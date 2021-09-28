@@ -69,7 +69,7 @@ var (
 type pkACProvider struct {
 
 	//chainconfig authType
-	authType AuthType
+	authType string
 
 	hashType string
 
@@ -112,7 +112,7 @@ func newPkACProvider(chainConfig *config.ChainConfig, localOrgId string,
 	pkAcProvider := &pkACProvider{
 		adminNum:              0,
 		hashType:              chainConfig.Crypto.Hash,
-		authType:              StringToAuthTypeMap[chainConfig.AuthType],
+		authType:              chainConfig.AuthType,
 		adminMember:           &sync.Map{},
 		consensusMember:       &sync.Map{},
 		localOrg:              localOrgId,

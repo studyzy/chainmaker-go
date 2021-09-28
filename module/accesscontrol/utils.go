@@ -5,7 +5,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	"strings"
 	"sync"
 
 	"chainmaker.org/chainmaker/common/v2/cert"
@@ -171,20 +170,4 @@ func InitPKSigningMember(ac protocol.AccessControlProvider,
 		}, nil
 	}
 	return nil, nil
-}
-
-func ConvertAuthType(authTypeStr string) (AuthType, error) {
-
-	authTypeStr = strings.ToLower(authTypeStr)
-
-	// 兼容1.x ChainConfig authType
-	if authTypeStr == Identity {
-		return PermissionedWithCert, nil
-	}
-
-	authType, ok := StringToAuthTypeMap[authTypeStr]
-	if !ok {
-		return 0, fmt.Errorf("convert auth type failed, invalid auth type in chain config")
-	}
-	return authType, nil
 }

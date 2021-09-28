@@ -147,11 +147,18 @@ hpyh7o6CYcs8xebU5FECQQCH0ZcTXrcX452gG+WUUL+0M0uDy4tF7KOkO89Aisqm
 9Pr4zSK60hTtx3dAuD83HhezMjBxRqLHjLk0QcuNgHeq
 -----END RSA PRIVATE KEY-----`
 	TestNodeId6 = "QmboYJpeHZqvKPhmeUKQhydP2FKBzeqDARhZvRmbdGQt7p"
+
+	TestPK = `-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDQOJSqXyNB+Q62cXT+lx4TGNDU
+Ast/pGwRFzPo+Ofef7lafQqu60gbkq4spQYqEgWyd7xr5tEw3tnQr3VEnSaQu2nS
+gJDcT4yol0brUV0b2im9PNA45Q8QT+cZVILPLf3jJZtIxBFLps9q2Js65Xc8P314
+UGClc2AZd8w7G7MLlwIDAQAB
+-----END PUBLIC KEY-----`
 )
 
 func TestGetNodeIdFromPK(t *testing.T) {
 	var nodeId string
-	pk, err := asym.PublicKeyFromPEM([]byte(TestPK6))
+	pk, err := asym.PublicKeyFromPEM([]byte(TestPK))
 	require.Nil(t, err)
 	nodeId, err = helper.CreateLibp2pPeerIdWithPublicKey(pk)
 	require.Nil(t, err)

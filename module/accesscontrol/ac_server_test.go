@@ -17,12 +17,13 @@ import (
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestInitAccessControlService(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	acServices := initAccessControlService(testHashType, testOrg1, testAuthType, testChainConfig, nil, logger)
+	acServices := initAccessControlService(testHashType, testOrg1, protocol.Identity, testChainConfig, nil, logger)
 	require.NotNil(t, acServices)
 }
 
@@ -32,7 +33,7 @@ func TestValidateResourcePolicy(t *testing.T) {
 	defer cleanFunc()
 
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	acServices := initAccessControlService(testHashType, testOrg1, testAuthType, testChainConfig, nil, logger)
+	acServices := initAccessControlService(testHashType, testOrg1, protocol.Identity, testChainConfig, nil, logger)
 	require.NotNil(t, acServices)
 
 	resourcePolicy := &config.ResourcePolicy{
@@ -56,7 +57,7 @@ func TestCertMemberInfo(t *testing.T) {
 	defer cleanFunc()
 
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	acServices := initAccessControlService(testHashType, testOrg1, testAuthType, testChainConfig, nil, logger)
+	acServices := initAccessControlService(testHashType, testOrg1, protocol.Identity, testChainConfig, nil, logger)
 	require.NotNil(t, acServices)
 
 	pbMember := &pbac.Member{
@@ -103,7 +104,7 @@ func TestVerifyPrincipalPolicy(t *testing.T) {
 	defer cleanFunc()
 	hashType := testHashType
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	acServices := initAccessControlService(testHashType, testOrg1, testAuthType, testChainConfig, nil, logger)
+	acServices := initAccessControlService(testHashType, testOrg1, protocol.Identity, testChainConfig, nil, logger)
 	require.NotNil(t, acServices)
 
 	var orgMemberMap = make(map[string]*orgMember, len(orgMemberInfoMap))

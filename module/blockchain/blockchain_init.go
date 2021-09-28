@@ -209,11 +209,12 @@ func (bc *Blockchain) initChainConf() (err error) {
 	}
 	authType = strings.ToLower(authType)
 	localAuthType := strings.ToLower(localconf.ChainMakerConfig.AuthType)
+
 	if authType != localAuthType &&
-		!(authType == strings.ToLower(localconf.AuthTypeIdentity) &&
-			localAuthType == strings.ToLower(localconf.AuthTypePermissionedWithCert)) &&
-		!(authType == strings.ToLower(localconf.AuthTypePermissionedWithCert) &&
-			localAuthType == strings.ToLower(localconf.AuthTypeIdentity)) {
+		!(authType == strings.ToLower(protocol.Identity) &&
+			localAuthType == strings.ToLower(protocol.PermissionedWithCert)) &&
+		!(authType == strings.ToLower(protocol.PermissionedWithKey) &&
+			localAuthType == strings.ToLower(protocol.Public)) {
 		return errors.New("auth type of chain config mismatch the local config")
 	}
 
@@ -321,26 +322,25 @@ func (bc *Blockchain) initAC() (err error) {
 		return
 	}
 
-	authType, err := accesscontrol.ConvertAuthType(bc.chainConf.ChainConfig().AuthType)
-	if err != nil {
-		bc.log.Errorf("convert authType failed, %s", err.Error())
-		return
-	}
-	if authType == accesscontrol.PermissionedWithCert {
-
+	switch bc.chainConf.ChainConfig().AuthType {
+	case protocol.PermissionedWithCert, protocol.Identity:
 		bc.identity, err = accesscontrol.InitCertSigningMember(bc.chainConf.ChainConfig(), nodeConfig.OrgId,
 			nodeConfig.PrivKeyFile, nodeConfig.PrivKeyPassword, nodeConfig.CertFile)
 		if err != nil {
 			bc.log.Errorf("initialize identity failed, %s", err.Error())
 			return
 		}
-	} else {
+	case protocol.PermissionedWithKey, protocol.Public:
 		bc.identity, err = accesscontrol.InitPKSigningMember(bc.ac, nodeConfig.OrgId,
 			nodeConfig.PrivKeyFile, nodeConfig.PrivKeyPassword)
 		if err != nil {
 			bc.log.Errorf("initialize identity failed, %s", err.Error())
 			return
 		}
+	default:
+		err := fmt.Errorf("auth type doesn't exist")
+		bc.log.Errorf("initialize identity failed, %s", err.Error())
+		return
 	}
 
 	bc.initModules[moduleNameAccessControl] = struct{}{}

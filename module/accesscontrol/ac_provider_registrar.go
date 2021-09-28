@@ -13,59 +13,31 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 
-// chain authentication mode
-type AuthType uint32
-
-const (
-	// permissioned with certificate
-	PermissionedWithCert AuthType = iota + 1
-
-	// permissioned with public key
-	PermissionedWithKey
-
-	// public key
-	Public
-)
-
-var AuthTypeToStringMap = map[AuthType]string{
-	PermissionedWithCert: "permissionedwithcert",
-	PermissionedWithKey:  "permissionedwithkey",
-	Public:               "public",
-}
-
-var StringToAuthTypeMap = map[string]AuthType{
-	"permissionedwithcert": PermissionedWithCert,
-	"permissionedwithkey":  PermissionedWithKey,
-	"public":               Public,
-}
-
-var Identity = "identity"
-
 func init() {
-	RegisterACProvider(PermissionedWithCert, NilCertACProvider)
-	RegisterACProvider(PermissionedWithKey, NilPermissionedPkACProvider)
-	RegisterACProvider(Public, NilPkACProvider)
+	RegisterACProvider(protocol.PermissionedWithCert, NilCertACProvider)
+	RegisterACProvider(protocol.PermissionedWithKey, NilPermissionedPkACProvider)
+	RegisterACProvider(protocol.Public, NilPkACProvider)
 }
 
-var acProviderRegistry = map[AuthType]reflect.Type{}
+var acProviderRegistry = map[string]reflect.Type{}
 
 type ACProvider interface {
 	NewACProvider(chainConf protocol.ChainConf, localOrgId string,
 		store protocol.BlockchainStore, log protocol.Logger) (protocol.AccessControlProvider, error)
 }
 
-func RegisterACProvider(authType AuthType, acp ACProvider) {
+func RegisterACProvider(authType string, acp ACProvider) {
 	_, found := acProviderRegistry[authType]
 	if found {
-		panic("accesscontrol provider[" + AuthTypeToStringMap[authType] + "] already registered!")
+		panic("accesscontrol provider[" + authType + "] already registered!")
 	}
 	acProviderRegistry[authType] = reflect.TypeOf(acp)
 }
 
-func NewACProviderByMemberType(authType AuthType) ACProvider {
+func NewACProviderByMemberType(authType string) ACProvider {
 	t, found := acProviderRegistry[authType]
 	if !found {
-		panic("accesscontrol provider[" + AuthTypeToStringMap[authType] + "] not found!")
+		panic("accesscontrol provider[" + authType + "] not found!")
 	}
 	return reflect.New(t).Elem().Interface().(ACProvider)
 }

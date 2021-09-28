@@ -210,7 +210,7 @@ type accessControlService struct {
 	// hash algorithm for chains
 	hashType string
 
-	authType AuthType
+	authType string
 }
 
 type memberCached struct {
@@ -218,7 +218,7 @@ type memberCached struct {
 	certChain []*bcx509.Certificate
 }
 
-func initAccessControlService(hashType, localOrgId string, authType AuthType, chainConf *config.ChainConfig,
+func initAccessControlService(hashType, localOrgId, authType string, chainConf *config.ChainConfig,
 	store protocol.BlockchainStore, log protocol.Logger) *accessControlService {
 	acService := &accessControlService{
 		orgNum:                0,
@@ -517,9 +517,9 @@ func (acs *accessControlService) createDefaultResourcePolicyForPK(localOrgId str
 func (acs *accessControlService) initResourcePolicy(resourcePolicies []*config.ResourcePolicy,
 	localOrgId string) {
 	switch acs.authType {
-	case PermissionedWithCert:
+	case protocol.PermissionedWithCert, protocol.Identity:
 		acs.createDefaultResourcePolicy(localOrgId)
-	case PermissionedWithKey:
+	case protocol.PermissionedWithKey:
 		acs.createDefaultResourcePolicyForPK(localOrgId)
 	}
 	for _, resourcePolicy := range resourcePolicies {

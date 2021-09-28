@@ -72,9 +72,8 @@ func newPermissionedPkACProvider(chainConfig *config.ChainConfig, localOrgId str
 		consensusMember: &sync.Map{},
 		localOrg:        localOrgId,
 	}
-	authType := StringToAuthTypeMap[chainConfig.AuthType]
 	ppacProvider.acService = initAccessControlService(chainConfig.GetCrypto().Hash,
-		localOrgId, authType, chainConfig, store, log)
+		localOrgId, chainConfig.AuthType, chainConfig, store, log)
 
 	err := ppacProvider.initAdminMembers(chainConfig.TrustRoots)
 	if err != nil {
