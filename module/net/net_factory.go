@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 
 	libp2p "chainmaker.org/chainmaker/chainmaker-net-libp2p/libp2pnet"
+	liquid "chainmaker.org/chainmaker/chainmaker-net-liquid/liquidnet"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 
@@ -47,8 +48,8 @@ func WithListenAddr(addr string) NetOption {
 			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetListenAddr(addr)
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//return liquid.SetListenAddrStr(n.HostConfig(), addr)
+			n, _ := nf.n.(*liquid.LiquidNet)
+			return liquid.SetListenAddrStr(n.HostConfig(), addr)
 		}
 		return nil
 	}
@@ -72,9 +73,9 @@ func WithCrypto(pkMode bool, keyFile string, certFile string) NetOption {
 			n.Prepare().SetKey(keyBytes)
 			n.Prepare().SetCert(certBytes)
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//n.CryptoConfig().KeyBytes = keyBytes
-			//n.CryptoConfig().CertBytes = certBytes
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.CryptoConfig().KeyBytes = keyBytes
+			n.CryptoConfig().CertBytes = certBytes
 		}
 		return nil
 	}
@@ -93,13 +94,13 @@ func WithSeeds(seeds ...string) NetOption {
 				n.Prepare().AddBootstrapsPeer(seed)
 			}
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//for _, seed := range seeds {
-			//	e := n.HostConfig().AddDirectPeer(seed)
-			//	if e != nil {
-			//		return e
-			//	}
-			//}
+			n, _ := nf.n.(*liquid.LiquidNet)
+			for _, seed := range seeds {
+				e := n.HostConfig().AddDirectPeer(seed)
+				if e != nil {
+					return e
+				}
+			}
 		}
 		return nil
 	}
@@ -113,8 +114,8 @@ func WithPeerStreamPoolSize(size int) NetOption {
 			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetPeerStreamPoolSize(size)
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//n.HostConfig().SendStreamPoolCap = int32(size)
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().SendStreamPoolCap = int32(size)
 		}
 		return nil
 	}
@@ -128,8 +129,8 @@ func WithPubSubMaxMessageSize(size int) NetOption {
 			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetPubSubMaxMsgSize(size)
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//n.PubSubConfig().MaxPubMessageSize = size
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.PubSubConfig().MaxPubMessageSize = size
 		}
 		return nil
 	}
@@ -143,8 +144,8 @@ func WithMaxPeerCountAllowed(max int) NetOption {
 			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetMaxPeerCountAllow(max)
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//n.HostConfig().MaxPeerCountAllowed = max
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().MaxPeerCountAllowed = max
 		}
 		return nil
 	}
@@ -156,9 +157,10 @@ func WithMaxConnCountAllowed(max int) NetOption {
 		switch nf.netType {
 		case protocol.Libp2p:
 			// not supported
+			return errors.New("max conn count allowed option unsupported")
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//n.HostConfig().MaxConnCountEachPeerAllowed = max
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().MaxConnCountEachPeerAllowed = max
 		}
 		return nil
 	}
@@ -172,8 +174,8 @@ func WithPeerEliminationStrategy(strategy int) NetOption {
 			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetPeerEliminationStrategy(strategy)
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//n.HostConfig().ConnEliminationStrategy = strategy
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().ConnEliminationStrategy = strategy
 		}
 		return nil
 	}
@@ -192,8 +194,8 @@ func WithBlackAddresses(blackAddresses ...string) NetOption {
 				n.Prepare().AddBlackAddress(ba)
 			}
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//n.HostConfig().BlackNetAddr = blackAddresses
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().BlackNetAddr = blackAddresses
 		}
 		return nil
 	}
@@ -212,8 +214,8 @@ func WithBlackNodeIds(blackNodeIds ...string) NetOption {
 				n.Prepare().AddBlackPeerId(bn)
 			}
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//return n.HostConfig().AddBlackPeers(blackNodeIds...)
+			n, _ := nf.n.(*liquid.LiquidNet)
+			return n.HostConfig().AddBlackPeers(blackNodeIds...)
 		}
 		return nil
 	}
@@ -227,8 +229,8 @@ func WithMsgCompression(enable bool) NetOption {
 			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.SetCompressMsgBytes(enable)
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//n.HostConfig().MsgCompress = enable
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().MsgCompress = enable
 		}
 		return nil
 	}
@@ -241,8 +243,8 @@ func WithInsecurity(isInsecurity bool) NetOption {
 			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetIsInsecurity(isInsecurity)
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//n.HostConfig().Insecurity = isInsecurity
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().Insecurity = isInsecurity
 		}
 		return nil
 	}
@@ -255,8 +257,8 @@ func WithPktEnable(pktEnable bool) NetOption {
 			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetPktEnable(pktEnable)
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//n.ExtensionsConfig().EnablePkt = pktEnable
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.ExtensionsConfig().EnablePkt = pktEnable
 		}
 		return nil
 	}
@@ -270,8 +272,8 @@ func WithPriorityControlEnable(priorityCtrlEnable bool) NetOption {
 			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetPriorityCtrlEnable(priorityCtrlEnable)
 		case protocol.Liquid:
-			//n, _ := nf.n.(*liquid.LiquidNet)
-			//n.ExtensionsConfig().EnablePriorityCtrl = priorityCtrlEnable
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.ExtensionsConfig().EnablePriorityCtrl = priorityCtrlEnable
 		}
 		return nil
 	}
@@ -288,11 +290,11 @@ func (nf *NetFactory) NewNet(netType protocol.NetType, opts ...NetOption) (proto
 		}
 		nf.n = localNet
 	case protocol.Liquid:
-		//liquidNet, err := liquid.NewLiquidNet()
-		//if err != nil {
-		//	return nil, err
-		//}
-		//nf.n = liquidNet
+		liquidNet, err := liquid.NewLiquidNet()
+		if err != nil {
+			return nil, err
+		}
+		nf.n = liquidNet
 	default:
 		return nil, ErrorNetType
 	}
