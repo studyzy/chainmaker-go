@@ -27,4 +27,5 @@ replace (
 	chainmaker.org/chainmaker-go/sync => ./../module/sync
 	chainmaker.org/chainmaker-go/txpool => ./../module/txpool
 	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
+	google.golang.org/grpc v1.40.0 => google.golang.org/grpc v1.26.0
 )
