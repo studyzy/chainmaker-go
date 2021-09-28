@@ -9,6 +9,8 @@ package consensus
 import (
 	"fmt"
 
+	"chainmaker.org/chainmaker-go/consensus/dpos"
+
 	"chainmaker.org/chainmaker-go/consensus/chainedbft"
 
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
@@ -44,7 +46,7 @@ func (f Factory) NewConsensusEngine(
 	chainConf protocol.ChainConf,
 	store protocol.BlockchainStore,
 	helper protocol.HotStuffHelper,
-	dpos protocol.DPoS) (protocol.ConsensusEngine, error) {
+) (protocol.ConsensusEngine, error) {
 	switch consensusType {
 	case consensuspb.ConsensusType_TBFT, consensuspb.ConsensusType_DPOS:
 		config := tbft.ConsensusTBFTImplConfig{
@@ -57,7 +59,7 @@ func (f Factory) NewConsensusEngine(
 			ChainConf:   chainConf,
 			NetService:  netService,
 			MsgBus:      msgBus,
-			Dpos:        dpos,
+			Dpos:        dpos.NewDPoSImpl(chainConf, store),
 		}
 		return tbft.New(config)
 	case consensuspb.ConsensusType_SOLO:
