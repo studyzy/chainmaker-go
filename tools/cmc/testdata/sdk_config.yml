@@ -11,6 +11,10 @@ chain_client:
   user_sign_key_file_path: "./testdata/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.key"
   # 客户端用户交易签名证书路径(若未设置，将使用user_crt_file_path)
   user_sign_crt_file_path: "./testdata/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.crt"
+  # 同步交易结果模式下，轮训获取交易结果时的最大轮训次数，删除此项或设为<=0则使用默认值 10
+  retry_limit: 10
+  # 同步交易结果模式下，每次轮训交易结果时的等待时间，单位：ms 删除此项或设为<=0则使用默认值 500
+  retry_interval: 500
 
   nodes:
     - # 节点地址，格式为：IP:端口:连接数
@@ -30,7 +34,13 @@ chain_client:
     type: "mysql"
     dest: "root:123456:localhost:3306"
     secret_key: xxx
-
   rpc_client:
     # grpc客户端最大接受容量(MB)
     max_receive_message_size: 16
+  pkcs11:
+    enabled: false # pkcs11 is not used by default
+    library: /usr/local/lib64/pkcs11/libupkcs11.so # path to the .so file of pkcs11 interface
+    label: HSM # label for the slot to be used
+    password: 11111111 # password to logon the HSM(Hardware security module)
+    session_cache_size: 10 # size of HSM session cache, default to 10
+    hash: "SHA256" # hash algorithm used to compute SKI
