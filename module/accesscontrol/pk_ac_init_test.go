@@ -6,6 +6,7 @@ import (
 
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"chainmaker.org/chainmaker/common/v2/helper"
+	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -155,6 +156,69 @@ gJDcT4yol0brUV0b2im9PNA45Q8QT+cZVILPLf3jJZtIxBFLps9q2Js65Xc8P314
 UGClc2AZd8w7G7MLlwIDAQAB
 -----END PUBLIC KEY-----`
 )
+const (
+	testPermissionedKeyAuthType = "permissionedWithKey"
+)
+
+var testPKChainConfig = &config.ChainConfig{
+	ChainId:  testChainId,
+	Version:  testVersion,
+	AuthType: testPermissionedKeyAuthType,
+	Sequence: 0,
+	Crypto: &config.CryptoConfig{
+		Hash: testHashType,
+	},
+	Block: nil,
+	Core:  nil,
+	Consensus: &config.ConsensusConfig{
+		Type: 0,
+		Nodes: []*config.OrgConfig{{
+			OrgId:  testOrg1,
+			NodeId: nil,
+		}, {
+			OrgId:  testOrg2,
+			NodeId: nil,
+		}, {
+			OrgId:  testOrg3,
+			NodeId: nil,
+		}, {
+			OrgId:  testOrg4,
+			NodeId: nil,
+		},
+		},
+		ExtConfig: nil,
+	},
+	TrustRoots: []*config.TrustRootConfig{
+		{
+			OrgId: testOrg1,
+			Root:  []string{testCAOrg1},
+		},
+		{
+			OrgId: testOrg2,
+			Root:  []string{testCAOrg2},
+		},
+		{
+			OrgId: testOrg3,
+			Root:  []string{testCAOrg3},
+		},
+		{
+			OrgId: testOrg4,
+			Root:  []string{testCAOrg4},
+		},
+	},
+	TrustMembers: []*config.TrustMemberConfig{
+		{
+			OrgId:      testOrg5,
+			Role:       "admin",
+			MemberInfo: testTrustMember1,
+		},
+		{
+			OrgId:      testOrg5,
+			Role:       "admin",
+			MemberInfo: testTrustMember2,
+		},
+	},
+}
 
 func TestGetNodeIdFromPK(t *testing.T) {
 	var nodeId string

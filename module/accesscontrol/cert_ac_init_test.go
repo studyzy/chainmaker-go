@@ -27,7 +27,7 @@ import (
 const (
 	testChainId      = "chain1"
 	testVersion      = "v1.0.0"
-	testCertAuthType = "permissionedWithCert "
+	testCertAuthType = "permissionedWithCert"
 	testHashType     = "SM3"
 
 	testOrg1 = "org1"

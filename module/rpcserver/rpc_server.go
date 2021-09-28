@@ -281,8 +281,8 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 		}
 	}
 
-	if localconf.ChainMakerConfig.AuthType == protocol.PermissionedWithKey ||
-		localconf.ChainMakerConfig.AuthType == protocol.Public {
+	if strings.ToLower(localconf.ChainMakerConfig.AuthType) == protocol.PermissionedWithKey ||
+		strings.ToLower(localconf.ChainMakerConfig.AuthType) == protocol.Public {
 		if localconf.ChainMakerConfig.RpcConfig.TLSConfig.Mode != TLS_MODE_DISABLE {
 			localconf.ChainMakerConfig.RpcConfig.TLSConfig.Mode = TLS_MODE_DISABLE
 			log.Infof("the tls mode has been automatically set to [disable] according to the authType:[%s]",

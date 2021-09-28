@@ -121,7 +121,7 @@ func newPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map,
 	}
 	adminMember, ok := loadSyncMap(adminList, string(member.MemberInfo))
 	if ok {
-		admin, _ := adminMember.(adminMemberModel)
+		admin, _ := adminMember.(*adminMemberModel)
 		return newPkMemberFromParam(admin.orgId, admin.pkPEM, protocol.RoleAdmin, acs.hashType)
 	}
 
@@ -137,7 +137,7 @@ func newPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map,
 
 	consensusMember, ok := loadSyncMap(consensusList, nodeId)
 	if ok {
-		consensus, _ := consensusMember.(consensusMemberModel)
+		consensus, _ := consensusMember.(*consensusMemberModel)
 		return newPkMemberFromParam(consensus.orgId, string(member.MemberInfo),
 			protocol.RoleConsensusNode, acs.hashType)
 	}
@@ -169,7 +169,7 @@ func publicNewPkMemberFromAcs(member *pbac.Member, adminList, consensusList *syn
 
 	adminMember, ok := loadSyncMap(adminList, string(member.MemberInfo))
 	if ok {
-		admin, _ := adminMember.(adminMemberModel)
+		admin, _ := adminMember.(*adminMemberModel)
 		return newPkMemberFromParam("", admin.pkPEM, protocol.RoleAdmin, hashType)
 	}
 
