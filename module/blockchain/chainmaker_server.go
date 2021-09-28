@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -72,6 +73,8 @@ func (server *ChainMakerServer) initNet() error {
 	switch strings.ToLower(provider) {
 	case "libp2p":
 		netType = protocol.Libp2p
+	case "liquid":
+		netType = protocol.Liquid
 	default:
 		return errors.New("unsupported net provider")
 	}
@@ -128,12 +131,16 @@ func (server *ChainMakerServer) initNet() error {
 		return errors.New(errMsg)
 	}
 
-	// read tls cert, then set the NodeId of local config
-	file, err := ioutil.ReadFile(certPath)
+	// read key file, then set the NodeId of local config
+	file, err := ioutil.ReadFile(keyPath)
 	if err != nil {
 		return err
 	}
-	nodeId, err := helper.GetLibp2pPeerIdFromCert(file)
+	privateKey, err := asym.PrivateKeyFromPEM(file, nil)
+	if err != nil {
+		return err
+	}
+	nodeId, err := helper.CreateLibp2pPeerIdWithPrivateKey(privateKey)
 	if err != nil {
 		return err
 	}

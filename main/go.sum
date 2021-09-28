@@ -1,11 +1,11 @@
 chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848 h1:T+9L0zZvwZitHBD4guSneNI0PtjBz1N90/r+LqN44Fg=
 chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848/go.mod h1:wDj2Rp/Lwo/ptB7nh0vcCCY1qEALCHa9p3/mfvNzoCY=
-chainmaker.org/chainmaker/chainmaker-net-common v0.0.6-0.20210928064127-d056df1dbf78 h1:keyPXYzNFtePvSzZlJEtqwCxmvHF9uoeuzaItWcxGoc=
-chainmaker.org/chainmaker/chainmaker-net-common v0.0.6-0.20210928064127-d056df1dbf78/go.mod h1:AV6U6zNeslGksSLrbbomhM1KC0CnPHHRQawx6eL0d7I=
-chainmaker.org/chainmaker/chainmaker-net-libp2p v0.0.11-0.20210928071524-d9b996dc5798 h1:fRm4aQDLc57zEibN6IG11f746DvCamxIlQ3mg1iYuHI=
-chainmaker.org/chainmaker/chainmaker-net-libp2p v0.0.11-0.20210928071524-d9b996dc5798/go.mod h1:0/Gof1XmlZlJKHdP4RLkelNOFwE9NPRx9igh6YXXKfw=
-chainmaker.org/chainmaker/chainmaker-net-liquid v0.0.8-0.20210928070729-cd79d66193f3 h1:F5ZGLCiGrFALuakLp1QH35ysA8iXmMAXsLPx341KA04=
-chainmaker.org/chainmaker/chainmaker-net-liquid v0.0.8-0.20210928070729-cd79d66193f3/go.mod h1:KIHFD24GEzDlPzKtA+yqAFnXA/eRoveuLn0t7Y3mbnI=
+chainmaker.org/chainmaker/chainmaker-net-common v0.0.6-0.20210928084825-ae4aec944259 h1:h2JrhXEgQ7QE6wtnFDTYpduB/b6hpLcAdkLjPuM14k4=
+chainmaker.org/chainmaker/chainmaker-net-common v0.0.6-0.20210928084825-ae4aec944259/go.mod h1:AV6U6zNeslGksSLrbbomhM1KC0CnPHHRQawx6eL0d7I=
+chainmaker.org/chainmaker/chainmaker-net-libp2p v0.0.11-0.20210928085353-699ecdd7edbf h1:ilHnH1uh0J+GbpftHquAg8HIEHo0MWffyKFDjeP2AeA=
+chainmaker.org/chainmaker/chainmaker-net-libp2p v0.0.11-0.20210928085353-699ecdd7edbf/go.mod h1:7nNx11LvprTSfNORiVJGLRwM6EEMmvEt1nui3pSATFA=
+chainmaker.org/chainmaker/chainmaker-net-liquid v0.0.8-0.20210928085414-5a68e7de7b32 h1:L5t4TfDLgCKYFL2dCUd/0/b0mTLVFcUHjzpWiyvqTBs=
+chainmaker.org/chainmaker/chainmaker-net-liquid v0.0.8-0.20210928085414-5a68e7de7b32/go.mod h1:B0mH7CmJfK/U/W45LYw0o7ex0hlv/XrswJ86G8vkGHI=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210901114756-9114511c2b70/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210906095952-6d8f2c6cede0/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210909033927-2a4cfc146579/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=

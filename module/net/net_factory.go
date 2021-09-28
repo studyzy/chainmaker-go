@@ -58,24 +58,35 @@ func WithListenAddr(addr string) NetOption {
 // WithCrypto set private key file and tls cert file for the net to create connection.
 func WithCrypto(pkMode bool, keyFile string, certFile string) NetOption {
 	return func(nf *NetFactory) error {
-		keyBytes, err := ioutil.ReadFile(keyFile)
+		var (
+			err                 error
+			keyBytes, certBytes []byte
+		)
+		keyBytes, err = ioutil.ReadFile(keyFile)
 		if err != nil {
 			return err
 		}
-		certBytes, err := ioutil.ReadFile(certFile)
-		if err != nil {
-			return err
+		if !pkMode {
+			certBytes, err = ioutil.ReadFile(certFile)
+			if err != nil {
+				return err
+			}
 		}
 		switch nf.netType {
 		case protocol.Libp2p:
 			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetPubKeyModeEnable(pkMode)
 			n.Prepare().SetKey(keyBytes)
-			n.Prepare().SetCert(certBytes)
+			if !pkMode {
+				n.Prepare().SetCert(certBytes)
+			}
 		case protocol.Liquid:
 			n, _ := nf.n.(*liquid.LiquidNet)
+			n.CryptoConfig().PubKeyMode = pkMode
 			n.CryptoConfig().KeyBytes = keyBytes
-			n.CryptoConfig().CertBytes = certBytes
+			if !pkMode {
+				n.CryptoConfig().CertBytes = certBytes
+			}
 		}
 		return nil
 	}
