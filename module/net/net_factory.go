@@ -34,7 +34,7 @@ func WithReadySignalC(signalC chan struct{}) NetOption {
 			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetReadySignalC(signalC)
 		case protocol.Liquid:
-
+			// not supported
 		}
 		return nil
 	}
@@ -157,7 +157,6 @@ func WithMaxConnCountAllowed(max int) NetOption {
 		switch nf.netType {
 		case protocol.Libp2p:
 			// not supported
-			return errors.New("max conn count allowed option unsupported")
 		case protocol.Liquid:
 			n, _ := nf.n.(*liquid.LiquidNet)
 			n.HostConfig().MaxConnCountEachPeerAllowed = max
