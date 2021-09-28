@@ -8,7 +8,7 @@
 chain_id: chain1                      # 链标识
 version: v1.0.0                       # 链版本
 sequence: 0                           # 配置版本
-auth_type: "permissionedWithCert"     # 认证类型 permissionedWithCert / permissioned-with-key / public
+auth_type: "permissionedWithKey"     # 认证类型 permissionedWithCert / permissionedWithKey / public
 
 crypto:
   hash: SHA256
@@ -42,12 +42,12 @@ consensus:
     - org_id: "wx-org2.chainmaker.org"
       node_id:
         - "QmboYJpeHZqvKPhmeUKQhydP2FKBzeqDARhZvRmbdGQt7p"
-    - org_id: "wx-org3.chainmaker.org"
-      node_id:
-        - "QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
-    - org_id: "wx-org4.chainmaker.org"
-      node_id:
-        - "QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
+  #    - org_id: "wx-org3.chainmaker.org"
+  #      node_id:
+  #        - "QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
+  #    - org_id: "wx-org4.chainmaker.org"
+  #      node_id:
+  #        - "QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
   #    - org_id: "wx-org5.chainmaker.org"
   #      node_id:
   #        - "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
@@ -69,12 +69,12 @@ trust_roots:
   - org_id: "wx-org2.chainmaker.org"
     root:
       - "../config-pk/permissioned-with-key/wx-org2/public-key/admin/wx-org2.chainmaker.org/admin.pem"
-  - org_id: "wx-org3.chainmaker.org"
-    root:
-      - "../config-pk/permissioned-with-key/wx-org2/public-key/admin/wx-org3.chainmaker.org/admin.pem"
-  - org_id: "wx-org4.chainmaker.org"
-    root:
-      - "../config-pk/permissioned-with-key/wx-org2/public-key/admin/wx-org4.chainmaker.org/admin.pem"
+#  - org_id: "wx-org3.chainmaker.org"
+#    root:
+#      - "../config-pk/permissioned-with-key/wx-org2/public-key/admin/wx-org3.chainmaker.org/admin.pem"
+#  - org_id: "wx-org4.chainmaker.org"
+#    root:
+#      - "../config-pk/permissioned-with-key/wx-org2/public-key/admin/wx-org4.chainmaker.org/admin.pem"
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:

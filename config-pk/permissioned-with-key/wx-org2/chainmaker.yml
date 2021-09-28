@@ -23,7 +23,7 @@ blockchain:
 node:
   # 节点类型：full
   type:              full
-  org_id:            wx-org1.chainmaker.org
+  org_id:            wx-org2.chainmaker.org
   priv_key_file:     ../config-pk/permissioned-with-key/wx-org2/public-key/node/consensus1/consensus1.key
   cert_file:         ../config-sql/wx-org1/certs/node/consensus1/consensus1.sign.crt
   signer_cache_size: 1000
@@ -35,8 +35,8 @@ net:
   seeds:
     - "/ip4/127.0.0.1/tcp/11351/p2p/QmXVYiWKFyQoSSoD6xptx5gCEmQTusnJ9veepeSvkXLTUF"
     - "/ip4/127.0.0.1/tcp/11352/p2p/QmboYJpeHZqvKPhmeUKQhydP2FKBzeqDARhZvRmbdGQt7p"
-    - "/ip4/127.0.0.1/tcp/11353/p2p/QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
-    - "/ip4/127.0.0.1/tcp/11354/p2p/QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
+#    - "/ip4/127.0.0.1/tcp/11353/p2p/QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
+#    - "/ip4/127.0.0.1/tcp/11354/p2p/QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
 #    - "/ip4/127.0.0.1/tcp/11355/p2p/QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
 #    - "/ip4/127.0.0.1/tcp/11356/p2p/QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
 #    - "/ip4/127.0.0.1/tcp/11357/p2p/QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
