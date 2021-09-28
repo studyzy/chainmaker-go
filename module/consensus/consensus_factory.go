@@ -61,6 +61,7 @@ func (f Factory) NewConsensusEngine(
 			MsgBus:      msgBus,
 			Dpos:        dpos.NewDPoSImpl(chainConf, store),
 		}
+
 		return tbft.New(config)
 	case consensuspb.ConsensusType_SOLO:
 		return solo.New(chainID, id, signer, msgBus, chainConf)
