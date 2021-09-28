@@ -7,18 +7,13 @@ require (
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210926120029-9a27a108fab3
 	chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20210928063007-18594e6fd4ca
 	github.com/c-bata/go-prompt v0.2.6
-	github.com/cespare/cp v0.1.0
-	github.com/davecgh/go-spew v1.1.1
-	github.com/deckarep/golang-set v0.0.0-20180603214616-504e848d77ea
 	github.com/ethereum/go-ethereum v1.10.4
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
-	github.com/google/uuid v1.1.5
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/hokaccha/go-prettyjson v0.0.0-20201222001619-a42f9ac2ec8e
 	github.com/mr-tron/base58 v1.2.0
-	github.com/rjeczalik/notify v0.9.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
