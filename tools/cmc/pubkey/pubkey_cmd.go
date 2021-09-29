@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/common/v2/crypto"
 
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"github.com/spf13/cobra"
@@ -47,9 +48,9 @@ const (
 	flagChainId            = "chain-id"
 	flagAdminKeyFilePaths  = "admin-key-file-paths"
 
-	flagPubkey = "pubkey"
-	flagOrgId  = "org-id"
-	flagRole   = "role"
+	flagPubkeyFilePath = "pubkey-file-path"
+	flagOrgId          = "org-id"
+	flagRole           = "role"
 )
 
 func NewPubkeyCMD() *cobra.Command {
@@ -86,7 +87,7 @@ func AddPKCmd() *cobra.Command {
 	}
 
 	flags := &pflag.FlagSet{}
-	flags.StringVar(&pubkeyFile, flagPubkey, "", "specify pubkey filename")
+	flags.StringVar(&pubkeyFile, flagPubkeyFilePath, "", "specify pubkey filename")
 	flags.StringVar(&orgId, flagOrgId, "", "specify the orgId, such as wx-org1.chainmaker.com")
 	flags.StringVar(&role, flagRole, "", "specify the role, such as client")
 
@@ -98,7 +99,7 @@ func AddPKCmd() *cobra.Command {
 	addPKCmd.MarkFlagRequired(flagChainId)
 	addPKCmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
-	addPKCmd.MarkFlagRequired(flagPubkey)
+	addPKCmd.MarkFlagRequired(flagPubkeyFilePath)
 	addPKCmd.MarkFlagRequired(flagOrgId)
 	addPKCmd.MarkFlagRequired(flagRole)
 
@@ -116,7 +117,7 @@ func DelPKCmd() *cobra.Command {
 	}
 
 	flags := &pflag.FlagSet{}
-	flags.StringVar(&pubkeyFile, flagPubkey, "", "specify pubkey filename")
+	flags.StringVar(&pubkeyFile, flagPubkeyFilePath, "", "specify pubkey filename")
 	flags.StringVar(&orgId, flagOrgId, "", "specify the orgId, such as wx-org1.chainmaker.com")
 
 	delPKCmd.Flags().AddFlagSet(pkFlags)
@@ -127,7 +128,7 @@ func DelPKCmd() *cobra.Command {
 	delPKCmd.MarkFlagRequired(flagChainId)
 	delPKCmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
-	delPKCmd.MarkFlagRequired(flagPubkey)
+	delPKCmd.MarkFlagRequired(flagPubkeyFilePath)
 	delPKCmd.MarkFlagRequired(flagOrgId)
 
 	return delPKCmd
@@ -168,8 +169,7 @@ func cliAddPubKey() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		//		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminPubkeys[i], payload)
-		e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], client.GetHashType(), orgId, payload)
+		e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
 		if err != nil {
 			return err
 		}
@@ -224,8 +224,7 @@ func cliDelPubKey() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		//		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminPubkeys[i], payload)
-		e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], client.GetHashType(), orgId, payload)
+		e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
 		if err != nil {
 			return err
 		}
