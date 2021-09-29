@@ -34,12 +34,12 @@ net:
   listen_addr: /ip4/0.0.0.0/tcp/11351
   seeds:
     - "/ip4/127.0.0.1/tcp/11351/p2p/QmXVYiWKFyQoSSoD6xptx5gCEmQTusnJ9veepeSvkXLTUF"
-    - "/ip4/127.0.0.1/tcp/11352/p2p/QmboYJpeHZqvKPhmeUKQhydP2FKBzeqDARhZvRmbdGQt7p"
-    - "/ip4/127.0.0.1/tcp/11353/p2p/QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
-    - "/ip4/127.0.0.1/tcp/11354/p2p/QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
-#    - "/ip4/127.0.0.1/tcp/11355/p2p/QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
-#    - "/ip4/127.0.0.1/tcp/11356/p2p/QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
-#    - "/ip4/127.0.0.1/tcp/11357/p2p/QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
+  #    - "/ip4/127.0.0.1/tcp/11352/p2p/QmboYJpeHZqvKPhmeUKQhydP2FKBzeqDARhZvRmbdGQt7p"
+  #    - "/ip4/127.0.0.1/tcp/11353/p2p/QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
+  #    - "/ip4/127.0.0.1/tcp/11354/p2p/QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
+  #    - "/ip4/127.0.0.1/tcp/11355/p2p/QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
+  #    - "/ip4/127.0.0.1/tcp/11356/p2p/QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
+  #    - "/ip4/127.0.0.1/tcp/11357/p2p/QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
   tls:
     enabled: true
     priv_key_file: ../config-pk/permissioned-with-key/wx-org1-solo/public-key/node/consensus1/consensus1.key
@@ -76,44 +76,33 @@ pprof:
   port: 24321
 
 storage:
-  db_prefix: org1_
-  store_path: ../data/org1/ledgerData1
+  store_path: ../data/org2/ledgerData1
   blockdb_config:
-    provider: sql
+    provider: leveldb
     leveldb_config:
-      store_path: ../data/org1/blocks
-    sqldb_config:
-      sqldb_type:  mysql
-      dsn:  root:passw0rd@tcp(192.168.1.35:3307)/mysql
+      store_path: ../data/org2/blocks
   statedb_config:
-    provider: sql
+    provider: leveldb
     leveldb_config:
-      store_path: ../data/org1/state
-    sqldb_config:
-      sqldb_type:  mysql
-      dsn:  root:passw0rd@tcp(192.168.1.35:3307)/mysql
+      store_path: ../data/org2/state
   historydb_config:
-    provider: sql
+    provider: leveldb
     leveldb_config:
-      store_path: ../data/org1/history
-    sqldb_config:
-      sqldb_type:  mysql
-      dsn:  root:passw0rd@tcp(192.168.1.35:3307)/mysql
+      store_path: ../data/org2/history
   resultdb_config:
-    provider: sql
+    provider: leveldb
     leveldb_config:
-      store_path: ../data/org1/result
-    sqldb_config:
-      sqldb_type:  mysql
-      dsn:  root:passw0rd@tcp(192.168.1.35:3307)/mysql
-  disable_contract_eventdb: false  #是否禁止合约事件存储功能，默认为true，如果设置为false,需要配置mysql
+      store_path: ../data/org2/result
+  disable_contract_eventdb: true  #是否禁止合约事件存储功能，默认为true，如果设置为false,需要配置mysql
   contract_eventdb_config:
     provider: sql                 #如果开启contract event db 功能，需要指定provider为sql
     sqldb_config:
-      sqldb_type:  mysql
-      dsn:  root:passw0rd@tcp(192.168.1.35:3307)/mysql
+      sqldb_type: mysql           #contract event db 只支持mysql
+      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
+
 debug:
   # 是否开启CLI功能，过度期间使用
   is_cli_open: true
   is_http_open: false
+
 
