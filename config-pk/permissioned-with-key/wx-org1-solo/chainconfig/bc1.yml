@@ -8,7 +8,7 @@
 chain_id: chain1                      # 链标识
 version: v1.0.0                       # 链版本
 sequence: 0                           # 配置版本
-auth_type: "permissionedWithCert"     # 认证类型 permissionedWithCert / permissioned-with-key / public
+auth_type: "permissionedWithKey"     # 认证类型 permissionedWithCert / permissionedWithKey / public
 
 crypto:
   hash: SHA256
@@ -33,21 +33,21 @@ core:
 #共识配置
 consensus:
   # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,10-POW)
-  type: 1
+  type: 0
   # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
   nodes:
     - org_id: "wx-org1.chainmaker.org"
       node_id:
         - "QmXVYiWKFyQoSSoD6xptx5gCEmQTusnJ9veepeSvkXLTUF"
-    - org_id: "wx-org2.chainmaker.org"
-      node_id:
-        - "QmboYJpeHZqvKPhmeUKQhydP2FKBzeqDARhZvRmbdGQt7p"
-    - org_id: "wx-org3.chainmaker.org"
-      node_id:
-        - "QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
-    - org_id: "wx-org4.chainmaker.org"
-      node_id:
-        - "QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
+  #    - org_id: "wx-org2.chainmaker.org"
+  #      node_id:
+  #        - "QmboYJpeHZqvKPhmeUKQhydP2FKBzeqDARhZvRmbdGQt7p"
+  #    - org_id: "wx-org3.chainmaker.org"
+  #      node_id:
+  #        - "QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
+  #    - org_id: "wx-org4.chainmaker.org"
+  #      node_id:
+  #        - "QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
   #    - org_id: "wx-org5.chainmaker.org"
   #      node_id:
   #        - "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
@@ -66,15 +66,15 @@ trust_roots:
   - org_id: "wx-org1.chainmaker.org"
     root:
       - "../config-pk/permissioned-with-key/wx-org1-solo/public-key/admin/wx-org1.chainmaker.org/admin.pem"
-  - org_id: "wx-org2.chainmaker.org"
-    root:
-      - "../config-pk/permissioned-with-key/wx-org1-solo/public-key/admin/wx-org2.chainmaker.org/admin.pem"
-  - org_id: "wx-org3.chainmaker.org"
-    root:
-      - "../config-pk/permissioned-with-key/wx-org1-solo/public-key/admin/wx-org3.chainmaker.org/admin.pem"
-  - org_id: "wx-org4.chainmaker.org"
-    root:
-      - "../config-pk/permissioned-with-key/wx-org1-solo/public-key/admin/wx-org4.chainmaker.org/admin.pem"
+#  - org_id: "wx-org2.chainmaker.org"
+#    root:
+#      - "../config-pk/permissioned-with-key/wx-org1-solo/public-key/admin/wx-org2.chainmaker.org/admin.pem"
+#  - org_id: "wx-org3.chainmaker.org"
+#    root:
+#      - "../config-pk/permissioned-with-key/wx-org1-solo/public-key/admin/wx-org3.chainmaker.org/admin.pem"
+#  - org_id: "wx-org4.chainmaker.org"
+#    root:
+#      - "../config-pk/permissioned-with-key/wx-org1-solo/public-key/admin/wx-org4.chainmaker.org/admin.pem"
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:
