@@ -11,8 +11,8 @@ log:
     log_levels:
       core: INFO
       net: INFO
-      vm: DEBUG
-      storage:  DEBUG
+      vm: INFO
+      storage: INFO
     file_path: ../log/org1/system.log
     max_age: 365                  # 日志最长保存时间，单位：天
     rotation_time: 1              # 日志滚动时间，单位：小时

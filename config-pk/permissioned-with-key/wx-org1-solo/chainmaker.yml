@@ -46,16 +46,13 @@ net:
     cert_file:     ../config-sql/wx-org1/certs/node/consensus1/consensus1.tls.crt
 
 txpool:
-  pool_type: "batch"
-  max_txpool_size: 100000 # 普通交易池上限
+  max_txpool_size: 51200 # 普通交易池上限
   max_config_txpool_size: 10 # config交易池的上限
   full_notify_again_time: 30 # 交易池溢出后，再次通知的时间间隔(秒)
-  batch_max_size: 1000 # 批次最大大小
-  batch_create_timeout: 1000 # 创建批次超时时间，单位毫秒
 
 rpc:
   provider: grpc
-  port: 12351
+  port: 12301
   tls:
     # TLS模式:
     #   disable - 不启用TLS
@@ -76,23 +73,23 @@ pprof:
   port: 24321
 
 storage:
-  store_path: ../data/org2/ledgerData1
+  store_path: ../data/org1/ledgerData1
   blockdb_config:
     provider: leveldb
     leveldb_config:
-      store_path: ../data/org2/blocks
+      store_path: ../data/org1/blocks
   statedb_config:
     provider: leveldb
     leveldb_config:
-      store_path: ../data/org2/state
+      store_path: ../data/org1/state
   historydb_config:
     provider: leveldb
     leveldb_config:
-      store_path: ../data/org2/history
+      store_path: ../data/org1/history
   resultdb_config:
     provider: leveldb
     leveldb_config:
-      store_path: ../data/org2/result
+      store_path: ../data/org1/result
   disable_contract_eventdb: true  #是否禁止合约事件存储功能，默认为true，如果设置为false,需要配置mysql
   contract_eventdb_config:
     provider: sql                 #如果开启contract event db 功能，需要指定provider为sql
