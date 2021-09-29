@@ -38,10 +38,6 @@ var (
 	adminKeyFilePaths  string
 )
 
-var (
-	pkFlags *pflag.FlagSet
-)
-
 const (
 	flagSdkConfPath        = "sdk-conf-path"
 	flagClientKeyFilePaths = "client-key-file-paths"
@@ -60,15 +56,16 @@ func NewPubkeyCMD() *cobra.Command {
 		Long:  "public key management command.",
 	}
 
-	pkFlags = &pflag.FlagSet{}
-	pkFlags.StringVar(&sdkConfPath, flagSdkConfPath, "",
+	pkCmd.PersistentFlags().StringVar(&sdkConfPath, flagSdkConfPath, "",
 		"specify sdk config path")
-	pkFlags.StringVar(&clientKeyFilePaths, flagClientKeyFilePaths, "",
-		"specify client key file paths, use ',' to separate")
-	pkFlags.StringVar(&chainId, flagChainId, "",
+	pkCmd.PersistentFlags().StringVar(&chainId, flagChainId, "",
 		"specify the chain id, such as: chain1, chain2 etc.")
-	pkFlags.StringVar(&adminKeyFilePaths, flagAdminKeyFilePaths, "",
+	pkCmd.PersistentFlags().StringVar(&adminKeyFilePaths, flagAdminKeyFilePaths, "",
 		"specify admin key file paths, use ',' to separate")
+
+	pkCmd.MarkPersistentFlagRequired(flagSdkConfPath)
+	pkCmd.MarkPersistentFlagRequired(flagChainId)
+	pkCmd.MarkPersistentFlagRequired(flagAdminKeyFilePaths)
 
 	pkCmd.AddCommand(AddPKCmd())
 	pkCmd.AddCommand(DelPKCmd())
@@ -91,13 +88,7 @@ func AddPKCmd() *cobra.Command {
 	flags.StringVar(&orgId, flagOrgId, "", "specify the orgId, such as wx-org1.chainmaker.com")
 	flags.StringVar(&role, flagRole, "", "specify the role, such as client")
 
-	addPKCmd.Flags().AddFlagSet(pkFlags)
 	addPKCmd.Flags().AddFlagSet(flags)
-
-	addPKCmd.MarkFlagRequired(flagSdkConfPath)
-	addPKCmd.MarkFlagRequired(flagClientKeyFilePaths)
-	addPKCmd.MarkFlagRequired(flagChainId)
-	addPKCmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
 	addPKCmd.MarkFlagRequired(flagPubkeyFilePath)
 	addPKCmd.MarkFlagRequired(flagOrgId)
@@ -120,13 +111,7 @@ func DelPKCmd() *cobra.Command {
 	flags.StringVar(&pubkeyFile, flagPubkeyFilePath, "", "specify pubkey filename")
 	flags.StringVar(&orgId, flagOrgId, "", "specify the orgId, such as wx-org1.chainmaker.com")
 
-	delPKCmd.Flags().AddFlagSet(pkFlags)
 	delPKCmd.Flags().AddFlagSet(flags)
-
-	delPKCmd.MarkFlagRequired(flagSdkConfPath)
-	delPKCmd.MarkFlagRequired(flagClientKeyFilePaths)
-	delPKCmd.MarkFlagRequired(flagChainId)
-	delPKCmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
 	delPKCmd.MarkFlagRequired(flagPubkeyFilePath)
 	delPKCmd.MarkFlagRequired(flagOrgId)
@@ -245,7 +230,7 @@ func cliDelPubKey() error {
 }
 
 func createClientWithConfig() (*sdk.ChainClient, error) {
-	chainClient, err := sdk.NewChainClient(sdk.WithConfPath(sdkConfPath), sdk.WithUserKeyFilePath(clientKeyFilePaths),
+	chainClient, err := sdk.NewChainClient(sdk.WithConfPath(sdkConfPath),
 		sdk.WithChainClientOrgId(orgId), sdk.WithChainClientChainId(chainId))
 	if err != nil {
 		return nil, err
