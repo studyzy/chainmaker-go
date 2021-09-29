@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/consensus/dpos"
 	"chainmaker.org/chainmaker-go/consensus/tbft"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/localconf/v2"
@@ -107,7 +106,6 @@ func TestNewConsensusEngine(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var factory Factory
-			dposImpl := dpos.NewDPoSImpl(tt.args.chainConf, tt.args.store)
 			got, err := factory.NewConsensusEngine(
 				tt.args.consensusType,
 				tt.args.chainID,
@@ -125,7 +123,6 @@ func TestNewConsensusEngine(t *testing.T) {
 				tt.args.chainConf,
 				tt.args.store,
 				nil,
-				dposImpl,
 			)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewConsensusEngine() error = %v, wantErr %v", err, tt.wantErr)
