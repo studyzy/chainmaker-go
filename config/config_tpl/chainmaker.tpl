@@ -124,6 +124,8 @@ storage:
   store_path: ../data/{org_id}/ledgerData1
   # 最小的不允许归档的区块高度
   unarchive_block_height: 300000
+#  encryptor: sm4    # 数据落盘对称加密算法：sm4/aes
+#  encrypt_key: "1234567890123456" # 对称加密密钥：16 bytes key，如果开启PKCS11则为密钥KeyID
   blockdb_config:
     provider: leveldb
     leveldb_config:
