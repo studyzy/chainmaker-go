@@ -13,13 +13,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	sdk "chainmaker.org/chainmaker/sdk-go/v2"
-
-	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
-
-	"github.com/spf13/cobra"
-
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -194,7 +191,7 @@ func revokeCert() error {
 
 	endorsementEntrys := make([]*commonpb.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
+		e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
 		if err != nil {
 			return fmt.Errorf("sign cert manage payload failed, %s", err.Error())
 		}

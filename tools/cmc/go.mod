@@ -20,9 +20,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tjfoc/gmtls v1.2.1 // indirect
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-	golang.org/x/tools v0.1.4 // indirect
 	gorm.io/driver/mysql v1.0.6
 	gorm.io/gorm v1.21.9
 )
-
-replace chainmaker.org/chainmaker/sdk-go v0.0.0-20210802095520-35ed0b5cc75c => /Users/hxy/go/src/chainmaker.org/sdk-go

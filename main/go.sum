@@ -12,7 +12,6 @@ chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210901114756-9114511c2b70/go.mod 
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210906095952-6d8f2c6cede0/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210909033927-2a4cfc146579/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210916080817-79b5a4160dae/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
-chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210924090707-3cfec86e5534 h1:8NBaZ96jP/7OmY+qLp5jShVMlkyEDkU7t54VmuuMBz4=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210924090707-3cfec86e5534/go.mod h1:zmhmvLiYlRduHQKrQtRHljn/xem1ipl+2zajpmibzOg=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210927025216-3d740cb6258e/go.mod h1:zmhmvLiYlRduHQKrQtRHljn/xem1ipl+2zajpmibzOg=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210927080800-f6c870cf28da/go.mod h1:zmhmvLiYlRduHQKrQtRHljn/xem1ipl+2zajpmibzOg=
@@ -29,7 +28,6 @@ chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210927063633-0994fcdf3928/go.mod
 chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210928020228-3ab2986d5ecd h1:swzRifxLW5UwyWydobYTHKE2Vr78yDyjtuoNNGY+X60=
 chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210928020228-3ab2986d5ecd/go.mod h1:SPqpohsoeMrRFhPHnDQMRiWylLr5PfMQIlxbrPppzhI=
 chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907133316-af00cea33c97/go.mod h1:/6mAB4cPLK2GB9epL3uU8srK/iMXZb2dbg2lcJa+3bg=
-chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d h1:D27rC2lDGsVH1piY1jCR8eTIPsqJGCWeWgt9XeXN4l0=
 chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d/go.mod h1:/6mAB4cPLK2GB9epL3uU8srK/iMXZb2dbg2lcJa+3bg=
 chainmaker.org/chainmaker/logger/v2 v2.0.0-20210927081951-999ab4a3fad6 h1:cLG5QvoWe+VVsR6gadcrK5LPvJoFhImUcCsHmvBKFUw=
 chainmaker.org/chainmaker/logger/v2 v2.0.0-20210927081951-999ab4a3fad6/go.mod h1:vR6yz2o67T7wNk9GhuvQFLn/vXoMbTAm4D/wADMsU/w=

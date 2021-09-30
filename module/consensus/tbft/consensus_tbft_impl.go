@@ -139,9 +139,10 @@ func New(config ConsensusTBFTImplConfig) (*ConsensusTBFTImpl, error) {
 	consensus.chainConf = config.ChainConf
 	consensus.netService = config.NetService
 	consensus.msgbus = config.MsgBus
-	consensus.dpos = config.Dpos
 	consensus.closeC = make(chan struct{})
-
+	if config.ChainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_DPOS {
+		consensus.dpos = config.Dpos
+	}
 	consensus.waldir = path.Join(localconf.ChainMakerConfig.GetStorePath(), consensus.chainID, walDir)
 	consensus.wal, err = wal.Open(consensus.waldir, nil)
 	if err != nil {
