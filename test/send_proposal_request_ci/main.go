@@ -78,7 +78,7 @@ var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/c
 // vm wasmer 整体功能测试，合约创建、升级、执行、查询、冻结、解冻、吊销、交易区块的查询、链配置信息的查询
 func main() {
 	common.SetCertPathPrefix(certPathPrefix)
-	//evmtest()
+	evmtest()
 	initWasmerTest()
 	runTest()
 }

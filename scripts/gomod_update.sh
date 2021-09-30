@@ -38,6 +38,7 @@ go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go get chainmaker.org/chainmaker/vm-native@${BRANCH}
 go get chainmaker.org/chainmaker/vm@${BRANCH}
+go get chainmaker.org/chainmaker/store/v2@${BRANCH}
 go mod tidy
 # go test ./...
 
