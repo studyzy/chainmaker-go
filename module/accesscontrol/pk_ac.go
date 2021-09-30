@@ -94,7 +94,7 @@ type pkACProvider struct {
 
 type publicAdminMemberModel struct {
 	publicKey crypto.PublicKey
-	pkPEM     string
+	pkBytes   []byte
 }
 
 func (p *pkACProvider) NewACProvider(chainConf protocol.ChainConf, localOrgId string,
@@ -154,11 +154,16 @@ func (p *pkACProvider) initAdminMembers(trustRootList []*config.TrustRootConfig)
 				if err != nil {
 					return fmt.Errorf("init admin member failed: parse the public key from PEM failed")
 				}
+				pkBytes, err := pk.Bytes()
+				if err != nil {
+					return fmt.Errorf("init admin member failed: %s", err.Error())
+				}
 				adminMember := &publicAdminMemberModel{
 					publicKey: pk,
-					pkPEM:     root,
+					pkBytes:   pkBytes,
 				}
-				tempSyncMap.Store(root, adminMember)
+				adminKey := hex.EncodeToString(pkBytes)
+				tempSyncMap.Store(adminKey, adminMember)
 				adminNum++
 			}
 		}

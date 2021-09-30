@@ -39,8 +39,8 @@ func getP11Handle() (*pkcs11.P11Handle, error) {
 	return p11Handle, nil
 }
 
-func pubkeyHash(pubkey string) string {
-	pkHash := sha256.Sum256([]byte(pubkey))
+func pubkeyHash(pubkey []byte) string {
+	pkHash := sha256.Sum256(pubkey)
 	strPkHash := base58.Encode(pkHash[:])
 	return strPkHash
 }
