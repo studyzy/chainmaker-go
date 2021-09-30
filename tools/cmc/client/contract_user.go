@@ -16,6 +16,9 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/protocol/v2"
+	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
 	ethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
@@ -82,7 +85,7 @@ func createUserContractCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagByteCodePath)
 	cmd.MarkFlagRequired(flagRuntimeType)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
+	//cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 
 	return cmd
 }
@@ -256,21 +259,30 @@ func revokeUserContractCMD() *cobra.Command {
 }
 
 func createUserContract() error {
-	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return errAdminOrgIdKeyCertIsEmpty
-	}
-	if len(adminKeys) != len(adminCrts) {
-		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
-	}
-
+	var adminKeys []string
+	var adminCrts []string
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
 		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}
 	defer client.Stop()
+
+	if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+		adminCrts = strings.Split(adminCrtFilePaths, ",")
+		if len(adminKeys) == 0 || len(adminCrts) == 0 {
+			return errAdminOrgIdKeyCertIsEmpty
+		}
+		if len(adminKeys) != len(adminCrts) {
+			return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
+		}
+	} else {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+		if len(adminKeys) == 0 {
+			return errAdminOrgIdKeyCertIsEmpty
+		}
+	}
 
 	rt, ok := common.RuntimeType_value[runtimeType]
 	if !ok {
@@ -308,12 +320,21 @@ func createUserContract() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
-		if err != nil {
-			return err
-		}
+		if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+			e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
+			if err != nil {
+				return err
+			}
 
-		endorsementEntrys[i] = e
+			endorsementEntrys[i] = e
+		} else {
+			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
+			if err != nil {
+				return err
+			}
+
+			endorsementEntrys[i] = e
+		}
 	}
 
 	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, timeout, syncResult)

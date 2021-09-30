@@ -213,7 +213,9 @@ func attachFlags(cmd *cobra.Command, names []string) {
 	cmdFlags := cmd.Flags()
 	for _, name := range names {
 		if flag := flags.Lookup(name); flag != nil {
-			cmdFlags.AddFlag(flag)
+			flagCopied := *flag
+			cmdFlags.AddFlag(&flagCopied)
+			//cmdFlags.AddFlag(flag)
 		}
 	}
 }
