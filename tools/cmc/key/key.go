@@ -72,7 +72,7 @@ func generatePrivateKey() error {
 	switch a {
 	case "SM2", "ECC_P256":
 		if keyType, ok := crypto.AsymAlgoMap[a]; ok {
-			_, err := cert.CreatePrivKey(keyType, path, name)
+			_, err := cert.CreatePrivKey(keyType, path, name, true)
 			return err
 		}
 		return fmt.Errorf("unsupported algorithm %s", algo)

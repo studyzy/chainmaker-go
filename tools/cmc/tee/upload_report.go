@@ -13,12 +13,11 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
-	sdk "chainmaker.org/chainmaker/sdk-go/v2"
+	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func uploadReportCmd() *cobra.Command {
@@ -80,7 +79,7 @@ func cliUploadReport() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
+		e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
 		if err != nil {
 			return err
 		}

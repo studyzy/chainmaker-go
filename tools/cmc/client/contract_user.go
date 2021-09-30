@@ -16,13 +16,12 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
 	ethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
-
-	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	"chainmaker.org/chainmaker/pb-go/v2/common"
-	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 )
 
 const CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT = "checkProposalRequestResp failed, %s"
@@ -308,7 +307,7 @@ func createUserContract() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
+		e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
 		if err != nil {
 			return err
 		}
@@ -517,7 +516,7 @@ func upgradeUserContract() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
+		e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
 		if err != nil {
 			return err
 		}
@@ -582,7 +581,7 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
+		e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
 		if err != nil {
 			return err
 		}

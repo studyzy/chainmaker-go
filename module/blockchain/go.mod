@@ -15,9 +15,9 @@ require (
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210924090707-3cfec86e5534
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210914062957-13e84972a921
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210926083506-73ff38ed01c0
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210914063622-6f007edc3a98
-	chainmaker.org/chainmaker/store/v2 v2.0.0-20210922083030-e886493a2be9
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210916064951-47123db73430
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210927062046-68813f263c0b
+	chainmaker.org/chainmaker/store/v2 v2.0.0-20210927063334-95fec89a7435
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210916084713-abd13154c26b
 	chainmaker.org/chainmaker/vm v0.0.0-20210918104424-239140ec3366
 	chainmaker.org/chainmaker/vm-evm v0.0.0-20210916091920-b915815eb88b
@@ -41,4 +41,5 @@ replace (
 	github.com/libp2p/go-libp2p => ../net/p2p/libp2p
 	github.com/libp2p/go-libp2p-core => ../net/p2p/libp2pcore
 	github.com/libp2p/go-libp2p-pubsub => ../net/p2p/libp2ppubsub
+	google.golang.org/grpc v1.40.0 => google.golang.org/grpc v1.26.0
 )
