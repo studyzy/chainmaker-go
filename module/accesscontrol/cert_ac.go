@@ -586,7 +586,7 @@ func (cp *certACProvider) GetMemberStatus(pbMember *pbac.Member) (pbac.MemberSta
 	member, err := cp.NewMember(pbMember)
 	if err != nil {
 		cp.acService.log.Infof("get member status error: %s", err.Error())
-		return pbac.MemberStatus_INVALID, nil
+		return pbac.MemberStatus_INVALID, err
 	}
 
 	var certChain []*bcx509.Certificate
@@ -595,11 +595,11 @@ func (cp *certACProvider) GetMemberStatus(pbMember *pbac.Member) (pbac.MemberSta
 	certChain = append(certChain, cert)
 	err = cp.checkCRL(certChain)
 	if err != nil && err.Error() == "certificate is revoked" {
-		return pbac.MemberStatus_REVOKED, nil
+		return pbac.MemberStatus_REVOKED, err
 	}
 	err = cp.checkCertFrozenList(certChain)
 	if err != nil && err.Error() == "certificate is frozen" {
-		return pbac.MemberStatus_FROZEN, nil
+		return pbac.MemberStatus_FROZEN, err
 	}
 	return pbac.MemberStatus_NORMAL, nil
 }
