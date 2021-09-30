@@ -10,6 +10,7 @@ require (
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210928111159-fae2e566afa1
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
 	github.com/gogo/protobuf v1.3.2
+	github.com/golang/mock v1.6.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/stretchr/testify v1.7.0
 )
