@@ -88,3 +88,12 @@ func createMultiSignAdmins(adminKeyFilePaths string, adminCrtFilePaths string) (
 
 	return adminKeys, adminCrts, nil
 }
+
+func createMultiSignAdminsForPK(adminKeyFilePaths string) ([]string, error) {
+	adminKeys := strings.Split(adminKeyFilePaths, ",")
+	if len(adminKeys) == 0 {
+		return nil, errors.New("no admin users given for sign payload")
+	}
+
+	return adminKeys, nil
+}

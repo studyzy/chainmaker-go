@@ -340,6 +340,10 @@ func (p *pkACProvider) createDefaultResourcePolicy(localOrgId string) {
 	p.exceptionalPolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGEMENT.String()+"-"+
 		syscontract.PubkeyManageFunction_PUBKEY_DELETE.String(), pubPolicyForbidden)
 
+	// disable trust root update for public mode
+	p.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), pubPolicyForbidden)
+
 	p.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
 		syscontract.ChainConfigFunction_CORE_UPDATE.String(), pubPolicyManage)
 	p.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
@@ -366,9 +370,6 @@ func (p *pkACProvider) createDefaultResourcePolicy(localOrgId string) {
 		syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(), pubPolicyMajorityAdmin)
 	p.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
 		syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String(), pubPolicyMajorityAdmin)
-	p.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-		syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), pubPolicyMajorityAdmin)
-
 }
 
 func (p *pkACProvider) verifyPrincipalPolicy(principal, refinedPrincipal protocol.Principal, pol *policy) (bool, error) {

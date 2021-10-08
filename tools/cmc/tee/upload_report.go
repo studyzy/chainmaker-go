@@ -14,7 +14,10 @@ import (
 	"os"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -38,16 +41,13 @@ func uploadReportCmd() *cobra.Command {
 	uploadReportCmd.MarkFlagRequired("report")
 	uploadReportCmd.MarkFlagRequired("sdk-conf-path")
 	uploadReportCmd.MarkFlagRequired("admin-key-file-paths")
-	uploadReportCmd.MarkFlagRequired("admin-crt-file-paths")
 
 	return uploadReportCmd
 }
 
 func cliUploadReport() error {
-	adminKeys, adminCrts, err := createMultiSignAdmins(adminKeyFilePaths, adminCrtFilePaths)
-	if err != nil {
-		return err
-	}
+	var adminKeys []string
+	var adminCrts []string
 
 	file, err := os.Open(reportFile)
 	if err != nil {
@@ -67,6 +67,18 @@ func cliUploadReport() error {
 	}
 	defer client.Stop()
 
+	if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+		adminKeys, adminCrts, err = createMultiSignAdmins(adminKeyFilePaths, adminCrtFilePaths)
+		if err != nil {
+			return err
+		}
+	} else {
+		adminKeys, err = createMultiSignAdminsForPK(adminKeyFilePaths)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = client.CheckNewBlockChainConfig()
 	if err != nil {
 		return fmt.Errorf("check new blockchains failed, %s", err.Error())
@@ -79,11 +91,21 @@ func cliUploadReport() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
-		if err != nil {
-			return err
+		if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+			e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
+			if err != nil {
+				return err
+			}
+
+			endorsementEntrys[i] = e
+		} else {
+			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
+			if err != nil {
+				return err
+			}
+
+			endorsementEntrys[i] = e
 		}
-		endorsementEntrys[i] = e
 	}
 
 	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, 5, false)
