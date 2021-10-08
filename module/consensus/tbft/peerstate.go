@@ -268,6 +268,7 @@ func (pcs *PeerStateService) sendProposal(proposal *Proposal) {
 	pcs.logger.Debugf("send proposal(%d/%x) to %s(%d/%d/%s)",
 		proposal.Block.Header.BlockHeight, proposal.Block.Header.BlockHash,
 		pcs.Id, pcs.Height, pcs.Round, pcs.Step)
+
 }
 
 func (pcs *PeerStateService) sendPrevote(prevote *Vote) {
