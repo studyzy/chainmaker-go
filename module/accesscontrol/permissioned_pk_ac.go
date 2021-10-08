@@ -9,6 +9,7 @@ package accesscontrol
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -72,6 +73,7 @@ func newPermissionedPkACProvider(chainConfig *config.ChainConfig, localOrgId str
 		consensusMember: &sync.Map{},
 		localOrg:        localOrgId,
 	}
+	chainConfig.AuthType = strings.ToLower(chainConfig.AuthType)
 	ppacProvider.acService = initAccessControlService(chainConfig.GetCrypto().Hash,
 		localOrgId, chainConfig.AuthType, chainConfig, store, log)
 
@@ -227,7 +229,6 @@ func (pp *permissionedPkACProvider) refineEndorsements(endorsements []*common.En
 
 	refinedSigners := map[string]bool{}
 	var refinedEndorsement []*common.EndorsementEntry
-	var memInfo string
 
 	for _, endorsementEntry := range endorsements {
 		endorsement := &common.EndorsementEntry{
@@ -238,6 +239,8 @@ func (pp *permissionedPkACProvider) refineEndorsements(endorsements []*common.En
 			},
 			Signature: endorsementEntry.Signature,
 		}
+
+		memInfo := string(endorsement.Signer.MemberInfo)
 
 		remoteMember, err := pp.NewMember(endorsement.Signer)
 		if err != nil {

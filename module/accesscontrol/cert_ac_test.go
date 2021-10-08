@@ -291,7 +291,7 @@ func testGetValidEndorsements(provider protocol.AccessControlProvider,
 	if err != nil {
 		return nil, err
 	}
-	return test1CertACProvider.(*certACProvider).GetValidEndorsements(principal)
+	return provider.(*certACProvider).GetValidEndorsements(principal)
 }
 
 func TestVerifyRelatedMaterial(t *testing.T) {

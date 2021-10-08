@@ -29,6 +29,7 @@ const (
 	testVersion      = "v1.0.0"
 	testCertAuthType = "permissionedWithCert"
 	testHashType     = "SM3"
+	testPKHashType   = "SHA256"
 
 	testOrg1 = "org1"
 	testOrg2 = "org2"

@@ -462,7 +462,6 @@ func (p *pkACProvider) refineEndorsements(endorsements []*common.EndorsementEntr
 
 	refinedSigners := map[string]bool{}
 	var refinedEndorsement []*common.EndorsementEntry
-	var memInfo string
 
 	for _, endorsementEntry := range endorsements {
 		endorsement := &common.EndorsementEntry{
@@ -473,13 +472,7 @@ func (p *pkACProvider) refineEndorsements(endorsements []*common.EndorsementEntr
 			},
 			Signature: endorsementEntry.Signature,
 		}
-		if endorsement.Signer.MemberType == pbac.MemberType_PUBLIC_KEY {
-			p.log.Debugf("target endorser uses public key in pkACProvider")
-			memInfo = string(endorsement.Signer.MemberInfo)
-		} else {
-			p.log.Errorf("member type error in pkACProvider")
-			continue
-		}
+		memInfo := string(endorsement.Signer.MemberInfo)
 
 		remoteMember, err := p.NewMember(endorsement.Signer)
 		if err != nil {

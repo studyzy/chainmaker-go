@@ -1,18 +1,14 @@
 package accesscontrol
 
 import (
-	"chainmaker.org/chainmaker/logger/v2"
-	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
-	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
-	"chainmaker.org/chainmaker/protocol/v2"
-	"chainmaker.org/chainmaker/protocol/v2/mock"
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"chainmaker.org/chainmaker/logger/v2"
+	"chainmaker.org/chainmaker/protocol/v2"
 
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"chainmaker.org/chainmaker/common/v2/helper"
@@ -427,7 +423,7 @@ var testPermissionedPKChainConfig = &config.ChainConfig{
 	AuthType: testPermissionedKeyAuthType,
 	Sequence: 0,
 	Crypto: &config.CryptoConfig{
-		Hash: testHashType,
+		Hash: testPKHashType,
 	},
 	Block: nil,
 	Core:  nil,
@@ -471,7 +467,7 @@ var testPermissionedPKChainConfig = &config.ChainConfig{
 
 func TestGetNodeIdFromPK(t *testing.T) {
 	var nodeId string
-	pk, err := asym.PublicKeyFromPEM([]byte(TestPK))
+	pk, err := asym.PublicKeyFromPEM([]byte(TestPK4))
 	require.Nil(t, err)
 	nodeId, err = helper.CreateLibp2pPeerIdWithPublicKey(pk)
 	require.Nil(t, err)
@@ -486,7 +482,6 @@ type testPKInfo struct {
 type testPkMemberInfo struct {
 	consensus *testPKInfo
 	admin     *testPKInfo
-	client    *testPKInfo
 }
 
 type testPkOrgMemberInfo struct {
@@ -499,7 +494,6 @@ type testPkOrgMember struct {
 	acProvider protocol.AccessControlProvider
 	consensus  protocol.SigningMember
 	admin      protocol.SigningMember
-	client     protocol.SigningMember
 }
 
 var testPKOrgMemberInfoMap = map[string]*testPkOrgMemberInfo{
@@ -507,7 +501,6 @@ var testPKOrgMemberInfoMap = map[string]*testPkOrgMemberInfo{
 		testPkMemberInfo: testPkMemberInfo{
 			consensus: testConsensus1PKInfo,
 			admin:     testAdmin1PKInfo,
-			client:    testClient1PKInfo,
 		},
 		orgId: testOrg1,
 	},
@@ -515,7 +508,6 @@ var testPKOrgMemberInfoMap = map[string]*testPkOrgMemberInfo{
 		testPkMemberInfo: testPkMemberInfo{
 			consensus: testConsensus2PKInfo,
 			admin:     testAdmin2PKInfo,
-			client:    testClient2PKInfo,
 		},
 		orgId: testOrg2,
 	},
@@ -523,7 +515,6 @@ var testPKOrgMemberInfoMap = map[string]*testPkOrgMemberInfo{
 		testPkMemberInfo: testPkMemberInfo{
 			consensus: testConsensus3PKInfo,
 			admin:     testAdmin3PKInfo,
-			client:    testClient3PKInfo,
 		},
 		orgId: testOrg3,
 	},
@@ -531,32 +522,9 @@ var testPKOrgMemberInfoMap = map[string]*testPkOrgMemberInfo{
 		testPkMemberInfo: testPkMemberInfo{
 			consensus: testConsensus4PKInfo,
 			admin:     testAdmin4PKInfo,
-			client:    testClient4PKInfo,
 		},
 		orgId: testOrg4,
 	},
-	testOrg5: {
-		testPkMemberInfo: testPkMemberInfo{
-			consensus: testClient1PKInfo,
-			admin:     testClient2PKInfo,
-			client:    testClient3PKInfo,
-		},
-		orgId: testOrg5,
-	},
-}
-
-var testSuccessfulStoreMock = "gggg"
-
-func getInitSuccessPkInfo(pkPEM string) []byte {
-	pk, _ := asym.PublicKeyFromPEM([]byte(pkPEM))
-	pkBytes, _ := pk.Bytes()
-	return pkBytes
-}
-
-var publickInfo = &pbac.PKInfo{
-	PkBytes: getInitSuccessPkInfo(TestPK9),
-	Role:    string(protocol.RoleClient),
-	OrgId:   testOrg1,
 }
 
 func initPKOrgMember(t *testing.T, info *testPkOrgMemberInfo) *testPkOrgMember {
@@ -564,17 +532,6 @@ func initPKOrgMember(t *testing.T, info *testPkOrgMemberInfo) *testPkOrgMember {
 	require.Nil(t, err)
 	defer cleanFunc()
 	logger := logger.GetLogger(logger.MODULE_ACCESS)
-
-	ctl := gomock.NewController(t)
-	store := mock.NewMockBlockchainStore(ctl)
-	store.EXPECT().ReadObject(syscontract.SystemContract_PUBKEY_MANAGEMENT.String(),
-		gomock.Any()).Return(nil, nil)
-
-	pkInfoBytes, err := proto.Marshal(publickInfo)
-	require.Nil(t, err)
-
-	store.EXPECT().ReadObject(syscontract.SystemContract_PUBKEY_MANAGEMENT.String(),
-		testSuccessfulStoreMock).Return(pkInfoBytes, nil)
 
 	ppkProvider, err := newPermissionedPkACProvider(testPermissionedPKChainConfig,
 		info.orgId, nil, logger)
@@ -595,18 +552,11 @@ func initPKOrgMember(t *testing.T, info *testPkOrgMemberInfo) *testPkOrgMember {
 	admin, err := InitPKSigningMember(ppkProvider, info.orgId, localPrivKeyFile, "")
 	require.Nil(t, err)
 
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(info.client.sk), os.ModePerm)
-	require.Nil(t, err)
-
-	client, err := InitPKSigningMember(ppkProvider, info.orgId, localPrivKeyFile, "")
-	require.Nil(t, err)
-
 	return &testPkOrgMember{
 		orgId:      info.orgId,
 		acProvider: ppkProvider,
 		consensus:  consensus,
 		admin:      admin,
-		client:     client,
 	}
 }
 
@@ -620,6 +570,6 @@ func testInitPermissionedPKFunc(t *testing.T) map[string]*testPkOrgMember {
 		testPkOrgMember[orgId] = initPKOrgMember(t, info)
 	}
 	test1PermissionedPKACProvider = testPkOrgMember[testOrg1].acProvider
-	test1PermissionedPKACProvider = testPkOrgMember[testOrg2].acProvider
+	test2PermissionedPKACProvider = testPkOrgMember[testOrg2].acProvider
 	return testPkOrgMember
 }
