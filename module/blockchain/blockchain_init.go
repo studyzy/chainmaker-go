@@ -157,8 +157,12 @@ func (bc *Blockchain) initStore() (err error) {
 	if err != nil {
 		return err
 	}
+	p11Handle, err := localconf.ChainMakerConfig.GetP11Handle()
+	if err != nil {
+		return err
+	}
 	if bc.store, err = storeFactory.NewStore(
-		bc.chainId, config, storeLogger); err != nil {
+		bc.chainId, config, storeLogger, p11Handle); err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}
