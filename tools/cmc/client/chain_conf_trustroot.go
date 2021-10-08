@@ -114,14 +114,8 @@ func updateTrustRootCMD() *cobra.Command {
 }
 
 func configTrustRoot(op int) error {
-	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return errAdminOrgIdKeyCertIsEmpty
-	}
-	if len(adminKeys) != len(adminCrts) {
-		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
-	}
+	var adminKeys []string
+	var adminCrts []string
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
 		userSignCrtFilePath, userSignKeyFilePath)
@@ -129,6 +123,22 @@ func configTrustRoot(op int) error {
 		return err
 	}
 	defer client.Stop()
+
+	if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+		adminCrts = strings.Split(adminCrtFilePaths, ",")
+		if len(adminKeys) == 0 || len(adminCrts) == 0 {
+			return errAdminOrgIdKeyCertIsEmpty
+		}
+		if len(adminKeys) != len(adminCrts) {
+			return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
+		}
+	} else {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+		if len(adminKeys) == 0 {
+			return errAdminOrgIdKeyCertIsEmpty
+		}
+	}
 
 	var trustRootBytes []string
 	if op == addTrustRoot || op == updateTrustRoot {
