@@ -318,7 +318,7 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 		newBlock.Header = block.Header
 		newBlock.Dag = block.Dag
 		newTxs := make([]*commonpb.Transaction, len(block.Txs))
-		for i, _ := range block.Txs {
+		for i := range block.Txs {
 			newPayload := &commonpb.Payload{
 				TxId: block.Txs[i].Payload.TxId,
 			}
