@@ -24,7 +24,7 @@ block:
   block_tx_capacity: 100  # 区块中最大交易数
   block_size: 10  # 区块最大限制，单位MB
   block_interval: 2000 # 出块间隔，单位:ms
-  consensus_message_turbo: true # 共识报文加速
+  consensus_message_turbo: false # 共识报文加速
 
 # core模块
 core:
