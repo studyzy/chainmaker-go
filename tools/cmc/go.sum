@@ -33,6 +33,8 @@ chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20210929101911-2db663e08451 h1:N7zW
 chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20210929101911-2db663e08451/go.mod h1:kBlQGycCc4a0Pzhm00+lvHVpTvSk1060gpwL2Rvm0Rs=
 chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20210929113545-84ce78fc5eda h1:6A3imiRgqRULyAjpdWLWIPaiWZyrsES7Sri3nD+esKM=
 chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20210929113545-84ce78fc5eda/go.mod h1:kBlQGycCc4a0Pzhm00+lvHVpTvSk1060gpwL2Rvm0Rs=
+chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20210929120724-635604cb9c41 h1:YFwJZHO1Z8v4NeHSao9yBFifAHO8ZJUXk1M05Z3BTec=
+chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20210929120724-635604cb9c41/go.mod h1:kBlQGycCc4a0Pzhm00+lvHVpTvSk1060gpwL2Rvm0Rs=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=

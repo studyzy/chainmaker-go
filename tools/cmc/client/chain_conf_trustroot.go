@@ -14,7 +14,10 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
 	"github.com/spf13/cobra"
 )
@@ -55,7 +58,6 @@ func addTrustRootCMD() *cobra.Command {
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTrustRootOrgId)
 	cmd.MarkFlagRequired(flagTrustRootCrtPath)
@@ -80,7 +82,6 @@ func removeTrustRootCMD() *cobra.Command {
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTrustRootOrgId)
 	cmd.MarkFlagRequired(flagTrustRootCrtPath)
@@ -105,7 +106,6 @@ func updateTrustRootCMD() *cobra.Command {
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTrustRootOrgId)
 	cmd.MarkFlagRequired(flagTrustRootCrtPath)
@@ -162,12 +162,21 @@ func configTrustRoot(op int) error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
-		if err != nil {
-			return err
-		}
+		if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+			e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
+			if err != nil {
+				return err
+			}
 
-		endorsementEntrys[i] = e
+			endorsementEntrys[i] = e
+		} else {
+			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
+			if err != nil {
+				return err
+			}
+
+			endorsementEntrys[i] = e
+		}
 	}
 
 	resp, err := client.SendChainConfigUpdateRequest(payload, endorsementEntrys, -1, syncResult)

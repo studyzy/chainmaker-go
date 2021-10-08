@@ -13,7 +13,10 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
 	"github.com/spf13/cobra"
 )
@@ -54,7 +57,6 @@ func addConsensusNodeIdCMD() *cobra.Command {
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagNodeOrgId)
 	cmd.MarkFlagRequired(flagNodeId)
@@ -79,7 +81,6 @@ func removeConsensusNodeIdCMD() *cobra.Command {
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagNodeOrgId)
 	cmd.MarkFlagRequired(flagNodeId)
@@ -104,7 +105,6 @@ func updateConsensusNodeIdCMD() *cobra.Command {
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagNodeOrgId)
 	cmd.MarkFlagRequired(flagNodeIdOld)
@@ -114,14 +114,8 @@ func updateConsensusNodeIdCMD() *cobra.Command {
 }
 
 func configConsensusNodeId(op int) error {
-	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return errAdminOrgIdKeyCertIsEmpty
-	}
-	if len(adminKeys) != len(adminCrts) {
-		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
-	}
+	var adminKeys []string
+	var adminCrts []string
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
 		userSignCrtFilePath, userSignKeyFilePath)
@@ -129,6 +123,22 @@ func configConsensusNodeId(op int) error {
 		return err
 	}
 	defer client.Stop()
+
+	if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+		adminCrts = strings.Split(adminCrtFilePaths, ",")
+		if len(adminKeys) == 0 || len(adminCrts) == 0 {
+			return errAdminOrgIdKeyCertIsEmpty
+		}
+		if len(adminKeys) != len(adminCrts) {
+			return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
+		}
+	} else {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+		if len(adminKeys) == 0 {
+			return errAdminOrgIdKeyCertIsEmpty
+		}
+	}
 
 	var payload *common.Payload
 	switch op {
@@ -147,12 +157,21 @@ func configConsensusNodeId(op int) error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
-		if err != nil {
-			return err
-		}
+		if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+			e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
+			if err != nil {
+				return err
+			}
 
-		endorsementEntrys[i] = e
+			endorsementEntrys[i] = e
+		} else {
+			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
+			if err != nil {
+				return err
+			}
+
+			endorsementEntrys[i] = e
+		}
 	}
 
 	resp, err := client.SendChainConfigUpdateRequest(payload, endorsementEntrys, -1, syncResult)
