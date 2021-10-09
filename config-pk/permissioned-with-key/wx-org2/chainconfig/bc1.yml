@@ -42,12 +42,12 @@ consensus:
     - org_id: "wx-org2.chainmaker.org"
       node_id:
         - "QmboYJpeHZqvKPhmeUKQhydP2FKBzeqDARhZvRmbdGQt7p"
-      - org_id: "wx-org3.chainmaker.org"
-        node_id:
-          - "QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
-      - org_id: "wx-org4.chainmaker.org"
-        node_id:
-          - "QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
+    - org_id: "wx-org3.chainmaker.org"
+      node_id:
+        - "QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
+    - org_id: "wx-org4.chainmaker.org"
+      node_id:
+        - "QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
 
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa

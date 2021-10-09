@@ -11,12 +11,12 @@ require (
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
 	chainmaker.org/chainmaker-go/sync v0.0.0
 	chainmaker.org/chainmaker-go/txpool v0.0.0
-	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211008100315-b70ecfa0c08f
-	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210930065646-a343285bad02
+	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211009120403-b3d966aebddf
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211009071412-cec96328e5d6
+	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211009063450-f9db84192eea
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210930030143-34ee3cbd74b5
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210927062046-68813f263c0b
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211009063815-ca059c45bcf3
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211009064056-03cbf6096208
 	chainmaker.org/chainmaker/store/v2 v2.0.0-20211009022637-e5e1cba4871b
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210916084713-abd13154c26b
 	chainmaker.org/chainmaker/vm v0.0.0-20210918104424-239140ec3366

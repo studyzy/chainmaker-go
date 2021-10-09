@@ -139,7 +139,8 @@ func (p *pkACProvider) initAdminMembers(trustRootList []*config.TrustRootConfig)
 	)
 
 	if len(trustRootList) == 0 {
-		return fmt.Errorf("init admin member failed: trsut root can't be empty")
+		p.log.Debugf("no super administrator is configured")
+		return nil
 	}
 
 	var adminNum int32
