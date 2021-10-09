@@ -7,7 +7,7 @@
 
 log:
   system:
-    log_level_default: INFO
+    log_level_default: DEBUG
     log_levels:
       core: INFO
       net: INFO

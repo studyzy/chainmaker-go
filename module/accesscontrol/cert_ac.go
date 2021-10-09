@@ -91,6 +91,7 @@ func newCertACProvider(chainConfig *config.ChainConfig, localOrgId string,
 		return nil, err
 	}
 
+	chainConfig.AuthType = strings.ToLower(chainConfig.AuthType)
 	certACProvider.acService = initAccessControlService(chainConfig.GetCrypto().Hash, localOrgId,
 		chainConfig.AuthType, chainConfig, store, log)
 

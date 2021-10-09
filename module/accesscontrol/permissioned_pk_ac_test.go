@@ -20,6 +20,8 @@ import (
 var (
 	test1PermissionedPKACProvider protocol.AccessControlProvider
 	test2PermissionedPKACProvider protocol.AccessControlProvider
+	test1PublicPKACProvider       protocol.AccessControlProvider
+	test2PublicPKACProvider       protocol.AccessControlProvider
 )
 
 func TestParsePublicKey(t *testing.T) {

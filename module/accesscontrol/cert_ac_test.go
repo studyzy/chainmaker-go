@@ -141,7 +141,7 @@ func TestVerifySelfPrincipal(t *testing.T) {
 	require.NotNil(t, endorsement)
 	principal, err := test1CertACProvider.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig,
 		[]*common.EndorsementEntry{endorsement}, []byte(testMsg), testOrg1)
-	require.NotNil(t, err)
+	require.Nil(t, err)
 	ok, err := test1CertACProvider.VerifyPrincipal(principal)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
@@ -187,6 +187,55 @@ func TestVerifyMajorityPrincipal(t *testing.T) {
 	require.Equal(t, len(validEndorsements), 3)
 
 	//majority invalid
+
+	ok, err = testVerifyPrincipal(test1CertACProvider, protocol.ResourceNameUpdateConfig,
+		[]*common.EndorsementEntry{endorsement1, endorsement2})
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+
+	validEndorsements, err = testGetValidEndorsements(test1CertACProvider, protocol.ResourceNameUpdateConfig,
+		[]*common.EndorsementEntry{endorsement1, endorsement2})
+
+	require.Nil(t, err)
+	require.Equal(t, len(validEndorsements), 2)
+
+}
+
+func TestVerifyAllPrincipal(t *testing.T) {
+	orgMemberMap := testInitFunc(t)
+	//all
+	orgMemberInfo1 := orgMemberMap[testOrg1]
+	endorsement1, err := testCreateEndorsementEntry(orgMemberInfo1, protocol.RoleAdmin, testHashType, testMsg)
+	require.Nil(t, err)
+	require.NotNil(t, endorsement1)
+
+	orgMemberInfo2 := orgMemberMap[testOrg2]
+	endorsement2, err := testCreateEndorsementEntry(orgMemberInfo2, protocol.RoleAdmin, testHashType, testMsg)
+	require.Nil(t, err)
+	require.NotNil(t, endorsement2)
+
+	orgMemberInfo3 := orgMemberMap[testOrg3]
+	endorsement3, err := testCreateEndorsementEntry(orgMemberInfo3, protocol.RoleAdmin, testHashType, testMsg)
+	require.Nil(t, err)
+	require.NotNil(t, endorsement3)
+
+	orgMemberInfo4 := orgMemberMap[testOrg4]
+	endorsement4, err := testCreateEndorsementEntry(orgMemberInfo4, protocol.RoleAdmin, testHashType, testMsg)
+	require.Nil(t, err)
+	require.NotNil(t, endorsement4)
+
+	ok, err := testVerifyPrincipal(test1CertACProvider, protocol.ResourceNameAllTest,
+		[]*common.EndorsementEntry{endorsement1, endorsement2, endorsement3, endorsement4})
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+
+	validEndorsements, err := testGetValidEndorsements(test1CertACProvider, protocol.ResourceNameUpdateConfig,
+		[]*common.EndorsementEntry{endorsement1, endorsement2, endorsement3, endorsement4})
+
+	require.Nil(t, err)
+	require.Equal(t, len(validEndorsements), 4)
+
+	//all invalid
 
 	ok, err = testVerifyPrincipal(test1CertACProvider, protocol.ResourceNameUpdateConfig,
 		[]*common.EndorsementEntry{endorsement1, endorsement2})

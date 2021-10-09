@@ -573,3 +573,130 @@ func testInitPermissionedPKFunc(t *testing.T) map[string]*testPkOrgMember {
 	test2PermissionedPKACProvider = testPkOrgMember[testOrg2].acProvider
 	return testPkOrgMember
 }
+
+const (
+	testPublicAuthType                   = "public"
+	testPublicTrustRootOrgId             = "public"
+	DPoSErc20TotalKey                    = "erc20.total"
+	DPoSErc20OwnerKey                    = "erc20.owner"
+	DPosErc20DecimalsKey                 = "erc20.decimals"
+	DPosErc20AccountKey                  = "erc20.account:DPOS_STAKE"
+	DPosStakeMinSelfDelegation           = "stake.minSelfDelegation"
+	DposStakeEpochValidatorNum           = "stake.epochValidatorNum"
+	DPosStakeEpochBlockNum               = "stake.epochBlockNum"
+	DposStakeCompletionUnbondingEpochNum = "stake.completionUnbondingEpochNum"
+	DposStakeCandidate                   = "stake.candidate:"
+	DposStakeNodeId                      = "stake.nodeID:"
+)
+
+var testPublicPKChainConfig = &config.ChainConfig{
+	ChainId:  testChainId,
+	Version:  testVersion,
+	AuthType: testPublicAuthType,
+	Sequence: 0,
+	Crypto: &config.CryptoConfig{
+		Hash: testPKHashType,
+	},
+	Block: nil,
+	Core:  nil,
+	Consensus: &config.ConsensusConfig{
+		Type:  5,
+		Nodes: nil,
+		DposConfig: []*config.ConfigKeyValue{
+			{Key: DPoSErc20TotalKey, Value: "10000000"},
+			{Key: DPoSErc20OwnerKey, Value: "QmQXjPB4DS8fNxsbqWzozSfwRiBbDDZg3t5qTxeb7R8BV5"},
+			{Key: DPosErc20DecimalsKey, Value: "18"},
+			{Key: DPosErc20AccountKey, Value: "10000000"},
+			{Key: DPosStakeMinSelfDelegation, Value: "2500000"},
+			{Key: DposStakeEpochValidatorNum, Value: "4"},
+			{Key: DPosStakeEpochBlockNum, Value: "10"},
+			{Key: DposStakeCompletionUnbondingEpochNum, Value: "1"},
+			{Key: DposStakeCandidate + "QmQXjPB4DS8fNxsbqWzozSfwRiBbDDZg3t5qTxeb7R8BV5",
+				Value: "250000"},
+			{Key: DposStakeNodeId + "",
+				Value: "QmQXjPB4DS8fNxsbqWzozSfwRiBbDDZg3t5qTxeb7R8BV5"},
+			{Key: DposStakeNodeId + "",
+				Value: "QmRUuqP9WkNmHv2NR8P9RUyBKSdjHuz4uu79hjgM4rWri4"},
+			{Key: DposStakeNodeId + "",
+				Value: "Qmd8o58EHnsfBbDikRra4XNsCmArXjXLSdZdkYwDcdsUvQ"},
+			{Key: DposStakeNodeId + "",
+				Value: "QmQ8nYaAMm5DdMzf3GaY2NPkmGneqmRyaSJDNRaFwuoxwV"},
+		},
+	},
+	TrustRoots: []*config.TrustRootConfig{
+		{
+			OrgId: testPublicTrustRootOrgId,
+			Root:  []string{TestPK5, TestPK6, TestPK7, TestPK8},
+		},
+	},
+}
+
+var testPKMemberInfoMap = map[string]*testPkMemberInfo{
+	testOrg1: {
+		consensus: testConsensus1PKInfo,
+		admin:     testAdmin1PKInfo,
+	},
+	testOrg2: {
+		consensus: testConsensus2PKInfo,
+		admin:     testAdmin2PKInfo,
+	},
+	testOrg3: {
+		consensus: testConsensus3PKInfo,
+		admin:     testAdmin3PKInfo,
+	},
+	testOrg4: {
+		consensus: testConsensus4PKInfo,
+		admin:     testAdmin4PKInfo,
+	},
+}
+
+type testPkMember struct {
+	acProvider protocol.AccessControlProvider
+	consensus  protocol.SigningMember
+	admin      protocol.SigningMember
+}
+
+func initPKMember(t *testing.T, info *testPkMemberInfo) *testPkMember {
+	td, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+	logger := logger.GetLogger(logger.MODULE_ACCESS)
+
+	pkProvider, err := newPkACProvider(testPublicPKChainConfig, nil, logger)
+	require.Nil(t, err)
+	require.NotNil(t, pkProvider)
+
+	localPrivKeyFile := filepath.Join(td, "public.key")
+
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(info.consensus.sk), os.ModePerm)
+	require.Nil(t, err)
+
+	consensus, err := InitPKSigningMember(pkProvider, "", localPrivKeyFile, "")
+	require.Nil(t, err)
+
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(info.admin.sk), os.ModePerm)
+	require.Nil(t, err)
+
+	admin, err := InitPKSigningMember(pkProvider, "", localPrivKeyFile, "")
+	require.Nil(t, err)
+
+	return &testPkMember{
+		acProvider: pkProvider,
+		consensus:  consensus,
+		admin:      admin,
+	}
+}
+
+func testInitPublicPKFunc(t *testing.T) map[string]*testPkMember {
+	_, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+
+	var testPkMember = make(map[string]*testPkMember, len(testPKMemberInfoMap))
+	for orgId, info := range testPKMemberInfoMap {
+		testPkMember[orgId] = initPKMember(t, info)
+	}
+	test1PublicPKACProvider = testPkMember[testOrg1].acProvider
+	test2PublicPKACProvider = testPkMember[testOrg2].acProvider
+	return testPkMember
+}

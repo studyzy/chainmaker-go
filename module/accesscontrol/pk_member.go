@@ -183,7 +183,7 @@ func publicNewPkMemberFromAcs(member *pbac.Member, adminList, consensusList *syn
 
 	adminMember, ok := loadSyncMap(adminList, hex.EncodeToString(pkBytes))
 	if ok {
-		admin, _ := adminMember.(*adminMemberModel)
+		admin, _ := adminMember.(*publicAdminMemberModel)
 		return newPkMemberFromParam("", admin.pkBytes, protocol.RoleAdmin, hashType)
 	}
 
@@ -218,7 +218,6 @@ func newPkMemberFromParam(orgId string, pkBytes []byte, role protocol.Role, hash
 	}
 
 	pkMember.pk = pk
-	pkMember.id = hex.EncodeToString(pkBytes)
 	pkMember.role = role
 	ski, err := commonCert.ComputeSKI(hash, pk.ToStandardKey())
 
@@ -227,6 +226,7 @@ func newPkMemberFromParam(orgId string, pkBytes []byte, role protocol.Role, hash
 	}
 
 	pkMember.uid = hex.EncodeToString(ski)
+	pkMember.id = pkMember.uid
 
 	return &pkMember, nil
 }

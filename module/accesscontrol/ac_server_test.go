@@ -131,6 +131,6 @@ func TestVerifyPrincipalPolicy(t *testing.T) {
 	require.Nil(t, err)
 
 	ok, err := acServices.verifyPrincipalPolicy(principal, principal, policyRead)
-	require.Nil(t, err)
-	require.Equal(t, true, ok)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
 }
