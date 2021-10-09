@@ -76,6 +76,8 @@ storage:
     provider: leveldb
     leveldb_config:
       store_path: ../data/org1/blocks
+      write_buffer_size: 1024
+      block_write_buffer_size: 1024
   statedb_config:
     provider: leveldb
     leveldb_config:
