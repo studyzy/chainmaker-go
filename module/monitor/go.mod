@@ -8,9 +8,4 @@ require (
 	github.com/prometheus/client_golang v1.9.0
 )
 
-replace (
-
-	chainmaker.org/chainmaker-go/localconf => ../conf/localconf
-
-
-)
+replace chainmaker.org/chainmaker-go/localconf => ../conf/localconf
