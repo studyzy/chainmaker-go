@@ -43,6 +43,8 @@ var (
 	withRWSet      bool
 	txId           string
 
+	adminKeyFilePath  string
+	adminCrtFilePath  string
 	adminKeyFilePaths string
 	adminCrtFilePaths string
 
@@ -66,6 +68,9 @@ var (
 	delegator string
 	validator string
 	epochID   string
+
+	grantContractList  []string
+	revokeContractList []string
 
 	trustMemberOrgId    string
 	trustMemberInfoPath string
@@ -92,6 +97,8 @@ const (
 	flagRuntimeType            = "runtime-type"
 	flagChainId                = "chain-id"
 	flagSendTimes              = "send-times"
+	flagAdminKeyFilePath       = "admin-key-file-path"
+	flagAdminCrtFilePath       = "admin-crt-file-path"
 	flagAdminKeyFilePaths      = "admin-key-file-paths"
 	flagAdminCrtFilePaths      = "admin-crt-file-paths"
 	flagUserTlsKeyFilePath     = "user-tlskey-file-path"
@@ -117,6 +124,8 @@ const (
 	flagDelegator              = "delegator"
 	flagValidator              = "validator"
 	flagEpochID                = "epoch-id"
+	flagGrantContractList      = "grant-contract-list"
+	flagRevokeContractList     = "revoke-contract-list"
 )
 
 func ClientCMD() *cobra.Command {
@@ -171,6 +180,8 @@ func init() {
 	//    - 使用逗号','分割
 	//    - 列表中的key与crt需一一对应
 	//    - 如果只有一对，将采用单签模式；如果有多对，将采用多签模式，第一对用于发起多签请求，其余的用于多签投票
+	flags.StringVar(&adminKeyFilePath, flagAdminKeyFilePath, "", "specify admin key file")
+	flags.StringVar(&adminCrtFilePath, flagAdminCrtFilePath, "", "specify admin cert file")
 	flags.StringVar(&adminKeyFilePaths, flagAdminKeyFilePaths, "", "specify admin key file paths, use ',' to separate")
 	flags.StringVar(&adminCrtFilePaths, flagAdminCrtFilePaths, "", "specify admin cert file paths, use ',' to separate")
 
@@ -207,6 +218,8 @@ func init() {
 	flags.StringVar(&delegator, flagDelegator, "", "specify delegator address")
 	flags.StringVar(&validator, flagValidator, "", "specify validator address")
 	flags.StringVar(&epochID, flagEpochID, "", "specify epoch id")
+	flags.StringSliceVar(&grantContractList, flagGrantContractList, nil, "specify grant list")
+	flags.StringSliceVar(&revokeContractList, flagRevokeContractList, nil, "specify revoke list")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {
