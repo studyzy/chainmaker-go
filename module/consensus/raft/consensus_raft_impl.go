@@ -86,7 +86,6 @@ type ConsensusRaftImpl struct {
 	raftStorage   *etcdraft.MemoryStorage
 	wal           *wal.WAL
 	waldir        string
-	asyncWalSave  bool
 	snapdir       string
 	snapCount     uint64
 	snapshotter   *snap.Snapshotter
@@ -99,7 +98,6 @@ type ConsensusRaftImpl struct {
 	verifyResultC  chan *consensus.VerifyResult
 	blockInfoC     chan *common.BlockInfo
 	confChangeC    chan raftpb.ConfChange
-	walSaveC       chan etcdraft.Ready
 	blockVerifier  protocol.BlockVerifier
 	blockCommitter protocol.BlockCommitter
 }
@@ -135,7 +133,6 @@ func New(config ConsensusRaftImplConfig) (*ConsensusRaftImpl, error) {
 	if consensus.snapCount == 0 {
 		consensus.snapCount = defaultSnapCount
 	}
-	consensus.asyncWalSave = localconf.ChainMakerConfig.ConsensusConfig.RaftConfig.AsyncWalSave
 	consensus.waldir = path.Join(localconf.ChainMakerConfig.GetStorePath(), consensus.chainID, walDir)
 	consensus.snapdir = path.Join(localconf.ChainMakerConfig.GetStorePath(), consensus.chainID, snapDir)
 	consensus.idToNodeId = make(map[uint64]string)
@@ -144,11 +141,9 @@ func New(config ConsensusRaftImplConfig) (*ConsensusRaftImpl, error) {
 	consensus.verifyResultC = make(chan *consensuspb.VerifyResult, DefaultChanCap)
 	consensus.blockInfoC = make(chan *common.BlockInfo, DefaultChanCap)
 	consensus.confChangeC = make(chan raftpb.ConfChange, DefaultChanCap)
-	consensus.walSaveC = make(chan etcdraft.Ready, DefaultChanCap)
 	consensus.blockVerifier = config.BlockVerifier
 	consensus.blockCommitter = config.BlockCommitter
 
-	go consensus.AsyncWalSave()
 	consensus.logger.Infof("New ConsensusRaftImpl[%x]", consensus.Id)
 	return consensus, nil
 }
@@ -356,12 +351,8 @@ func (consensus *ConsensusRaftImpl) NodeReady(ready etcdraft.Ready) (exit bool) 
 	})
 
 	//异步WalSave
-	if consensus.asyncWalSave {
-		consensus.walSaveC <- ready
-	} else {
-		if err := consensus.wal.Save(ready.HardState, ready.Entries); err != nil {
-			consensus.logger.Panicf("[%x] save wal: %v, error: %v", consensus.Id, describeReady(ready), err)
-		}
+	if err := consensus.wal.Save(ready.HardState, ready.Entries); err != nil {
+		consensus.logger.Panicf("[%x] save wal: %v, error: %v", consensus.Id, describeReady(ready), err)
 	}
 
 	if !etcdraft.IsEmptySnap(ready.Snapshot) {
@@ -428,20 +419,6 @@ func (consensus *ConsensusRaftImpl) ProposeBlock(block *common.Block) {
 	if err := consensus.node.Propose(context.TODO(), data); err != nil {
 		consensus.logger.Panicf("[%x] propose error: %v", consensus.Id, err)
 	}
-}
-
-func (consensus *ConsensusRaftImpl) AsyncWalSave() {
-	for ready := range consensus.walSaveC {
-		if etcdraft.IsEmptyHardState(ready.HardState) && len(ready.Entries) == 0 {
-			continue
-		}
-
-		consensus.logger.Infof("[%x]Async save wal: %v", consensus.Id, describeReady(ready))
-		if err := consensus.wal.Save(ready.HardState, ready.Entries); err != nil {
-			consensus.logger.Panicf("[%x]Async save wal: %v, error: %v", consensus.Id, describeReady(ready), err)
-		}
-	}
-
 }
 
 func (consensus *ConsensusRaftImpl) entriesToApply(ents []raftpb.Entry) (nents []raftpb.Entry) {

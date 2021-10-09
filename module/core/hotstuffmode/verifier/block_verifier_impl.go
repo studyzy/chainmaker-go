@@ -134,8 +134,9 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		isSqlDb := v.chainConf.ChainConfig().Contract.EnableSqlSupport
 		notSolo := consensuspb.ConsensusType_SOLO != v.chainConf.ChainConfig().Consensus.Type
 		if notSolo || isSqlDb {
+			elapsed := utils.CurrentTimeMillisSeconds() - startTick
 			// the block has verified before
-			v.log.Infof("verify success repeat [%d](%x)", block.Header.BlockHeight, block.Header.BlockHash)
+			v.log.Infof("verify success repeat [%d](%x), total: %d", block.Header.BlockHeight, block.Header.BlockHash, elapsed)
 			isValid = true
 			if protocol.CONSENSUS_VERIFY == mode {
 				// consensus mode, publish verify result to message bus

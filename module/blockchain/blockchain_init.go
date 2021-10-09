@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strings"
 
+	"chainmaker.org/chainmaker/common/v2/container"
 	evm "chainmaker.org/chainmaker/vm-evm"
 	gasm "chainmaker.org/chainmaker/vm-gasm"
 	wasmer "chainmaker.org/chainmaker/vm-wasmer"
@@ -152,17 +153,30 @@ func (bc *Blockchain) initStore() (err error) {
 	}
 	var storeFactory store.Factory
 	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, bc.chainId)
+	err = container.Register(func() protocol.Logger { return storeLogger }, container.Name("store"))
+	if err != nil {
+		return err
+	}
 	config := &conf.StorageConfig{}
 	err = mapstructure.Decode(localconf.ChainMakerConfig.StorageConfig, config)
 	if err != nil {
 		return err
 	}
-	p11Handle, err := localconf.ChainMakerConfig.GetP11Handle()
+
+	//p11Handle, err := localconf.ChainMakerConfig.GetP11Handle()
+	err = container.Register(localconf.ChainMakerConfig.GetP11Handle)
 	if err != nil {
 		return err
 	}
-	if bc.store, err = storeFactory.NewStore(
-		bc.chainId, config, storeLogger, p11Handle); err != nil {
+
+	err = container.Register(storeFactory.NewStore,
+		container.Parameters(map[int]interface{}{0: bc.chainId, 1: config}),
+		container.DependsOn(map[int]string{2: "store"}))
+	if err != nil {
+		return err
+	}
+	err = container.Resolve(&bc.store)
+	if err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}

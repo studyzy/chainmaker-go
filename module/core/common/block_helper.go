@@ -640,6 +640,7 @@ type BlockCommitterImpl struct {
 	metricTxCounter       *prometheus.CounterVec   // metric transaction counter
 	metricBlockCommitTime *prometheus.HistogramVec // metric block commit time
 	storeHelper           conf.StoreHelper
+	blockInterval         int64
 }
 
 type BlockCommitterConfig struct {
@@ -806,12 +807,15 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 
 	chain.proposalCache.ClearProposedBlockAt(height)
 
-	elapsed := utils.CurrentTimeMillisSeconds() - startTick
+	curTime := utils.CurrentTimeMillisSeconds()
+	elapsed := curTime - startTick
+	interval := curTime - chain.blockInterval
+	chain.blockInterval = curTime
 	chain.log.Infof(
 		"commit block [%d](count:%d,hash:%x), "+
-			"time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,pubConEvent:%d,other:%d,total:%d)",
+			"time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,pubConEvent:%d,other:%d,total:%d,interval:%d)",
 		height, block.Header.TxCount, block.Header.BlockHash,
-		checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, pubEvent, otherLasts, elapsed)
+		checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, pubEvent, otherLasts, elapsed, interval)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		chain.metricBlockCommitTime.WithLabelValues(chain.chainId).Observe(float64(elapsed) / 1000)
 	}
