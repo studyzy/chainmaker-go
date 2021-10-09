@@ -15,10 +15,10 @@ require (
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210928092334-f8be4fb05660
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210928020228-3ab2986d5ecd
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210926113446-c38a67e6150e
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210929134110-f509c624980a
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210928111159-fae2e566afa1
 	chainmaker.org/chainmaker/store/v2 v2.0.0-20210927063334-95fec89a7435
-	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210916084713-abd13154c26b
+	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211009065223-b235f1fd94d3
 	chainmaker.org/chainmaker/vm v0.0.0-20210918104424-239140ec3366
 	chainmaker.org/chainmaker/vm-evm v0.0.0-20210916091920-b915815eb88b
 	chainmaker.org/chainmaker/vm-gasm v0.0.0-20210918095814-3f0ddfe29968
