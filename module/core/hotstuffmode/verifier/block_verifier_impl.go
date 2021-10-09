@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"sync"
+	"time"
 
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/core/common"
@@ -166,17 +167,24 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		}
 	}
 
-	txRWSetMap, contractEventMap, timeLasts, err := v.validateBlock(block)
+	startPoolTick := utils.CurrentTimeMillisSeconds()
+	newBlock, err := v.consensusMessageTurbo(block, mode)
+	if err != nil {
+		return err
+	}
+	lastPool := utils.CurrentTimeMillisSeconds() - startPoolTick
+
+	txRWSetMap, contractEventMap, timeLasts, err := v.validateBlock(newBlock)
 	if err != nil {
 		v.log.Warnf("verify failed [%d](%x),preBlockHash:%x, %s",
-			block.Header.BlockHeight, block.Header.BlockHash, block.Header.PreBlockHash, err.Error())
+			newBlock.Header.BlockHeight, newBlock.Header.BlockHash, newBlock.Header.PreBlockHash, err.Error())
 		if protocol.CONSENSUS_VERIFY == mode {
-			v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRWSetMap))
+			v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(newBlock, isValid, txRWSetMap))
 		}
 
 		// rollback sql
-		if sqlErr := v.storeHelper.RollBack(block, v.blockchainStore); sqlErr != nil {
-			v.log.Errorf("block [%d] rollback sql failed: %s", block.Header.BlockHeight, sqlErr)
+		if sqlErr := v.storeHelper.RollBack(newBlock, v.blockchainStore); sqlErr != nil {
+			v.log.Errorf("block [%d] rollback sql failed: %s", newBlock.Header.BlockHeight, sqlErr)
 		}
 		return err
 	}
@@ -184,34 +192,74 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	// sync mode, need to verify consensus vote signature
 	beginConsensCheck := utils.CurrentTimeMillisSeconds()
 	if protocol.SYNC_VERIFY == mode {
-		if err = v.verifyVoteSig(block); err != nil {
+		if err = v.verifyVoteSig(newBlock); err != nil {
 			v.log.Warnf("verify failed [%d](%x), votesig %s",
-				block.Header.BlockHeight, block.Header.BlockHash, err.Error())
+				newBlock.Header.BlockHeight, newBlock.Header.BlockHash, err.Error())
 			return err
 		}
 	}
 	consensusCheckUsed := utils.CurrentTimeMillisSeconds() - beginConsensCheck
 
 	// verify success, cache block and read write set
-	v.log.Debugf("set proposed block(%d,%x)", block.Header.BlockHeight, block.Header.BlockHash)
-	if err = v.proposalCache.SetProposedBlock(block, txRWSetMap, contractEventMap, false); err != nil {
+	v.log.Debugf("set proposed block(%d,%x)", newBlock.Header.BlockHeight, newBlock.Header.BlockHash)
+	if err = v.proposalCache.SetProposedBlock(newBlock, txRWSetMap, contractEventMap, false); err != nil {
 		return err
 	}
 
 	// mark transactions in block as pending status in txpool
-	v.txPool.AddTxsToPendingCache(block.Txs, block.Header.BlockHeight)
+	v.txPool.AddTxsToPendingCache(newBlock.Txs, newBlock.Header.BlockHeight)
 
 	isValid = true
 	if protocol.CONSENSUS_VERIFY == mode {
-		v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRWSetMap))
+		v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(newBlock, isValid, txRWSetMap))
 	}
 	elapsed := utils.CurrentTimeMillisSeconds() - startTick
-	v.log.Infof("verify success [%d,%x](%v,consensusCheckUsed: %d, total: %d)", block.Header.BlockHeight,
-		block.Header.BlockHash, timeLasts, consensusCheckUsed, elapsed)
+	v.log.Infof("verify success [%d,%x](%v,pool: %d,consensusCheckUsed: %d, total: %d)", newBlock.Header.BlockHeight,
+		newBlock.Header.BlockHash, timeLasts, lastPool, consensusCheckUsed, elapsed)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		v.metricBlockVerifyTime.WithLabelValues(v.chainId).Observe(float64(elapsed) / 1000)
 	}
 	return nil
+}
+
+func (v *BlockVerifierImpl) consensusMessageTurbo(
+	block *commonpb.Block, mode protocol.VerifyMode) (*commonpb.Block, error) {
+
+	if v.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo && protocol.SYNC_VERIFY != mode {
+		newBlock := &commonpb.Block{
+			Header:         block.Header,
+			Dag:            block.Dag,
+			Txs:            make([]*commonpb.Transaction, len(block.Txs)),
+			AdditionalData: block.AdditionalData,
+		}
+
+		txIds := utils.GetTxIds(block.Txs)
+		txsMap := make(map[string]*commonpb.Transaction)
+		maxRetryTime := v.chainConf.ChainConfig().Core.ConsensusTurboConfig.RetryTime
+		retryInterval := v.chainConf.ChainConfig().Core.ConsensusTurboConfig.RetryInterval
+		for i := uint64(0); i < maxRetryTime; i++ {
+			txsMap, _ = v.txPool.GetTxsByTxIds(txIds)
+			if len(txsMap) == len(block.Txs) {
+				break
+			}
+			v.log.Debugf("txs map is not map with tx count,height[%d],map[%d],txcount[%d],retry[%d]",
+				block.Header.BlockHeight, len(txsMap), block.Header.TxCount, i+1)
+			if i+1 == maxRetryTime {
+				v.log.Debugf("get txs by branchId fail,height[%d],map[%d],txcount[%d]",
+					block.Header.BlockHeight, len(txsMap), block.Header.TxCount)
+				return nil, fmt.Errorf("block[%d] verify time out error", block.Header.BlockHeight)
+			}
+			time.Sleep(time.Millisecond * time.Duration(retryInterval))
+		}
+
+		for i, tx := range block.Txs {
+			newBlock.Txs[i] = txsMap[tx.Payload.TxId]
+			newBlock.Txs[i].Result = block.Txs[i].Result
+		}
+		return newBlock, nil
+	}
+
+	return block, nil
 }
 
 func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*commonpb.TxRWSet,

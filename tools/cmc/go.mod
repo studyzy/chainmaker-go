@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211008100315-b70ecfa0c08f
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210930030143-34ee3cbd74b5
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211009072509-e7d0967e05e8
 	chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20210928063007-18594e6fd4ca
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/ethereum/go-ethereum v1.10.4

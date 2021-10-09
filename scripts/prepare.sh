@@ -23,8 +23,8 @@ CRYPTOGEN_TOOL_PATH=${PROJECT_PATH}/tools/chainmaker-cryptogen
 CRYPTOGEN_TOOL_BIN=${CRYPTOGEN_TOOL_PATH}/bin/chainmaker-cryptogen
 CRYPTOGEN_TOOL_CONF=${CRYPTOGEN_TOOL_PATH}/config/crypto_config_template.yml
 
-BC_YML_TRUST_ROOT_LINE=122
-BC_YML_TRUST_ROOT_LINE_END=142
+BC_YML_TRUST_ROOT_LINE=126
+BC_YML_TRUST_ROOT_LINE_END=146
 
 function show_help() {
     echo "Usage:  "
