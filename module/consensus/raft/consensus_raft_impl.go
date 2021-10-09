@@ -99,7 +99,7 @@ type ConsensusRaftImpl struct {
 	verifyResultC  chan *consensus.VerifyResult
 	blockInfoC     chan *common.BlockInfo
 	confChangeC    chan raftpb.ConfChange
-	walSaveC       chan etcdraft.Ready
+	walSaveC       chan interface{}
 	blockVerifier  protocol.BlockVerifier
 	blockCommitter protocol.BlockCommitter
 }
@@ -144,7 +144,7 @@ func New(config ConsensusRaftImplConfig) (*ConsensusRaftImpl, error) {
 	consensus.verifyResultC = make(chan *consensuspb.VerifyResult, DefaultChanCap)
 	consensus.blockInfoC = make(chan *common.BlockInfo, DefaultChanCap)
 	consensus.confChangeC = make(chan raftpb.ConfChange, DefaultChanCap)
-	consensus.walSaveC = make(chan etcdraft.Ready, DefaultChanCap)
+	consensus.walSaveC = make(chan interface{}, DefaultChanCap)
 	consensus.blockVerifier = config.BlockVerifier
 	consensus.blockCommitter = config.BlockCommitter
 
@@ -359,19 +359,7 @@ func (consensus *ConsensusRaftImpl) NodeReady(ready etcdraft.Ready) (exit bool) 
 	if consensus.asyncWalSave {
 		consensus.walSaveC <- ready
 	} else {
-		if err := consensus.wal.Save(ready.HardState, ready.Entries); err != nil {
-			consensus.logger.Panicf("[%x] save wal: %v, error: %v", consensus.Id, describeReady(ready), err)
-		}
-	}
-
-	if !etcdraft.IsEmptySnap(ready.Snapshot) {
-		if err := consensus.saveSnap(ready.Snapshot); err != nil {
-			consensus.logger.Panicf("[%x] save snap error: %v", consensus.Id, err)
-		}
-		if err := consensus.raftStorage.ApplySnapshot(ready.Snapshot); err != nil {
-			consensus.logger.Panicf("[%x] apply snapshot error: %v", consensus.Id, err)
-		}
-		consensus.publishSnapshot(ready.Snapshot)
+		consensus.processWalAndSnap(ready)
 	}
 
 	if err := consensus.raftStorage.Append(ready.Entries); err != nil {
@@ -380,11 +368,19 @@ func (consensus *ConsensusRaftImpl) NodeReady(ready etcdraft.Ready) (exit bool) 
 	consensus.sendMessages(ready.Messages)
 	ok, configChanged := consensus.publishEntries(consensus.entriesToApply(ready.CommittedEntries))
 	if !ok {
-		consensus.maybeTriggerSnapshot(configChanged)
-		consensus.logger.Infof("[%x] is deleted from consensus nodes", consensus.Id)
+		if consensus.asyncWalSave {
+			consensus.walSaveC <- configChanged
+		} else {
+			consensus.maybeTriggerSnapshot(configChanged)
+			consensus.logger.Infof("[%x] is deleted from consensus nodes", consensus.Id)
+		}
 		return true
 	}
-	consensus.maybeTriggerSnapshot(configChanged)
+	if consensus.asyncWalSave {
+		consensus.walSaveC <- configChanged
+	} else {
+		consensus.maybeTriggerSnapshot(configChanged)
+	}
 	if ready.SoftState != nil {
 		consensus.isLeader = atomic.LoadUint64(&ready.SoftState.Lead) == consensus.Id
 	}
@@ -430,18 +426,34 @@ func (consensus *ConsensusRaftImpl) ProposeBlock(block *common.Block) {
 	}
 }
 
-func (consensus *ConsensusRaftImpl) AsyncWalSave() {
-	for ready := range consensus.walSaveC {
-		if etcdraft.IsEmptyHardState(ready.HardState) && len(ready.Entries) == 0 {
-			continue
-		}
-
-		consensus.logger.Infof("[%x]Async save wal: %v", consensus.Id, describeReady(ready))
+func (consensus *ConsensusRaftImpl) processWalAndSnap(ready etcdraft.Ready) {
+	if !etcdraft.IsEmptyHardState(ready.HardState) || len(ready.Entries) != 0 {
+		consensus.logger.Infof("[%x]Save wal: %v", consensus.Id, describeReady(ready))
 		if err := consensus.wal.Save(ready.HardState, ready.Entries); err != nil {
-			consensus.logger.Panicf("[%x]Async save wal: %v, error: %v", consensus.Id, describeReady(ready), err)
+			consensus.logger.Panicf("[%x] save wal: %v, error: %v", consensus.Id, describeReady(ready), err)
 		}
 	}
+	if !etcdraft.IsEmptySnap(ready.Snapshot) {
+		if err := consensus.saveSnap(ready.Snapshot); err != nil {
+			consensus.logger.Panicf("[%x] save snap error: %v", consensus.Id, err)
+		}
+		if err := consensus.raftStorage.ApplySnapshot(ready.Snapshot); err != nil {
+			consensus.logger.Panicf("[%x] apply snapshot error: %v", consensus.Id, err)
+		}
+		consensus.publishSnapshot(ready.Snapshot)
+	}
+}
 
+func (consensus *ConsensusRaftImpl) AsyncWalSave() {
+	for item := range consensus.walSaveC {
+		if ready, ok := item.(etcdraft.Ready); ok {
+			consensus.processWalAndSnap(ready)
+		} else if configChanged, ok := item.(bool); ok {
+			consensus.maybeTriggerSnapshot(configChanged)
+		} else {
+			consensus.logger.Panicf("[%x] AsyncWalSave got an invalid item: %v", item)
+		}
+	}
 }
 
 func (consensus *ConsensusRaftImpl) entriesToApply(ents []raftpb.Entry) (nents []raftpb.Entry) {
@@ -564,14 +576,14 @@ func (consensus *ConsensusRaftImpl) maybeTriggerSnapshot(configChanged bool) {
 
 	consensus.logger.Infof("trigger snapshot appliedIndex: %v, data: %v, snapshotIndex: %v",
 		consensus.appliedIndex, string(data), consensus.snapshotIndex)
-	consensus.snapshotIndex = consensus.appliedIndex
+	//consensus.snapshotIndex = consensus.appliedIndex
+	consensus.snapshotIndex = snap.Metadata.Index
 
-	if consensus.appliedIndex < snapshotCatchUpEntriesN+1 {
+	if consensus.snapshotIndex < snapshotCatchUpEntriesN+1 {
 		return
 	}
 
-	compactIndex := consensus.appliedIndex - snapshotCatchUpEntriesN
-
+	compactIndex := consensus.snapshotIndex - snapshotCatchUpEntriesN
 	first, _ := consensus.raftStorage.FirstIndex()
 	if compactIndex <= first {
 		return
