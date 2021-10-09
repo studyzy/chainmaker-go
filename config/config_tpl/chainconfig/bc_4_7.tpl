@@ -24,12 +24,15 @@ block:
   block_tx_capacity: 100  # 区块中最大交易数
   block_size: 10  # 区块最大限制，单位MB
   block_interval: 2000 # 出块间隔，单位:ms
-  consensus_message_turbo: false # 共识报文加速
 
 # core模块
 core:
   tx_scheduler_timeout: 10 #  [0, 60] 交易调度器从交易池拿到交易后, 进行调度的时间
   tx_scheduler_validate_timeout: 10 # [0, 60] 交易调度器从区块中拿到交易后, 进行验证的超时时间
+  consensus_turbo_config:
+    consensus_message_turbo: true # 是否开启共识报文压缩
+    retry_time: 50 # 根据交易ID列表从交易池获取交易的重试次数
+    retry_interval: 20 # 重试间隔，单位:ms
 
 # snapshot module
 snapshot:

@@ -168,6 +168,9 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 
 	startPoolTick := utils.CurrentTimeMillisSeconds()
 	newBlock, err := v.consensusMessageTurbo(block, mode)
+	if err != nil {
+		return err
+	}
 	lastPool := utils.CurrentTimeMillisSeconds() - startPoolTick
 
 	txRWSetMap, contractEventMap, timeLasts, err := v.validateBlock(newBlock)
@@ -221,7 +224,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 func (v *BlockVerifierImpl) consensusMessageTurbo(
 	block *commonpb.Block, mode protocol.VerifyMode) (*commonpb.Block, error) {
 
-	if v.chainConf.ChainConfig().Block.ConsensusMessageTurbo && protocol.SYNC_VERIFY != mode {
+	if v.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo && protocol.SYNC_VERIFY != mode {
 		newBlock := &commonpb.Block{
 			Header:         block.Header,
 			Dag:            block.Dag,
@@ -231,8 +234,9 @@ func (v *BlockVerifierImpl) consensusMessageTurbo(
 
 		txIds := utils.GetTxIds(block.Txs)
 		txsMap := make(map[string]*commonpb.Transaction)
-		maxRetryTime := 500
-		for i := 0; i < maxRetryTime; i++ {
+		maxRetryTime := v.chainConf.ChainConfig().Core.ConsensusTurboConfig.RetryTime
+		retryInterval := v.chainConf.ChainConfig().Core.ConsensusTurboConfig.RetryInterval
+		for i := uint64(0); i < maxRetryTime; i++ {
 			txsMap, _ = v.txPool.GetTxsByTxIds(txIds)
 			if len(txsMap) == len(block.Txs) {
 				break
@@ -244,7 +248,7 @@ func (v *BlockVerifierImpl) consensusMessageTurbo(
 					block.Header.BlockHeight, len(txsMap), block.Header.TxCount)
 				return nil, fmt.Errorf("block[%d] verify time out error", block.Header.BlockHeight)
 			}
-			time.Sleep(time.Millisecond * 20)
+			time.Sleep(time.Millisecond * time.Duration(retryInterval))
 		}
 
 		for i, tx := range block.Txs {
