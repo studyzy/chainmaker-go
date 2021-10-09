@@ -41,6 +41,10 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+const (
+	PREFIX_dpos_stake_nodeId string = "stake.nodeID"
+)
+
 // Init all the modules.
 func (bc *Blockchain) Init() (err error) {
 	baseModules := []map[string]func() error{
@@ -438,14 +442,27 @@ func (bc *Blockchain) initConsensus() (err error) {
 	// init consensus module
 	var consensusFactory consensus.Factory
 	id := localconf.ChainMakerConfig.NodeConfig.NodeId
-	nodes := bc.chainConf.ChainConfig().Consensus.Nodes
-	nodeIds := make([]string, len(nodes))
+	var nodeIds []string
 	isConsensusNode := false
-	for i, node := range nodes {
-		for _, nid := range node.NodeId {
-			nodeIds[i] = nid
-			if nid == id {
-				isConsensusNode = true
+	if bc.getConsensusType() == consensusPb.ConsensusType_DPOS {
+		dposConfigs := bc.chainConf.ChainConfig().Consensus.DposConfig
+		for _, dposConfig := range dposConfigs {
+			if strings.HasPrefix(dposConfig.Key, PREFIX_dpos_stake_nodeId) {
+				nodeIds = append(nodeIds, string(dposConfig.Value))
+				if string(dposConfig.Value) == id {
+					isConsensusNode = true
+				}
+			}
+		}
+	} else {
+		nodes := bc.chainConf.ChainConfig().Consensus.Nodes
+		nodeIds = make([]string, len(nodes))
+		for i, node := range nodes {
+			for _, nid := range node.NodeId {
+				nodeIds[i] = nid
+				if nid == id {
+					isConsensusNode = true
+				}
 			}
 		}
 	}
