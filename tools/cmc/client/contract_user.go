@@ -31,6 +31,8 @@ const CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT = "checkProposalRequestResp failed, 
 const SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT = "SendContractManageRequest failed, %s"
 const ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT = "admin orgId & key & cert list length not equal, " +
 	"[keys len: %d]/[certs len:%d]"
+const ADMIN_ORGID_KEY_LENGTH_NOT_EQUAL_FORMAT = "admin orgId & key list length not equal, " +
+	"[keys len: %d]/[org-ids len:%d]"
 
 var (
 	errAdminOrgIdKeyCertIsEmpty = errors.New("admin orgId or key or cert list is empty")

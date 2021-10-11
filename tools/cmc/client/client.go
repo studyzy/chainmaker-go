@@ -45,6 +45,7 @@ var (
 
 	adminKeyFilePaths string
 	adminCrtFilePaths string
+	adminOrgIds       string
 
 	userTlsKeyFilePath  string
 	userTlsCrtFilePath  string
@@ -94,6 +95,7 @@ const (
 	flagSendTimes              = "send-times"
 	flagAdminKeyFilePaths      = "admin-key-file-paths"
 	flagAdminCrtFilePaths      = "admin-crt-file-paths"
+	flagAdminOrgIds            = "admin-org-ids"
 	flagUserTlsKeyFilePath     = "user-tlskey-file-path"
 	flagUserTlsCrtFilePath     = "user-tlscrt-file-path"
 	flagUserSignKeyFilePath    = "user-signkey-file-path"
@@ -173,6 +175,7 @@ func init() {
 	//    - 如果只有一对，将采用单签模式；如果有多对，将采用多签模式，第一对用于发起多签请求，其余的用于多签投票
 	flags.StringVar(&adminKeyFilePaths, flagAdminKeyFilePaths, "", "specify admin key file paths, use ',' to separate")
 	flags.StringVar(&adminCrtFilePaths, flagAdminCrtFilePaths, "", "specify admin cert file paths, use ',' to separate")
+	flags.StringVar(&adminOrgIds, flagAdminOrgIds, "", "specify admin org-ids, use ',' to separate")
 
 	flags.StringVar(&userTlsKeyFilePath, flagUserTlsKeyFilePath, "", "specify user tls key file path for "+
 		"chainclient tls connection")

@@ -43,7 +43,7 @@ func updateBlockIntervalCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagChainId,
-		flagSdkConfPath, flagOrgId, flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagBlockInterval,
+		flagSdkConfPath, flagOrgId, flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagAdminOrgIds, flagBlockInterval,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -56,6 +56,7 @@ func updateBlockIntervalCMD() *cobra.Command {
 func updateBlockInterval() error {
 	var adminKeys []string
 	var adminCrts []string
+	var adminOrgs []string
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
 		userSignCrtFilePath, userSignKeyFilePath)
@@ -72,6 +73,15 @@ func updateBlockInterval() error {
 		}
 		if len(adminKeys) != len(adminCrts) {
 			return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
+		}
+	} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+		adminOrgs = strings.Split(adminOrgIds, ",")
+		if len(adminKeys) == 0 || len(adminOrgs) == 0 {
+			return errAdminOrgIdKeyCertIsEmpty
+		}
+		if len(adminKeys) != len(adminOrgs) {
+			return fmt.Errorf(ADMIN_ORGID_KEY_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminOrgs))
 		}
 	} else {
 		adminKeys = strings.Split(adminKeyFilePaths, ",")
@@ -103,8 +113,15 @@ func updateBlockInterval() error {
 			}
 
 			endorsementEntrys[i] = e
+		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
+			if err != nil {
+				return err
+			}
+
+			endorsementEntrys[i] = e
 		} else {
-			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
+			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], "", payload)
 			if err != nil {
 				return err
 			}
