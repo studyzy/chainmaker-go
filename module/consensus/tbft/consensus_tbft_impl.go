@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker/chainconf/v2"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/helper"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/common/v2/wal"
 	"chainmaker.org/chainmaker/localconf/v2"
@@ -550,9 +552,11 @@ func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb
 		return
 	}
 
-	if err := consensus.dpos.VerifyConsensusArgs(verifyResult.VerifiedBlock, verifyResult.TxsRwSet); err != nil {
-		consensus.logger.Warnf("verify block DPoS consensus failed, reason: %s", err)
-		return
+	if consensus.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_DPOS {
+		if err := consensus.dpos.VerifyConsensusArgs(verifyResult.VerifiedBlock, verifyResult.TxsRwSet); err != nil {
+			consensus.logger.Warnf("verify block DPoS consensus failed, reason: %s", err)
+			return
+		}
 	}
 
 	consensus.Proposal = consensus.VerifingProposal
@@ -1415,6 +1419,22 @@ func (consensus *ConsensusTBFTImpl) verifyVote(voteProto *tbftpb.Vote) error {
 		return fmt.Errorf("verifyVote failed, unmatch uid: %v with vote: %v", uid, voteProto.Voter)
 	}
 
+	return nil
+}
+
+func publicKeyValidateVoter(vote *tbftpb.Vote) error {
+	signer := vote.Endorsement.Signer
+	pk, err := asym.PublicKeyFromPEM(signer.MemberInfo)
+	if err != nil {
+		return fmt.Errorf("get pk failed from signer, reason: %s", err)
+	}
+	uid, err := helper.CreateLibp2pPeerIdWithPublicKey(pk)
+	if err != nil {
+		return fmt.Errorf("createLibp2pId with pubkey failed, reason: %s", err)
+	}
+	if uid != vote.Voter {
+		return fmt.Errorf("verifyVote failed, unmatch uid: %v with vote: %v", uid, vote.Voter)
+	}
 	return nil
 }
 
