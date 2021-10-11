@@ -447,11 +447,12 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(proposedBlock *consensus
 	}
 
 	// add DPoS consensus args in block
-	err := consensus.dpos.CreateDPoSRWSet(block.Header.PreBlockHash, proposedBlock)
-	if err != nil {
-		consensus.logger.Errorf("[%s](%d/%d/%s) Create DPoS RWSets failed, reason: %s",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
-		return
+	if consensus.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_DPOS {
+		if err := consensus.dpos.CreateDPoSRWSet(block.Header.PreBlockHash, proposedBlock); err != nil {
+			consensus.logger.Errorf("[%s](%d/%d/%s) Create DPoS RWSets failed, reason: %s",
+				consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
+			return
+		}
 	}
 
 	// Add hash and signature to block
@@ -549,9 +550,11 @@ func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb
 		return
 	}
 
-	if err := consensus.dpos.VerifyConsensusArgs(verifyResult.VerifiedBlock, verifyResult.TxsRwSet); err != nil {
-		consensus.logger.Warnf("verify block DPoS consensus failed, reason: %s", err)
-		return
+	if consensus.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_DPOS {
+		if err := consensus.dpos.VerifyConsensusArgs(verifyResult.VerifiedBlock, verifyResult.TxsRwSet); err != nil {
+			consensus.logger.Warnf("verify block DPoS consensus failed, reason: %s", err)
+			return
+		}
 	}
 
 	consensus.Proposal = consensus.VerifingProposal
