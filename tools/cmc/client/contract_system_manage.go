@@ -1,12 +1,13 @@
 package client
 
 import (
+	"fmt"
+	"strings"
+
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
-	"fmt"
 	"github.com/spf13/cobra"
-	"strings"
 )
 
 func systemContractManageCMD() *cobra.Command {
@@ -25,7 +26,7 @@ func systemContractManageCMD() *cobra.Command {
 
 func contractAccessGrantCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "accessGrant",
+		Use:   "access-grant",
 		Short: "contract access grant",
 		Long:  "contract access grant",
 		RunE: func(_ *cobra.Command, _ []string) error {
@@ -36,7 +37,8 @@ func contractAccessGrantCMD() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagConcurrency, flagTotalCountPerGoroutine, flagSdkConfPath, flagOrgId, flagChainId,
-		flagParams, flagTimeout, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagEnableCertHash, flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagGrantContractList,
+		flagParams, flagTimeout, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagEnableCertHash,
+		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagGrantContractList,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -49,7 +51,7 @@ func contractAccessGrantCMD() *cobra.Command {
 
 func contractAccessRevokeCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "accessRevoke",
+		Use:   "access-revoke",
 		Short: "contract access revoke",
 		Long:  "contract access revoke",
 		RunE: func(_ *cobra.Command, _ []string) error {
@@ -60,7 +62,8 @@ func contractAccessRevokeCMD() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagConcurrency, flagTotalCountPerGoroutine, flagSdkConfPath, flagOrgId, flagChainId,
-		flagParams, flagTimeout, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagEnableCertHash, flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagRevokeContractList,
+		flagParams, flagTimeout, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagEnableCertHash,
+		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagRevokeContractList,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -73,7 +76,7 @@ func contractAccessRevokeCMD() *cobra.Command {
 
 func contractAccessQueryCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "accessQuery",
+		Use:   "access-query",
 		Short: "contract access query",
 		Long:  "contract access query",
 		RunE: func(_ *cobra.Command, _ []string) error {
@@ -116,10 +119,10 @@ func grantOrRevokeContractAccess(which int) error {
 	switch which {
 	case 1:
 		payload, err = client.CreateNativeContractAccessGrantPayload(grantContractList)
-		whichOperation = "grant"
+		whichOperation = "access grant"
 	case 2:
 		payload, err = client.CreateNativeContractAccessRevokePayload(revokeContractList)
-		whichOperation = "revoke"
+		whichOperation = "access revoke"
 	default:
 		err = fmt.Errorf("wrong which param")
 	}
@@ -161,6 +164,9 @@ func queryContractAccess() error {
 	defer client.Stop()
 	var payload *common.Payload
 	payload, err = client.CreateGetDisabledNativeContractListPayload()
+	if err != nil {
+		return fmt.Errorf("create GetDisabledNativeContractListPayload error,%s", err.Error())
+	}
 	resp, err := client.SendContractManageRequest(payload, nil, timeout, syncResult)
 	if err != nil {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())

@@ -1,18 +1,18 @@
 package client
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
-	"encoding/json"
-	"fmt"
 	"github.com/spf13/cobra"
-	"io/ioutil"
 )
 
 var (
 	payload *common.Payload
-	pairs1  []*common.KeyValuePair
 )
 
 type ParamMultiSign struct {
@@ -23,7 +23,7 @@ type ParamMultiSign struct {
 
 func systemContractMultiSignCMD() *cobra.Command {
 	systemContractMultiSignCmd := &cobra.Command{
-		Use:   "multisign",
+		Use:   "multi-sign",
 		Short: "system contract multi sign command",
 		Long:  "system contract multi sign command",
 	}
@@ -37,7 +37,7 @@ func systemContractMultiSignCMD() *cobra.Command {
 
 func multiSignReqCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "multisignreq",
+		Use:   "multi-sign-req",
 		Short: "multi sign req",
 		Long:  "multi sign req",
 		RunE: func(_ *cobra.Command, _ []string) error {
@@ -59,7 +59,7 @@ func multiSignReqCMD() *cobra.Command {
 
 func multiSignVoteCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "multisignvote",
+		Use:   "multi-sign-vote",
 		Short: "multi sign vote",
 		Long:  "multi sign vote",
 		RunE: func(_ *cobra.Command, _ []string) error {
@@ -70,7 +70,8 @@ func multiSignVoteCMD() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagConcurrency, flagTotalCountPerGoroutine, flagSdkConfPath, flagOrgId, flagChainId, flagTxId,
-		flagTimeout, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagEnableCertHash, flagAdminCrtFilePath, flagAdminKeyFilePath,
+		flagTimeout, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagEnableCertHash,
+		flagAdminCrtFilePath, flagAdminKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -83,7 +84,7 @@ func multiSignVoteCMD() *cobra.Command {
 
 func multiSignQueryCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "multisignquery",
+		Use:   "multi-sign-query",
 		Short: "multi sign query",
 		Long:  "multi sign query",
 		RunE: func(_ *cobra.Command, _ []string) error {
