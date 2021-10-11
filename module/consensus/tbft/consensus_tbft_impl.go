@@ -1384,10 +1384,43 @@ func (consensus *ConsensusTBFTImpl) verifyVote(voteProto *tbftpb.Vote) error {
 		return fmt.Errorf("verifyVote result: %v", result)
 	}
 
-	return validateVoter(voteProto)
+	member, err := consensus.ac.NewMember(voteProto.Endorsement.Signer)
+	if err != nil {
+		consensus.logger.Errorf("[%s](%d/%d/%s) verifyVote new member failed %v",
+			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
+		return err
+	}
+
+	var uid string
+	chainConf := consensus.chainConf.ChainConfig()
+	for _, v := range chainConf.TrustMembers {
+		if v.MemberInfo == string(voteProto.Endorsement.Signer.MemberInfo) {
+			uid = v.NodeId
+			break
+		}
+	}
+
+	if uid == "" {
+		certId := member.GetMemberId()
+		uid, err = consensus.netService.GetNodeUidByCertId(certId)
+		if err != nil {
+			consensus.logger.Errorf("[%s](%d/%d/%s) verifyVote certId: %v, GetNodeUidByCertId failed %v",
+				consensus.Id, consensus.Height, consensus.Round, consensus.Step, certId, err)
+			return err
+		}
+	}
+
+	if uid != voteProto.Voter {
+		consensus.logger.Errorf("[%s](%d/%d/%s) verifyVote failed, uid %s is not equal with voter %s",
+			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
+			uid, voteProto.Voter)
+		return fmt.Errorf("verifyVote failed, unmatch uid: %v with vote: %v", uid, voteProto.Voter)
+	}
+
+	return nil
 }
 
-func validateVoter(vote *tbftpb.Vote) error {
+func publicKeyValidateVoter(vote *tbftpb.Vote) error {
 	signer := vote.Endorsement.Signer
 	pk, err := asym.PublicKeyFromPEM(signer.MemberInfo)
 	if err != nil {

@@ -226,7 +226,11 @@ func newPkMemberFromParam(orgId string, pkBytes []byte, role protocol.Role, hash
 	}
 
 	pkMember.uid = hex.EncodeToString(ski)
-	pkMember.id = pkMember.uid
+	pkPem, err := pk.String()
+	if err != nil {
+		return nil, fmt.Errorf("setup pk member failed, err: %s", err.Error())
+	}
+	pkMember.id = pkPem
 
 	return &pkMember, nil
 }
