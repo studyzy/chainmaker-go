@@ -312,8 +312,30 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 		return nil
 	}
 	_, txsRwSet, _ := bp.proposalCache.GetProposedBlock(block)
-	bp.msgBus.Publish(msgbus.ProposedBlock, &consensuspb.ProposalBlock{Block: block, TxsRwSet: txsRwSet})
-	//bp.log.Debugf("finalized block \n%s", utils.FormatBlock(block))
+
+	newBlock := new(commonpb.Block)
+	if bp.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo {
+		newBlock.Header = block.Header
+		newBlock.Dag = block.Dag
+		newTxs := make([]*commonpb.Transaction, len(block.Txs))
+		for i := range block.Txs {
+			newPayload := &commonpb.Payload{
+				TxId: block.Txs[i].Payload.TxId,
+			}
+
+			newTxs[i] = &commonpb.Transaction{
+				Payload:   newPayload,
+				Sender:    block.Txs[i].Sender,
+				Endorsers: block.Txs[i].Endorsers,
+				Result:    block.Txs[i].Result,
+			}
+		}
+		newBlock.Txs = newTxs
+	} else {
+		newBlock = block
+	}
+
+	bp.msgBus.Publish(msgbus.ProposedBlock, &consensuspb.ProposalBlock{Block: newBlock, TxsRwSet: txsRwSet})
 	elapsed := utils.CurrentTimeMillisSeconds() - startTick
 	bp.log.Infof("proposer success [%d](txs:%d), time used(fetch:%d,dup:%d,vm:%v,total:%d)",
 		block.Header.BlockHeight, block.Header.TxCount,

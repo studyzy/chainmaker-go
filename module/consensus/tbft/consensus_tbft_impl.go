@@ -293,7 +293,7 @@ func (consensus *ConsensusTBFTImpl) updateChainConfig() (addedValidators []strin
 
 	config := consensus.chainConf.ChainConfig().Consensus
 	validators, timeoutPropose, timeoutProposeDelta, tbftBlocksPerProposer,
-	err := consensus.extractConsensusConfig(config)
+		err := consensus.extractConsensusConfig(config)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -552,9 +552,11 @@ func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb
 		return
 	}
 
-	if err := consensus.dpos.VerifyConsensusArgs(verifyResult.VerifiedBlock, verifyResult.TxsRwSet); err != nil {
-		consensus.logger.Warnf("verify block DPoS consensus failed, reason: %s", err)
-		return
+	if consensus.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_DPOS {
+		if err := consensus.dpos.VerifyConsensusArgs(verifyResult.VerifiedBlock, verifyResult.TxsRwSet); err != nil {
+			consensus.logger.Warnf("verify block DPoS consensus failed, reason: %s", err)
+			return
+		}
 	}
 
 	consensus.Proposal = consensus.VerifingProposal
