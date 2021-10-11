@@ -374,7 +374,7 @@ func HandleMsgBusSubscriberOnMessage(netService *NetService, msgType netPb.NetMs
 }
 
 func handleMsgBusSubscriberOnMessageBroadcast(netService *NetService, msgType netPb.NetMsg_MsgType, logMsgDescription string, netMsg *netPb.NetMsg) error {
-	if msgType == netPb.NetMsg_TX || msgType == netPb.NetMsg_CONSENSUS_MSG {
+	if (msgType == netPb.NetMsg_TX || msgType == netPb.NetMsg_CONSENSUS_MSG) && len(netService.getConsensusNodeIdList()) > 0 {
 		if err := netService.consensusBroadcastMsg(netMsg.GetPayload(), CreateFlagWithPrefixAndMsgType(msgBusConsensusTopicPrefix, msgType)); err != nil {
 			netService.logger.Debugf("[NetService/msg-bus %s subscriber] broadcast failed, %s", logMsgDescription, err.Error())
 			return err
