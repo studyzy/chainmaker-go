@@ -29,7 +29,10 @@ block:
 core:
   tx_scheduler_timeout: 10 #  [0, 60] 交易调度器从交易池拿到交易后, 进行调度的时间
   tx_scheduler_validate_timeout: 10 # [0, 60] 交易调度器从区块中拿到交易后, 进行验证的超时时间
-
+  consensus_turbo_config:
+    consensus_message_turbo: true # 是否开启共识报文压缩
+    retry_time: 500 # 根据交易ID列表从交易池获取交易的重试次数
+    retry_interval: 20 # 重试间隔，单位:ms
 #共识配置
 consensus:
   # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,10-POW)
