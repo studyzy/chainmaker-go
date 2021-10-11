@@ -37,7 +37,7 @@ func systemContractMultiSignCMD() *cobra.Command {
 
 func multiSignReqCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "multi-sign-req",
+		Use:   "req",
 		Short: "multi sign req",
 		Long:  "multi sign req",
 		RunE: func(_ *cobra.Command, _ []string) error {
@@ -59,7 +59,7 @@ func multiSignReqCMD() *cobra.Command {
 
 func multiSignVoteCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "multi-sign-vote",
+		Use:   "vote",
 		Short: "multi sign vote",
 		Long:  "multi sign vote",
 		RunE: func(_ *cobra.Command, _ []string) error {
@@ -84,7 +84,7 @@ func multiSignVoteCMD() *cobra.Command {
 
 func multiSignQueryCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "multi-sign-query",
+		Use:   "query",
 		Short: "multi sign query",
 		Long:  "multi sign query",
 		RunE: func(_ *cobra.Command, _ []string) error {
