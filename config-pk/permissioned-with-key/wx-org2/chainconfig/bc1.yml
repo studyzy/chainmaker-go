@@ -15,7 +15,7 @@ crypto:
 
 # 合约支持类型的配置
 contract:
-  enable_sql_support: true
+  enable_sql_support: false
 
 # 交易、区块相关配置
 block:
@@ -42,21 +42,13 @@ consensus:
     - org_id: "wx-org2.chainmaker.org"
       node_id:
         - "QmboYJpeHZqvKPhmeUKQhydP2FKBzeqDARhZvRmbdGQt7p"
-  #    - org_id: "wx-org3.chainmaker.org"
-  #      node_id:
-  #        - "QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
-  #    - org_id: "wx-org4.chainmaker.org"
-  #      node_id:
-  #        - "QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
-  #    - org_id: "wx-org5.chainmaker.org"
-  #      node_id:
-  #        - "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
-  #    - org_id: "wx-org6.chainmaker.org"
-  #      node_id:
-  #        - "QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
-  #    - org_id: "wx-org7.chainmaker.org"
-  #      node_id:
-  #        - "QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
+    - org_id: "wx-org3.chainmaker.org"
+      node_id:
+        - "QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
+    - org_id: "wx-org4.chainmaker.org"
+      node_id:
+        - "QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
+
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11
@@ -69,12 +61,12 @@ trust_roots:
   - org_id: "wx-org2.chainmaker.org"
     root:
       - "../config-pk/permissioned-with-key/wx-org2/public-key/admin/wx-org2.chainmaker.org/admin.pem"
-#  - org_id: "wx-org3.chainmaker.org"
-#    root:
-#      - "../config-pk/permissioned-with-key/wx-org2/public-key/admin/wx-org3.chainmaker.org/admin.pem"
-#  - org_id: "wx-org4.chainmaker.org"
-#    root:
-#      - "../config-pk/permissioned-with-key/wx-org2/public-key/admin/wx-org4.chainmaker.org/admin.pem"
+  - org_id: "wx-org3.chainmaker.org"
+    root:
+      - "../config-pk/permissioned-with-key/wx-org2/public-key/admin/wx-org3.chainmaker.org/admin.pem"
+  - org_id: "wx-org4.chainmaker.org"
+    root:
+      - "../config-pk/permissioned-with-key/wx-org2/public-key/admin/wx-org4.chainmaker.org/admin.pem"
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:

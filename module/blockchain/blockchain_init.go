@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strings"
 
+	"chainmaker.org/chainmaker/common/v2/container"
 	evm "chainmaker.org/chainmaker/vm-evm"
 	gasm "chainmaker.org/chainmaker/vm-gasm"
 	wasmer "chainmaker.org/chainmaker/vm-wasmer"
@@ -38,6 +39,10 @@ import (
 	"chainmaker.org/chainmaker/utils/v2"
 	"chainmaker.org/chainmaker/vm"
 	"github.com/mitchellh/mapstructure"
+)
+
+const (
+	PREFIX_dpos_stake_nodeId string = "stake.nodeID"
 )
 
 // Init all the modules.
@@ -152,13 +157,30 @@ func (bc *Blockchain) initStore() (err error) {
 	}
 	var storeFactory store.Factory
 	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, bc.chainId)
+	err = container.Register(func() protocol.Logger { return storeLogger }, container.Name("store"))
+	if err != nil {
+		return err
+	}
 	config := &conf.StorageConfig{}
 	err = mapstructure.Decode(localconf.ChainMakerConfig.StorageConfig, config)
 	if err != nil {
 		return err
 	}
-	if bc.store, err = storeFactory.NewStore(
-		bc.chainId, config, storeLogger); err != nil {
+
+	//p11Handle, err := localconf.ChainMakerConfig.GetP11Handle()
+	err = container.Register(localconf.ChainMakerConfig.GetP11Handle)
+	if err != nil {
+		return err
+	}
+
+	err = container.Register(storeFactory.NewStore,
+		container.Parameters(map[int]interface{}{0: bc.chainId, 1: config}),
+		container.DependsOn(map[int]string{2: "store"}))
+	if err != nil {
+		return err
+	}
+	err = container.Resolve(&bc.store)
+	if err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}
@@ -420,14 +442,27 @@ func (bc *Blockchain) initConsensus() (err error) {
 	// init consensus module
 	var consensusFactory consensus.Factory
 	id := localconf.ChainMakerConfig.NodeConfig.NodeId
-	nodes := bc.chainConf.ChainConfig().Consensus.Nodes
-	nodeIds := make([]string, len(nodes))
+	var nodeIds []string
 	isConsensusNode := false
-	for i, node := range nodes {
-		for _, nid := range node.NodeId {
-			nodeIds[i] = nid
-			if nid == id {
-				isConsensusNode = true
+	if bc.getConsensusType() == consensusPb.ConsensusType_DPOS {
+		dposConfigs := bc.chainConf.ChainConfig().Consensus.DposConfig
+		for _, dposConfig := range dposConfigs {
+			if strings.HasPrefix(dposConfig.Key, PREFIX_dpos_stake_nodeId) {
+				nodeIds = append(nodeIds, string(dposConfig.Value))
+				if string(dposConfig.Value) == id {
+					isConsensusNode = true
+				}
+			}
+		}
+	} else {
+		nodes := bc.chainConf.ChainConfig().Consensus.Nodes
+		nodeIds = make([]string, len(nodes))
+		for i, node := range nodes {
+			for _, nid := range node.NodeId {
+				nodeIds[i] = nid
+				if nid == id {
+					isConsensusNode = true
+				}
 			}
 		}
 	}

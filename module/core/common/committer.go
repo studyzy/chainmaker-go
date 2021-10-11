@@ -157,8 +157,7 @@ func (cb *CommitBlock) MonitorCommit(bi *commonpb.BlockInfo) error {
 
 func NotifyChainConf(block *commonpb.Block, chainConf protocol.ChainConf) (err error) {
 	if block != nil && block.GetTxs() != nil && len(block.GetTxs()) > 0 {
-		tx := block.GetTxs()[0]
-		if _, ok := chainconf.IsNativeTx(tx); ok {
+		if _, ok := chainconf.IsNativeTx(block.GetTxs()[0]); ok || utils.HasDPosTxWritesInHeader(block, chainConf) {
 			if err = chainConf.CompleteBlock(block); err != nil {
 				return fmt.Errorf("chainconf block complete, %s", err)
 			}

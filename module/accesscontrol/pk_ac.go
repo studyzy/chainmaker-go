@@ -77,8 +77,6 @@ type pkACProvider struct {
 
 	log protocol.Logger
 
-	localOrg string
-
 	adminMember *sync.Map
 
 	consensusMember *sync.Map
@@ -99,7 +97,7 @@ type publicAdminMemberModel struct {
 
 func (p *pkACProvider) NewACProvider(chainConf protocol.ChainConf, localOrgId string,
 	store protocol.BlockchainStore, log protocol.Logger) (protocol.AccessControlProvider, error) {
-	pkAcProvider, err := newPkACProvider(chainConf.ChainConfig(), localOrgId, store, log)
+	pkAcProvider, err := newPkACProvider(chainConf.ChainConfig(), store, log)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +105,7 @@ func (p *pkACProvider) NewACProvider(chainConf protocol.ChainConf, localOrgId st
 	return pkAcProvider, nil
 }
 
-func newPkACProvider(chainConfig *config.ChainConfig, localOrgId string,
+func newPkACProvider(chainConfig *config.ChainConfig,
 	store protocol.BlockchainStore, log protocol.Logger) (*pkACProvider, error) {
 	pkAcProvider := &pkACProvider{
 		adminNum:              0,
@@ -115,7 +113,6 @@ func newPkACProvider(chainConfig *config.ChainConfig, localOrgId string,
 		authType:              chainConfig.AuthType,
 		adminMember:           &sync.Map{},
 		consensusMember:       &sync.Map{},
-		localOrg:              localOrgId,
 		memberCache:           concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.CertCacheSize),
 		log:                   log,
 		dataStore:             store,
@@ -123,15 +120,15 @@ func newPkACProvider(chainConfig *config.ChainConfig, localOrgId string,
 		exceptionalPolicyMap:  &sync.Map{},
 	}
 
-	pkAcProvider.createDefaultResourcePolicy(pkAcProvider.localOrg)
+	pkAcProvider.createDefaultResourcePolicy()
 
 	err := pkAcProvider.initAdminMembers(chainConfig.TrustRoots)
 	if err != nil {
-		return nil, fmt.Errorf("new publick AC provider failed: %s", err.Error())
+		return nil, fmt.Errorf("new public AC provider failed: %s", err.Error())
 	}
 	err = pkAcProvider.initConsensusMember(chainConfig)
 	if err != nil {
-		return nil, fmt.Errorf("new publick AC provider failed: %s", err.Error())
+		return nil, fmt.Errorf("new public AC provider failed: %s", err.Error())
 	}
 	return pkAcProvider, nil
 }
@@ -142,7 +139,8 @@ func (p *pkACProvider) initAdminMembers(trustRootList []*config.TrustRootConfig)
 	)
 
 	if len(trustRootList) == 0 {
-		return fmt.Errorf("init admin member failed: trsut root can't be empty")
+		p.log.Debugf("no super administrator is configured")
+		return nil
 	}
 
 	var adminNum int32
@@ -244,12 +242,12 @@ func (p *pkACProvider) Watch(chainConfig *config.ChainConfig) error {
 	p.hashType = chainConfig.GetCrypto().GetHash()
 	err := p.initAdminMembers(chainConfig.TrustRoots)
 	if err != nil {
-		return fmt.Errorf("new publick AC provider failed: %s", err.Error())
+		return fmt.Errorf("new public AC provider failed: %s", err.Error())
 	}
 
 	err = p.updateConsensusMember(chainConfig)
 	if err != nil {
-		return fmt.Errorf("new publick AC provider failed: %s", err.Error())
+		return fmt.Errorf("new public AC provider failed: %s", err.Error())
 	}
 	p.memberCache.Clear()
 	return nil
@@ -271,9 +269,7 @@ func (p *pkACProvider) NewMember(pbMember *pbac.Member) (protocol.Member, error)
 	return member, nil
 }
 
-func (p *pkACProvider) createDefaultResourcePolicy(localOrgId string) {
-
-	policyArchive.orgList = []string{localOrgId}
+func (p *pkACProvider) createDefaultResourcePolicy() {
 
 	p.resourceNamePolicyMap.Store(protocol.ResourceNameConsensusNode, pubPolicyConsensus)
 	// for txtype
@@ -463,7 +459,6 @@ func (p *pkACProvider) refineEndorsements(endorsements []*common.EndorsementEntr
 
 	refinedSigners := map[string]bool{}
 	var refinedEndorsement []*common.EndorsementEntry
-	var memInfo string
 
 	for _, endorsementEntry := range endorsements {
 		endorsement := &common.EndorsementEntry{
@@ -474,13 +469,7 @@ func (p *pkACProvider) refineEndorsements(endorsements []*common.EndorsementEntr
 			},
 			Signature: endorsementEntry.Signature,
 		}
-		if endorsement.Signer.MemberType == pbac.MemberType_PUBLIC_KEY {
-			p.log.Debugf("target endorser uses public key in pkACProvider")
-			memInfo = string(endorsement.Signer.MemberInfo)
-		} else {
-			p.log.Errorf("member type error in pkACProvider")
-			continue
-		}
+		memInfo := string(endorsement.Signer.MemberInfo)
 
 		remoteMember, err := p.NewMember(endorsement.Signer)
 		if err != nil {
