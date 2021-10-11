@@ -55,7 +55,7 @@ type NetService struct {
 	logger               *rootLog.CMLogger
 	configWatcher        *ConfigWatcher
 	consensusNodeIds     map[string]struct{}
-	consensusNodeIdsLock sync.Mutex
+	consensusNodeIdsLock sync.RWMutex
 
 	ac            protocol.AccessControlProvider
 	revokeNodeIds sync.Map // node id of node cert revoked , map[string]struct{}
@@ -105,14 +105,20 @@ func (ns *NetService) CancelSubscribe(msgType netPb.NetMsg_MsgType) error {
 
 func (ns *NetService) getConsensusNodeIdList() []string {
 	result := make([]string, 0)
-	ns.consensusNodeIdsLock.Lock()
-	defer ns.consensusNodeIdsLock.Unlock()
+	ns.consensusNodeIdsLock.RLock()
+	defer ns.consensusNodeIdsLock.RUnlock()
 	if ns.consensusNodeIds != nil {
 		for node := range ns.consensusNodeIds {
 			result = append(result, node)
 		}
 	}
 	return result
+}
+
+func (ns *NetService) isConsensusNodeIdListEmpty() bool {
+	ns.consensusNodeIdsLock.RLock()
+	defer ns.consensusNodeIdsLock.RUnlock()
+	return len(ns.consensusNodeIds) == 0
 }
 
 func (ns *NetService) consensusBroadcastMsg(msg []byte, topic string) error {
@@ -374,7 +380,7 @@ func HandleMsgBusSubscriberOnMessage(netService *NetService, msgType netPb.NetMs
 }
 
 func handleMsgBusSubscriberOnMessageBroadcast(netService *NetService, msgType netPb.NetMsg_MsgType, logMsgDescription string, netMsg *netPb.NetMsg) error {
-	if (msgType == netPb.NetMsg_TX || msgType == netPb.NetMsg_CONSENSUS_MSG) && len(netService.getConsensusNodeIdList()) > 0 {
+	if (msgType == netPb.NetMsg_TX || msgType == netPb.NetMsg_CONSENSUS_MSG) && !netService.isConsensusNodeIdListEmpty() {
 		if err := netService.consensusBroadcastMsg(netMsg.GetPayload(), CreateFlagWithPrefixAndMsgType(msgBusConsensusTopicPrefix, msgType)); err != nil {
 			netService.logger.Debugf("[NetService/msg-bus %s subscriber] broadcast failed, %s", logMsgDescription, err.Error())
 			return err
