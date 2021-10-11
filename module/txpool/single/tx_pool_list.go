@@ -13,8 +13,8 @@ import (
 
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
-	"chainmaker.org/chainmaker-go/monitor"
 	"chainmaker.org/chainmaker/common/v2/linkedhashmap"
+	"chainmaker.org/chainmaker/common/v2/monitor"
 	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/utils/v2"

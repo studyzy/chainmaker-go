@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/consensus v0.0.0
-	chainmaker.org/chainmaker-go/monitor v0.0.0
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
 	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211011092036-d42992b75fd5
