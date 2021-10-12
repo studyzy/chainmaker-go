@@ -78,6 +78,8 @@ chainmaker.org/chainmaker/utils/v2 v2.0.0-20211009065223-b235f1fd94d3 h1:LOezAra
 chainmaker.org/chainmaker/utils/v2 v2.0.0-20211009065223-b235f1fd94d3/go.mod h1:PeCAziKqYULDbYprzWlsLMZ/JANvdjRJYUkPhCLmeAY=
 chainmaker.org/chainmaker/utils/v2 v2.0.0-20211011062420-24df29961fa2 h1:uzJOOn4uxhgrgVXsVa7C1HdUONo2t9K1OknpXQl79Zs=
 chainmaker.org/chainmaker/utils/v2 v2.0.0-20211011062420-24df29961fa2/go.mod h1:PeCAziKqYULDbYprzWlsLMZ/JANvdjRJYUkPhCLmeAY=
+chainmaker.org/chainmaker/utils/v2 v2.0.0-20211012064332-ba20dd386083 h1:C9BG4pL2S/5EsYyX1TsGTdDrc7OahN5J0uqFgO8ncU8=
+chainmaker.org/chainmaker/utils/v2 v2.0.0-20211012064332-ba20dd386083/go.mod h1:PeCAziKqYULDbYprzWlsLMZ/JANvdjRJYUkPhCLmeAY=
 chainmaker.org/chainmaker/vm v0.0.0-20210918095505-c2ac385f5a48/go.mod h1:GMxRvg/YQflDyDZPjnXGPSlbDbh7WyWF35zwgSDQ4Lw=
 chainmaker.org/chainmaker/vm v0.0.0-20210918104424-239140ec3366 h1:xdYD4j4TLlumP2nIR/fCY16wlacS0pacqGwyJ/h/u6w=
 chainmaker.org/chainmaker/vm v0.0.0-20210918104424-239140ec3366/go.mod h1:CBi7D9253njoG5nOlawif7I+cXY01QoIpd8mFaDEMd0=
@@ -91,6 +93,8 @@ chainmaker.org/chainmaker/vm-native v0.0.0-20210922090336-9f8289cf0433 h1:ZyIeP8
 chainmaker.org/chainmaker/vm-native v0.0.0-20210922090336-9f8289cf0433/go.mod h1:wjlI5dXDviXw2doWaiAcOKfWvRcsWcmUxiZDFnYjMA4=
 chainmaker.org/chainmaker/vm-native v0.0.0-20210930034608-276d99273792 h1:rcDlQoFmruKHY66TA8Ly/Q6voL68oGbmYpLvUar9VmE=
 chainmaker.org/chainmaker/vm-native v0.0.0-20210930034608-276d99273792/go.mod h1:2bNd7xZCqIl2IlY4XVGrViuAcaIl1elOSp4UIj3lVZg=
+chainmaker.org/chainmaker/vm-native v0.0.0-20211012092026-c61f9d7b1e7c h1:YA2pBkY3M/qrSx/Fc5LIXFnAphwXjrqSsJUKWUOOufY=
+chainmaker.org/chainmaker/vm-native v0.0.0-20211012092026-c61f9d7b1e7c/go.mod h1:2bNd7xZCqIl2IlY4XVGrViuAcaIl1elOSp4UIj3lVZg=
 chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211008132543-79cb76bb2f68 h1:EuNWWu7EdhZv2YAsNarK5yURrSaIIxPuClFTHkLKZYM=
 chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211008132543-79cb76bb2f68/go.mod h1:FpRir+YOLP/+eYmQLgClDoLpqJRxKgmOIll6QkCOCog=
 chainmaker.org/chainmaker/vm-wxvm v0.0.0-20210918101823-dce1c76fb189 h1:V+8oNW/IJWraIc0lIhzY6qgOIncz7JGIvNV4mk5s+jE=
