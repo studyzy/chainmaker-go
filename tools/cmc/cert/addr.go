@@ -114,10 +114,10 @@ func certToUserAddrInStake() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
-		pubkeyOrCertPath,
+		flagCertOrPubkeyPath,
 	})
 
-	cmd.MarkFlagRequired(pubkeyOrCertPath)
+	cmd.MarkFlagRequired(flagCertOrPubkeyPath)
 	return cmd
 }
 
