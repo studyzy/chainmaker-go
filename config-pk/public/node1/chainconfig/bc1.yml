@@ -47,7 +47,7 @@ consensus:
     - key: erc20.total
       value: "10000000"
     - key: erc20.owner
-      value: "QmQXjPB4DS8fNxsbqWzozSfwRiBbDDZg3t5qTxeb7R8BV5"
+      value: "3yGyxffqCAZUUiKAosNeCyySTcajVgwMjCLqZd2bJNJb"
     - key: erc20.decimals
       value: "18"
     - key: erc20.account:DPOS_STAKE
@@ -61,22 +61,22 @@ consensus:
       value: "10"
     - key: stake.completionUnbondingEpochNum
       value: "1"
-    - key: stake.candidate:QmQXjPB4DS8fNxsbqWzozSfwRiBbDDZg3t5qTxeb7R8BV5
+    - key: stake.candidate:3yGyxffqCAZUUiKAosNeCyySTcajVgwMjCLqZd2bJNJb
       value: "2500000"
-    - key: stake.candidate:QmRUuqP9WkNmHv2NR8P9RUyBKSdjHuz4uu79hjgM4rWri4
+    - key: stake.candidate:EnaLA3NuSnu4dXtAQdnjkQvqAfR5AWRaniUb7vPb9vje
       value: "2500000"
-    - key: stake.candidate:Qmd8o58EHnsfBbDikRra4XNsCmArXjXLSdZdkYwDcdsUvQ
+    - key: stake.candidate:Fu9rA7Tw54F1jwUnRziGB49V6Fo6HjeDJaej9W2xVXKf
       value: "2500000"
-    - key: stake.candidate:QmQ8nYaAMm5DdMzf3GaY2NPkmGneqmRyaSJDNRaFwuoxwV
+    - key: stake.candidate:2Zr3c5LsqzkQcCkJ3DR8hDWgTaDikoabbaKYgBAKygpc
       value: "2500000"
 
-    - key: stake.nodeID:QmQXjPB4DS8fNxsbqWzozSfwRiBbDDZg3t5qTxeb7R8BV5
+    - key: stake.nodeID:3yGyxffqCAZUUiKAosNeCyySTcajVgwMjCLqZd2bJNJb
       value: "QmXVYiWKFyQoSSoD6xptx5gCEmQTusnJ9veepeSvkXLTUF"
-    - key: stake.nodeID:QmRUuqP9WkNmHv2NR8P9RUyBKSdjHuz4uu79hjgM4rWri4
+    - key: stake.nodeID:EnaLA3NuSnu4dXtAQdnjkQvqAfR5AWRaniUb7vPb9vje
       value: "QmboYJpeHZqvKPhmeUKQhydP2FKBzeqDARhZvRmbdGQt7p"
-    - key: stake.nodeID:Qmd8o58EHnsfBbDikRra4XNsCmArXjXLSdZdkYwDcdsUvQ
+    - key: stake.nodeID:Fu9rA7Tw54F1jwUnRziGB49V6Fo6HjeDJaej9W2xVXKf
       value: "QmaM6gWM2enCLcfXHnTnwxP4PVEu649gsg1YCV1AMWogMD"
-    - key: stake.nodeID:QmQ8nYaAMm5DdMzf3GaY2NPkmGneqmRyaSJDNRaFwuoxwV
+    - key: stake.nodeID:2Zr3c5LsqzkQcCkJ3DR8hDWgTaDikoabbaKYgBAKygpc
       value: "QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
 
 # 超级管理员
