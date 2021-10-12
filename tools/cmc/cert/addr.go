@@ -14,10 +14,6 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	chainmaker_sdk_go "chainmaker.org/chainmaker/sdk-go/v2"
-
-	pubkey2 "chainmaker.org/chainmaker-go/tools/cmc/pubkey"
-
 	"github.com/mr-tron/base58"
 	"github.com/spf13/cobra"
 
@@ -25,6 +21,7 @@ import (
 	hashAlo "chainmaker.org/chainmaker/common/v2/crypto/hash"
 	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 	"chainmaker.org/chainmaker/common/v2/evmutils"
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 )
 
 func addrCMD() *cobra.Command {
@@ -80,7 +77,7 @@ func certToUserAddrInStake() *cobra.Command {
 			if len(pubkeyOrCertPath) == 0 {
 				return fmt.Errorf("cert or pubkey path is null")
 			}
-			chainClient, err := pubkey2.CreateClientWithConfig()
+			chainClient, err := sdk.NewChainClient(sdk.WithConfPath(sdkConfPath))
 			if err != nil {
 				return err
 			}
@@ -95,11 +92,11 @@ func certToUserAddrInStake() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("read cert content failed, reason: %s", err)
 			}
-			if authType == chainmaker_sdk_go.PermissionedWithCert {
+			if authType == sdk.PermissionedWithCert {
 				if pubkey, err = getPubkeyFromCert(content); err != nil {
 					return err
 				}
-			} else if authType == chainmaker_sdk_go.PermissionedWithKey || authType == chainmaker_sdk_go.Public {
+			} else if authType == sdk.PermissionedWithKey || authType == sdk.Public {
 				pubkey = content
 			}
 			if hashType == crypto.CRYPTO_ALGO_SM3 || hashType == crypto.CRYPTO_ALGO_SHA256 {
@@ -114,9 +111,10 @@ func certToUserAddrInStake() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagSdkConfPath,
 		flagCertOrPubkeyPath,
 	})
-
+	cmd.MarkFlagRequired(flagSdkConfPath)
 	cmd.MarkFlagRequired(flagCertOrPubkeyPath)
 	return cmd
 }

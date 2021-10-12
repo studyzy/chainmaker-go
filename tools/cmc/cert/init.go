@@ -29,6 +29,7 @@ var (
 	csrPath          string
 	crlPath          string
 	crtPath          string
+	sdkConfPath      string
 	nodeCertPath     string
 	pubkeyOrCertPath string
 )
@@ -38,6 +39,7 @@ const (
 	flagCaCertPath       = "ca-cert-path"
 	flagCrlPath          = "crl-path"
 	flagCrtPath          = "crt-path"
+	flagSdkConfPath      = "sdk-conf-path"
 	flagNodeCertPath     = "node-cert-path"
 	flagCertOrPubkeyPath = "pubkey-cert-path"
 )
@@ -68,6 +70,7 @@ func init() {
 	flags.StringVar(&crtPath, flagCrtPath, "", "specify crt file path")
 	flags.StringVar(&nodeCertPath, flagNodeCertPath, "", "specify node cert path")
 	flags.StringVar(&pubkeyOrCertPath, flagCertOrPubkeyPath, "", "specify user pubkey path or cert path")
+	flags.StringVar(&sdkConfPath, flagSdkConfPath, "", "specify sdk_conf path")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {
