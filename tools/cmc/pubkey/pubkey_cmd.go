@@ -141,7 +141,7 @@ func cliAddPubKey() error {
 		return fmt.Errorf("read file '%v' error: %v", pubkeyFile, err)
 	}
 
-	client, err := createClientWithConfig()
+	client, err := CreateClientWithConfig()
 	if err != nil {
 		return fmt.Errorf("create user client failed, %s", err.Error())
 	}
@@ -196,7 +196,7 @@ func cliDelPubKey() error {
 		return fmt.Errorf("read file '%v' error: %v", pubkeyFile, err)
 	}
 
-	client, err := createClientWithConfig()
+	client, err := CreateClientWithConfig()
 	if err != nil {
 		return fmt.Errorf("create user client failed, %s", err.Error())
 	}
@@ -234,7 +234,7 @@ func cliDelPubKey() error {
 	return nil
 }
 
-func createClientWithConfig() (*sdk.ChainClient, error) {
+func CreateClientWithConfig() (*sdk.ChainClient, error) {
 	chainClient, err := sdk.NewChainClient(sdk.WithConfPath(sdkConfPath),
 		sdk.WithChainClientOrgId(orgId), sdk.WithChainClientChainId(chainId))
 	if err != nil {

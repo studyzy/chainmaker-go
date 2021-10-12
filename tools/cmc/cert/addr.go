@@ -14,6 +14,10 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	chainmaker_sdk_go "chainmaker.org/chainmaker/sdk-go/v2"
+
+	pubkey2 "chainmaker.org/chainmaker-go/tools/cmc/pubkey"
+
 	"github.com/mr-tron/base58"
 	"github.com/spf13/cobra"
 
@@ -34,7 +38,7 @@ func addrCMD() *cobra.Command {
 	}
 
 	attachFlags(addrCmd, []string{
-		flagCertPath,
+		flagCertOrPubkeyPath,
 	})
 
 	return addrCmd
@@ -42,9 +46,9 @@ func addrCMD() *cobra.Command {
 
 func getAddr() error {
 
-	certBytes, err := ioutil.ReadFile(certPath)
+	certBytes, err := ioutil.ReadFile(flagCertOrPubkeyPath)
 	if err != nil {
-		return fmt.Errorf("read cert file [%s] failed, %s", certPath, err)
+		return fmt.Errorf("read cert file [%s] failed, %s", flagCertOrPubkeyPath, err)
 	}
 
 	block, _ := pem.Decode(certBytes)
@@ -73,49 +77,62 @@ func certToUserAddrInStake() *cobra.Command {
 		Use:   "userAddr",
 		Short: "get user addr feature of the DPoS from cert",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			if len(certPath) == 0 {
-				return fmt.Errorf("cert path is null")
+			if len(pubkeyOrCertPath) == 0 {
+				return fmt.Errorf("cert or pubkey path is null")
 			}
-			certContent, err := ioutil.ReadFile(certPath)
+			chainClient, err := pubkey2.CreateClientWithConfig()
+			if err != nil {
+				return err
+			}
+
+			var (
+				pubkey   []byte
+				hashBz   []byte
+				authType = chainClient.GetAuthType()
+				hashType = chainClient.GetHashType()
+			)
+			content, err := ioutil.ReadFile(pubkeyOrCertPath)
 			if err != nil {
 				return fmt.Errorf("read cert content failed, reason: %s", err)
 			}
-			block, _ := pem.Decode(certContent)
-			if block == nil {
-				return errors.New("pem.Decode failed, invalid cert")
-			}
-			cert, err := bcx509.ParseCertificate(block.Bytes)
-			if err != nil {
-				return fmt.Errorf("parse cert failed, reason: %s", err)
-			}
-			pubkey, err := cert.PublicKey.Bytes()
-			if err != nil {
-				return fmt.Errorf("get pubkey failed from cert, reason: %s", err)
-			}
-			var (
-				hashBz []byte
-			)
-			if cert.SignatureAlgorithm == bcx509.SM3WithSM2 {
-				hashBz, err = hashAlo.GetByStrType(crypto.CRYPTO_ALGO_SM3, pubkey)
-				if err != nil {
+			if authType == chainmaker_sdk_go.PermissionedWithCert {
+				if pubkey, err = getPubkeyFromCert(content); err != nil {
 					return err
 				}
-			} else {
-				hashBz, err = hashAlo.GetByStrType(crypto.CRYPTO_ALGO_SHA256, pubkey)
-				if err != nil {
+			} else if authType == chainmaker_sdk_go.PermissionedWithKey || authType == chainmaker_sdk_go.Public {
+				pubkey = content
+			}
+			if hashType == crypto.CRYPTO_ALGO_SM3 || hashType == crypto.CRYPTO_ALGO_SHA256 {
+				if hashBz, err = hashAlo.GetByStrType(hashType, pubkey); err != nil {
 					return err
 				}
 			}
 			addr := base58.Encode(hashBz[:])
-			fmt.Printf("address: %s \n\nfrom cert: %s\n", addr, certPath)
+			fmt.Printf("address: %s \n\nfrom cert: %s\n", addr, pubkeyOrCertPath)
 			return nil
 		},
 	}
 
 	attachFlags(cmd, []string{
-		flagCertPath,
+		pubkeyOrCertPath,
 	})
 
-	cmd.MarkFlagRequired(certPath)
+	cmd.MarkFlagRequired(pubkeyOrCertPath)
 	return cmd
+}
+
+func getPubkeyFromCert(certContent []byte) ([]byte, error) {
+	block, _ := pem.Decode(certContent)
+	if block == nil {
+		return nil, errors.New("pem.Decode failed, invalid cert")
+	}
+	cert, err := bcx509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("parse cert failed, reason: %s", err)
+	}
+	pubkey, err := cert.PublicKey.Bytes()
+	if err != nil {
+		return nil, fmt.Errorf("get pubkey failed from cert, reason: %s", err)
+	}
+	return pubkey, nil
 }
