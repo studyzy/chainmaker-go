@@ -5,12 +5,15 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/blockchain v0.0.0
 	chainmaker.org/chainmaker-go/rpcserver v0.0.0-00010101000000-000000000000
-	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210930065646-a343285bad02
-	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210927081951-999ab4a3fad6
+	chainmaker.org/chainmaker-go/txpool v0.0.0
+	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211012062258-a0408edb4a1c
+	chainmaker.org/chainmaker/logger/v2 v2.0.0
+	chainmaker.org/chainmaker/txpool-batch/v2 v2.0.0-20211013035004-190b3acb8eb8
+	chainmaker.org/chainmaker/txpool-single/v2 v2.0.0-20211013035055-0b3b640215ad
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
 	github.com/prometheus/client_golang v1.11.0
-	github.com/spf13/cobra v1.1.3
+	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 )
 

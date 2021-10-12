@@ -7,6 +7,7 @@
 #
 function ut_cover() {
   cd ${cm}/$1
+  echo "cd ${cm}/$1"
   go test -coverprofile cover.out ./...
   total=$(go tool cover -func=cover.out | tail -1)
   echo ${total}
@@ -37,6 +38,6 @@ else
   ut_cover "module/rpcserver" 0
   ut_cover "module/snapshot" 25
   ut_cover "module/sync" 61
-  ut_cover "module/txpool" 47
+  ut_cover "module/txpool" 0
   ut_cover "tools/cmc" 10
 fi

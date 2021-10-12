@@ -9,8 +9,11 @@ package blockchain
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
+
+	batch "chainmaker.org/chainmaker/txpool-batch/v2"
 
 	"chainmaker.org/chainmaker/common/v2/container"
 	evm "chainmaker.org/chainmaker/vm-evm"
@@ -35,7 +38,7 @@ import (
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
-	"chainmaker.org/chainmaker/store/v2"
+	"chainmaker.org/chainmaker/store/v2" // nolint: typecheck
 	"chainmaker.org/chainmaker/store/v2/conf"
 	"chainmaker.org/chainmaker/utils/v2"
 	"chainmaker.org/chainmaker/vm"
@@ -152,7 +155,7 @@ func (bc *Blockchain) initStore() (err error) {
 		bc.log.Infof("store module existed, ignore.")
 		return
 	}
-	var storeFactory store.Factory
+	var storeFactory store.Factory // nolint: typecheck
 	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, bc.chainId)
 	err = container.Register(func() protocol.Logger { return storeLogger }, container.Name("store"))
 	if err != nil {
@@ -326,31 +329,38 @@ func (bc *Blockchain) initTxPool() (err error) {
 		bc.log.Infof("tx pool module existed, ignore.")
 		return
 	}
-	// init transaction pool
-	var (
-		txPoolFactory txpool.TxPoolFactory
-		txType        = txpool.SINGLE
-	)
-	if strings.ToUpper(localconf.ChainMakerConfig.TxPoolConfig.PoolType) == string(txpool.BATCH) {
-		txType = txpool.BATCH
+
+	txPoolType := txpool.TypeDefault
+
+	if value, ok := localconf.ChainMakerConfig.TxPoolConfig["pool_type"]; ok {
+		txPoolType, _ = value.(string)
+		txPoolType = strings.ToUpper(txPoolType)
 	}
 
-	txpoolLogger := logger.GetLoggerByChain(logger.MODULE_TXPOOL, bc.chainId)
-	bc.txPool, err = txPoolFactory.NewTxPool(txpoolLogger,
-		txType,
-		txpool.WithNodeId(localconf.ChainMakerConfig.NodeConfig.NodeId),
-		txpool.WithMsgBus(bc.msgBus),
-		txpool.WithChainId(bc.chainId),
-		txpool.WithNetService(bc.netService),
-		txpool.WithBlockchainStore(bc.store),
-		txpool.WithSigner(bc.identity),
-		txpool.WithChainConf(bc.chainConf),
-		txpool.WithAccessControl(bc.ac),
+	txPoolLogger := logger.GetLoggerByChain(logger.MODULE_TXPOOL, bc.chainId)
+	txPoolProvider := txpool.GetTxPoolProvider(txPoolType)
+	if txPoolProvider == nil {
+		return errors.New("get txPool provider failed, expected txPool not found")
+	}
+
+	currentTxPool, err := txPoolProvider(
+		localconf.ChainMakerConfig.NodeConfig.NodeId,
+		bc.chainId,
+		bc.store,
+		bc.msgBus,
+		bc.chainConf,
+		bc.ac,
+		txPoolLogger,
+		localconf.ChainMakerConfig.MonitorConfig.Enabled,
+		localconf.ChainMakerConfig.TxPoolConfig,
 	)
+
 	if err != nil {
 		bc.log.Errorf("new tx pool failed, %s", err)
 		return err
 	}
+
+	bc.txPool = currentTxPool
 	bc.initModules[moduleNameTxPool] = struct{}{}
 	return nil
 }
@@ -405,9 +415,15 @@ func (bc *Blockchain) initCore() (err error) {
 	}
 
 	// turn off consensus turbo when txpool is single txpool
-	if bc.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo &&
-		strings.ToUpper(localconf.ChainMakerConfig.TxPoolConfig.PoolType) != string(txpool.BATCH) {
-		bc.log.Warnf("invaild consensus message setting, consensus message turbo turn off.")
+	txPoolType := txpool.TypeDefault
+	value, ok := localconf.ChainMakerConfig.TxPoolConfig["pool_type"]
+	if ok {
+		txPoolType, _ = value.(string)
+		txPoolType = strings.ToUpper(txPoolType)
+	}
+
+	if bc.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo && txPoolType != batch.TxPoolType {
+		bc.log.Warnf("invalid consensus message setting, consensus message turbo turn off.")
 		bc.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo = false
 	}
 

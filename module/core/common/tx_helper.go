@@ -14,7 +14,6 @@ import (
 	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/utils/v2"
-	"github.com/prometheus/common/log"
 )
 
 type VerifyBlockBatch struct {
@@ -269,7 +268,7 @@ func (vt *VerifierTx) verifyTx(txs []*commonpb.Transaction, txsRet map[string]*c
 		result := vt.txResultMap[tx.Payload.TxId]
 		rwsetHash, err := utils.CalcRWSetHash(vt.chainConf.ChainConfig().Crypto.Hash, rwSet)
 		if err != nil {
-			log.Warnf("calc rwset hash error (tx:%s), %s", tx.Payload.TxId, err)
+			vt.log.Warnf("calc rwset hash error (tx:%s), %s", tx.Payload.TxId, err)
 			return nil, nil, err
 		}
 		if err = IsTxRWSetValid(vt.block, tx, rwSet, result, rwsetHash); err != nil {
@@ -282,7 +281,7 @@ func (vt *VerifierTx) verifyTx(txs []*commonpb.Transaction, txsRet map[string]*c
 		}
 		hash, err := utils.CalcTxHash(vt.chainConf.ChainConfig().Crypto.Hash, tx)
 		if err != nil {
-			log.Warnf("calc txhash error (tx:%s), %s", tx.Payload.TxId, err)
+			vt.log.Warnf("calc txhash error (tx:%s), %s", tx.Payload.TxId, err)
 			return nil, nil, err
 		}
 		txHashes = append(txHashes, hash)

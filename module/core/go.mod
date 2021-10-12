@@ -14,10 +14,8 @@ require (
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210916084713-abd13154c26b
 	chainmaker.org/chainmaker/vm v0.0.0-20211009033650-5123c6160898
 	github.com/gogo/protobuf v1.3.2
-	github.com/google/martian v2.1.0+incompatible
 	github.com/panjf2000/ants/v2 v2.4.3
 	github.com/prometheus/client_golang v1.11.0
-	github.com/prometheus/common v0.26.0
 	github.com/stretchr/testify v1.7.0
 )
 
