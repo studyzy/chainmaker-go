@@ -94,10 +94,11 @@ func (cb *CommitBlock) CommitBlock(
 
 	// notify chainConf to update config when config block committed
 	startConfTick := utils.CurrentTimeMillisSeconds()
-	cb.ledgerCache.SetLastCommittedBlock(block)
 	if err = NotifyChainConf(block, cb.chainConf); err != nil {
 		return 0, 0, 0, 0, 0, err
 	}
+
+	cb.ledgerCache.SetLastCommittedBlock(block)
 	confLasts = utils.CurrentTimeMillisSeconds() - startConfTick
 
 	// publish contract event

@@ -31,6 +31,7 @@ import (
 	"chainmaker.org/chainmaker/chainconf/v2"
 	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -332,10 +333,8 @@ func (bc *Blockchain) initTxPool() (err error) {
 	)
 	if strings.ToUpper(localconf.ChainMakerConfig.TxPoolConfig.PoolType) == string(txpool.BATCH) {
 		txType = txpool.BATCH
-	} else if bc.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo {
-		bc.log.Warnf("invaild consensus message setting, consensus message turbo turn off.")
-		bc.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo = false
 	}
+
 	txpoolLogger := logger.GetLoggerByChain(logger.MODULE_TXPOOL, bc.chainId)
 	bc.txPool, err = txPoolFactory.NewTxPool(txpoolLogger,
 		txType,
@@ -395,6 +394,23 @@ func (bc *Blockchain) initCore() (err error) {
 	} else {
 		bc.snapshotManager = snapshotFactory.NewSnapshotManager(bc.store)
 	}
+
+	// init default consensus turbo config
+	if bc.chainConf.ChainConfig().Core.ConsensusTurboConfig == nil {
+		bc.chainConf.ChainConfig().Core.ConsensusTurboConfig = &configPb.ConsensusTurboConfig{
+			ConsensusMessageTurbo: false,
+			RetryTime:             0,
+			RetryInterval:         0,
+		}
+	}
+
+	// turn off consensus turbo when txpool is single txpool
+	if bc.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo &&
+		strings.ToUpper(localconf.ChainMakerConfig.TxPoolConfig.PoolType) != string(txpool.BATCH) {
+		bc.log.Warnf("invaild consensus message setting, consensus message turbo turn off.")
+		bc.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo = false
+	}
+
 	// init coreEngine module
 	coreEngineConfig := &providerConf.CoreEngineConfig{
 		ChainId:         bc.chainId,
