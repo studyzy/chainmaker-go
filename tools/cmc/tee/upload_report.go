@@ -48,6 +48,7 @@ func uploadReportCmd() *cobra.Command {
 func cliUploadReport() error {
 	var adminKeys []string
 	var adminCrts []string
+	var adminOrgs []string
 
 	file, err := os.Open(reportFile)
 	if err != nil {
@@ -72,8 +73,8 @@ func cliUploadReport() error {
 		if err != nil {
 			return err
 		}
-	} else {
-		adminKeys, err = createMultiSignAdminsForPK(adminKeyFilePaths)
+	} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+		adminKeys, adminOrgs, err = createMultiSignAdminsForPK(adminKeyFilePaths, adminOrgIds)
 		if err != nil {
 			return err
 		}
@@ -98,8 +99,8 @@ func cliUploadReport() error {
 			}
 
 			endorsementEntrys[i] = e
-		} else {
-			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
+		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
 			if err != nil {
 				return err
 			}

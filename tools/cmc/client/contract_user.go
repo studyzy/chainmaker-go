@@ -77,7 +77,7 @@ func createUserContractCMD() *cobra.Command {
 		flagUserTlsKeyFilePath, flagUserTlsCrtFilePath, flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagContractName, flagVersion, flagByteCodePath, flagOrgId, flagChainId, flagSendTimes,
 		flagRuntimeType, flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
-		flagAdminKeyFilePaths, flagAdminCrtFilePaths,
+		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagAdminOrgIds,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -172,7 +172,7 @@ func upgradeUserContractCMD() *cobra.Command {
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagSdkConfPath, flagContractName, flagVersion, flagByteCodePath, flagOrgId, flagChainId, flagSendTimes,
 		flagRuntimeType, flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
-		flagAdminCrtFilePaths, flagAdminKeyFilePaths,
+		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagAdminOrgIds,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -198,7 +198,7 @@ func freezeUserContractCMD() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes, flagTimeout, flagParams,
-		flagSyncResult, flagEnableCertHash, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
+		flagSyncResult, flagEnableCertHash, flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagAdminOrgIds,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -221,7 +221,7 @@ func unfreezeUserContractCMD() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes, flagTimeout, flagParams,
-		flagSyncResult, flagEnableCertHash, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
+		flagSyncResult, flagEnableCertHash, flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagAdminOrgIds,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -244,7 +244,7 @@ func revokeUserContractCMD() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes, flagTimeout, flagParams,
-		flagSyncResult, flagEnableCertHash, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
+		flagSyncResult, flagEnableCertHash, flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagAdminOrgIds,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -257,6 +257,8 @@ func revokeUserContractCMD() *cobra.Command {
 func createUserContract() error {
 	var adminKeys []string
 	var adminCrts []string
+	var adminOrgs []string
+
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
 		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
@@ -273,10 +275,14 @@ func createUserContract() error {
 		if len(adminKeys) != len(adminCrts) {
 			return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 		}
-	} else {
+	} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
 		adminKeys = strings.Split(adminKeyFilePaths, ",")
-		if len(adminKeys) == 0 {
+		adminOrgs = strings.Split(adminOrgIds, ",")
+		if len(adminKeys) == 0 || len(adminOrgs) == 0 {
 			return errAdminOrgIdKeyCertIsEmpty
+		}
+		if len(adminKeys) != len(adminOrgs) {
+			return fmt.Errorf(ADMIN_ORGID_KEY_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminOrgs))
 		}
 	}
 
@@ -323,8 +329,8 @@ func createUserContract() error {
 			}
 
 			endorsementEntrys[i] = e
-		} else {
-			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
+		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
 			if err != nil {
 				return err
 			}
@@ -498,6 +504,7 @@ func getUserContract() error {
 func upgradeUserContract() error {
 	var adminKeys []string
 	var adminCrts []string
+	var adminOrgs []string
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
 		userSignCrtFilePath, userSignKeyFilePath)
@@ -515,10 +522,14 @@ func upgradeUserContract() error {
 		if len(adminKeys) != len(adminCrts) {
 			return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 		}
-	} else {
+	} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
 		adminKeys = strings.Split(adminKeyFilePaths, ",")
-		if len(adminKeys) == 0 {
+		adminOrgs = strings.Split(adminOrgIds, ",")
+		if len(adminKeys) == 0 || len(adminOrgs) == 0 {
 			return errAdminOrgIdKeyCertIsEmpty
+		}
+		if len(adminKeys) != len(adminOrgs) {
+			return fmt.Errorf(ADMIN_ORGID_KEY_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminOrgs))
 		}
 	}
 
@@ -551,8 +562,8 @@ func upgradeUserContract() error {
 			}
 
 			endorsementEntrys[i] = e
-		} else {
-			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
+		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
 			if err != nil {
 				return err
 			}
@@ -580,6 +591,7 @@ func upgradeUserContract() error {
 func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 	var adminKeys []string
 	var adminCrts []string
+	var adminOrgs []string
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
 		userSignCrtFilePath, userSignKeyFilePath)
@@ -597,10 +609,14 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 		if len(adminKeys) != len(adminCrts) {
 			return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 		}
-	} else {
+	} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
 		adminKeys = strings.Split(adminKeyFilePaths, ",")
-		if len(adminKeys) == 0 {
+		adminOrgs = strings.Split(adminOrgIds, ",")
+		if len(adminKeys) == 0 || len(adminOrgs) == 0 {
 			return errAdminOrgIdKeyCertIsEmpty
+		}
+		if len(adminKeys) != len(adminOrgs) {
+			return fmt.Errorf(ADMIN_ORGID_KEY_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminOrgs))
 		}
 	}
 
@@ -635,8 +651,8 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 			}
 
 			endorsementEntrys[i] = e
-		} else {
-			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
+		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
 			if err != nil {
 				return err
 			}

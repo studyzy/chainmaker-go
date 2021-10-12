@@ -36,6 +36,7 @@ var (
 	clientKeyFilePaths string
 	chainId            string
 	adminKeyFilePaths  string
+	adminOrgIds        string
 )
 
 const (
@@ -43,6 +44,7 @@ const (
 	flagClientKeyFilePaths = "client-key-file-paths"
 	flagChainId            = "chain-id"
 	flagAdminKeyFilePaths  = "admin-key-file-paths"
+	flagAdminOrgIds        = "admin-org-ids"
 
 	flagPubkeyFilePath = "pubkey-file-path"
 	flagOrgId          = "org-id"
@@ -62,10 +64,13 @@ func NewPubkeyCMD() *cobra.Command {
 		"specify the chain id, such as: chain1, chain2 etc.")
 	pkCmd.PersistentFlags().StringVar(&adminKeyFilePaths, flagAdminKeyFilePaths, "",
 		"specify admin key file paths, use ',' to separate")
+	pkCmd.PersistentFlags().StringVar(&adminOrgIds, flagAdminOrgIds, "",
+		"specify admin org-ids, use ',' to separate")
 
 	pkCmd.MarkPersistentFlagRequired(flagSdkConfPath)
 	pkCmd.MarkPersistentFlagRequired(flagChainId)
 	pkCmd.MarkPersistentFlagRequired(flagAdminKeyFilePaths)
+	pkCmd.MarkPersistentFlagRequired(flagAdminOrgIds)
 
 	pkCmd.AddCommand(AddPKCmd())
 	pkCmd.AddCommand(DelPKCmd())
@@ -120,7 +125,7 @@ func DelPKCmd() *cobra.Command {
 }
 
 func cliAddPubKey() error {
-	adminKeys, err := createMultiSignAdmins(adminKeyFilePaths)
+	adminKeys, adminOrgs, err := createMultiSignAdmins(adminKeyFilePaths, adminOrgIds)
 	if err != nil {
 		return err
 	}
@@ -154,7 +159,7 @@ func cliAddPubKey() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
+		e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
 		if err != nil {
 			return err
 		}
@@ -175,7 +180,7 @@ func cliAddPubKey() error {
 }
 
 func cliDelPubKey() error {
-	adminKeys, err := createMultiSignAdmins(adminKeyFilePaths)
+	adminKeys, adminOrgs, err := createMultiSignAdmins(adminKeyFilePaths, adminOrgIds)
 	if err != nil {
 		return err
 	}
@@ -209,7 +214,7 @@ func cliDelPubKey() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], orgId, payload)
+		e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
 		if err != nil {
 			return err
 		}
@@ -239,11 +244,15 @@ func createClientWithConfig() (*sdk.ChainClient, error) {
 	return chainClient, nil
 }
 
-func createMultiSignAdmins(adminKeyFilePaths string) ([]string, error) {
+func createMultiSignAdmins(adminKeyFilePaths string, adminOrgIds string) ([]string, []string, error) {
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	if len(adminKeys) == 0 {
-		return nil, errors.New("no admin users given for sign payload")
+	adminOrgs := strings.Split(adminOrgIds, ",")
+	if len(adminKeys) == 0 || len(adminOrgs) == 0 {
+		return nil, nil, errors.New("no admin users given for sign payload")
+	}
+	if len(adminKeys) != len(adminOrgs) {
+		return nil, nil, fmt.Errorf("admin keys num(%v) is not equals org-id num(%v)", len(adminKeys), len(adminOrgs))
 	}
 
-	return adminKeys, nil
+	return adminKeys, adminOrgs, nil
 }

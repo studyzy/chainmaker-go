@@ -13,6 +13,7 @@ import (
 	"os"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 	sdk "chainmaker.org/chainmaker/sdk-go/v2"
@@ -46,6 +47,7 @@ func uploadCaCertCmd() *cobra.Command {
 func cliUploadCaCert() error {
 	var adminKeys []string
 	var adminCrts []string
+	var adminOrgs []string
 
 	file, err := os.Open(caCertFile)
 	if err != nil {
@@ -69,8 +71,8 @@ func cliUploadCaCert() error {
 		if err != nil {
 			return err
 		}
-	} else {
-		adminKeys, err = createMultiSignAdminsForPK(adminKeyFilePaths)
+	} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+		adminKeys, adminOrgs, err = createMultiSignAdminsForPK(adminKeyFilePaths, adminOrgIds)
 		if err != nil {
 			return err
 		}
@@ -88,11 +90,21 @@ func cliUploadCaCert() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
-		if err != nil {
-			return err
+		if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+			e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
+			if err != nil {
+				return err
+			}
+
+			endorsementEntrys[i] = e
+		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
+			if err != nil {
+				return err
+			}
+
+			endorsementEntrys[i] = e
 		}
-		endorsementEntrys[i] = e
 	}
 
 	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, 5, false)

@@ -83,11 +83,6 @@ func updateBlockInterval() error {
 		if len(adminKeys) != len(adminOrgs) {
 			return fmt.Errorf(ADMIN_ORGID_KEY_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminOrgs))
 		}
-	} else {
-		adminKeys = strings.Split(adminKeyFilePaths, ",")
-		if len(adminKeys) == 0 {
-			return errAdminOrgIdKeyCertIsEmpty
-		}
 	}
 	chainConfig, err := client.GetChainConfig()
 	if err != nil {
@@ -115,13 +110,6 @@ func updateBlockInterval() error {
 			endorsementEntrys[i] = e
 		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
 			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
-			if err != nil {
-				return err
-			}
-
-			endorsementEntrys[i] = e
-		} else {
-			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], "", payload)
 			if err != nil {
 				return err
 			}
