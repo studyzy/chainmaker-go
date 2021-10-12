@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
@@ -71,12 +72,12 @@ func multiSignVoteCMD() *cobra.Command {
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagConcurrency, flagTotalCountPerGoroutine, flagSdkConfPath, flagOrgId, flagChainId, flagTxId,
 		flagTimeout, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagEnableCertHash,
-		flagAdminCrtFilePath, flagAdminKeyFilePath,
+		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagSyncResult,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminCrtFilePath)
-	cmd.MarkFlagRequired(flagAdminKeyFilePath)
+	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
+	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTxId)
 
 	return cmd
@@ -156,7 +157,9 @@ func multiSignReq() error {
 
 func multiSignVote() error {
 	var (
-		err error
+		adminKey string
+		adminCrt string
+		err      error
 	)
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
@@ -165,13 +168,25 @@ func multiSignVote() error {
 		return err
 	}
 	defer client.Stop()
+	adminKeys := strings.Split(adminKeyFilePaths, ",")
+	adminCrts := strings.Split(adminCrtFilePaths, ",")
+	if len(adminKeys) == 0 || len(adminCrts) == 0 {
+		return errAdminOrgIdKeyCertIsEmpty
+	}
+	if len(adminKeys) != len(adminCrts) {
+		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
+	}
+	if len(adminKeys) > 1 {
+		adminKey = adminKeys[0]
+		adminCrt = adminCrts[0]
+	}
 
 	result, err := client.GetTxByTxId(txId)
 	if err != nil {
 		return fmt.Errorf("get tx by txid failed, %s", err.Error())
 	}
 	payload = result.Transaction.Payload
-	endorser, err := sdkutils.MakeEndorserWithPath(adminKeyFilePaths, adminCrtFilePaths, payload)
+	endorser, err := sdkutils.MakeEndorserWithPath(adminKey, adminCrt, payload)
 	if err != nil {
 		return fmt.Errorf("multi sign vote failed, %s", err.Error())
 	}
