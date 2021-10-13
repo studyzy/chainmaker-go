@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	hashAlo "chainmaker.org/chainmaker/common/v2/crypto/hash"
 	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 	"chainmaker.org/chainmaker/common/v2/evmutils"
@@ -97,7 +98,15 @@ func certToUserAddrInStake() *cobra.Command {
 					return err
 				}
 			} else if authType == sdk.PermissionedWithKey || authType == sdk.Public {
-				pubkey = content
+				pk, err := asym.PublicKeyFromPEM(content)
+				if err != nil {
+					return err
+				}
+				pkStr, err := pk.String()
+				if err != nil {
+					return err
+				}
+				pubkey = []byte(pkStr)
 			}
 			if hashType == crypto.CRYPTO_ALGO_SM3 || hashType == crypto.CRYPTO_ALGO_SHA256 {
 				if hashBz, err = hashAlo.GetByStrType(hashType, pubkey); err != nil {
