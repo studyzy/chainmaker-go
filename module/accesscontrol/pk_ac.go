@@ -28,8 +28,6 @@ const (
 	AdminPublicKey = "public"
 	// chainconfig the DPoS of orgId
 	DposOrgId = "dpos_org_id"
-	// chainconfig the DPoS config of nodeId key prefix
-	DposNodeIdKeyPrefix = "stake.nodeID:"
 )
 
 var (
@@ -173,35 +171,12 @@ func (p *pkACProvider) initAdminMembers(trustRootList []*config.TrustRootConfig)
 
 func (p *pkACProvider) initConsensusMember(chainConfig *config.ChainConfig) error {
 	if chainConfig.Consensus.Type == consensus.ConsensusType_DPOS {
-		return p.initDPoSMember(chainConfig.Consensus.DposConfig)
+		return p.initDPoSMember(chainConfig.Consensus.Nodes)
 	}
 	return fmt.Errorf("public chain mode does not support other consensus")
 }
 
-func (p *pkACProvider) updateConsensusMember(chainConfig *config.ChainConfig) error {
-	if chainConfig.Consensus.Type == consensus.ConsensusType_DPOS {
-		return p.updateDPoSMember(chainConfig.Consensus.Nodes)
-	}
-	return fmt.Errorf("public chain mode does not support other consensus")
-}
-
-func (p *pkACProvider) initDPoSMember(consensusConf []*config.ConfigKeyValue) error {
-	if len(consensusConf) == 0 {
-		return fmt.Errorf("init dpos consensus member failed: DPoS config can't be empty in chain config")
-	}
-	var consensusMember sync.Map
-
-	for _, kvPair := range consensusConf {
-		if strings.HasPrefix(kvPair.Key, DposNodeIdKeyPrefix) {
-			consensusMember.Store(kvPair.Value, struct{}{})
-		}
-	}
-	p.consensusMember = &consensusMember
-	p.log.Infof("init consensus list: [%v]", p.consensusMember)
-	return nil
-}
-
-func (p *pkACProvider) updateDPoSMember(consensusConf []*config.OrgConfig) error {
+func (p *pkACProvider) initDPoSMember(consensusConf []*config.OrgConfig) error {
 	if len(consensusConf) == 0 {
 		return fmt.Errorf("update dpos consensus member failed: DPoS config can't be empty in chain config")
 	}
@@ -247,7 +222,7 @@ func (p *pkACProvider) Watch(chainConfig *config.ChainConfig) error {
 		return fmt.Errorf("new public AC provider failed: %s", err.Error())
 	}
 
-	err = p.updateConsensusMember(chainConfig)
+	err = p.initConsensusMember(chainConfig)
 	if err != nil {
 		return fmt.Errorf("new public AC provider failed: %s", err.Error())
 	}
