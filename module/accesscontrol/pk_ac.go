@@ -197,6 +197,7 @@ func (p *pkACProvider) initDPoSMember(consensusConf []*config.ConfigKeyValue) er
 		}
 	}
 	p.consensusMember = &consensusMember
+	p.log.Infof("init consensus list: [%v]", p.consensusMember)
 	return nil
 }
 
@@ -213,6 +214,7 @@ func (p *pkACProvider) updateDPoSMember(consensusConf []*config.OrgConfig) error
 		consensusMember.Store(nodeId, struct{}{})
 	}
 	p.consensusMember = &consensusMember
+	p.log.Infof("update consensus list: [%v]", p.consensusMember)
 	return nil
 }
 
@@ -392,7 +394,7 @@ func (p *pkACProvider) verifyRuleAnyCase(pol *policy, endorsements []*common.End
 		}
 		member := p.getMemberFromCache(endorsement.Signer)
 		if member == nil {
-			p.log.Debugf(
+			p.log.Infof(
 				"authentication warning: the member is not in member cache, memberInfo[%s]",
 				string(endorsement.Signer.MemberInfo))
 			continue
@@ -401,8 +403,12 @@ func (p *pkACProvider) verifyRuleAnyCase(pol *policy, endorsements []*common.End
 		if _, ok := roleList[member.GetRole()]; ok {
 			return true, nil
 		}
+		p.log.Infof("authentication warning, the member role is not in roleList, role: [%s]",
+			member.GetRole())
 	}
-	return false, fmt.Errorf("authentication fail for any rule")
+	err := fmt.Errorf("authentication fail for any rule, policy: rule: [%v],roleList: [%v]",
+		pol.rule, pol.roleList)
+	return false, err
 }
 
 func (p *pkACProvider) verifyRuleMajorityCase(pol *policy, endorsements []*common.EndorsementEntry) (bool, error) {
