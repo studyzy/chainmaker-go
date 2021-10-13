@@ -31,6 +31,7 @@ var (
 	crtPath          string
 	sdkConfPath      string
 	nodeCertPath     string
+	nodePkPath       string
 	pubkeyOrCertPath string
 )
 
@@ -41,6 +42,7 @@ const (
 	flagCrtPath          = "crt-path"
 	flagSdkConfPath      = "sdk-conf-path"
 	flagNodeCertPath     = "node-cert-path"
+	flagNodePkPath       = "node-pk-path"
 	flagCertOrPubkeyPath = "pubkey-cert-path"
 )
 
@@ -69,6 +71,7 @@ func init() {
 	flags.StringVar(&crlPath, flagCrlPath, "", "specify crl file path")
 	flags.StringVar(&crtPath, flagCrtPath, "", "specify crt file path")
 	flags.StringVar(&nodeCertPath, flagNodeCertPath, "", "specify node cert path")
+	flags.StringVar(&nodePkPath, flagNodePkPath, "", "specify node cert path")
 	flags.StringVar(&pubkeyOrCertPath, flagCertOrPubkeyPath, "", "specify user pubkey path or cert path")
 	flags.StringVar(&sdkConfPath, flagSdkConfPath, "", "specify sdk_conf path")
 }
