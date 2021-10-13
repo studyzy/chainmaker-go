@@ -19,7 +19,6 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker/pb-go/v2/txpool"
 	"chainmaker.org/chainmaker/protocol/v2"
-	"github.com/google/martian/log"
 )
 
 // CoreEngine is a block handle engine.
@@ -182,7 +181,7 @@ func (c *CoreEngine) Start() {
 
 // Stop, stop core engine
 func (c *CoreEngine) Stop() {
-	defer log.Infof("core stoped.")
+	defer c.log.Infof("core stoped.")
 	c.blockProposer.Stop() //nolint: errcheck
 }
 

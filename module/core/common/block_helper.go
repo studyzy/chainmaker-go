@@ -827,7 +827,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 
 func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height uint64) []*commonpb.Transaction {
 	proposedBlocks := chain.proposalCache.GetProposedBlocksAt(height)
-	txRetry := make([]*commonpb.Transaction, 0, localconf.ChainMakerConfig.TxPoolConfig.BatchMaxSize)
+	txRetry := make([]*commonpb.Transaction, 0, len(block.Txs))
 	chain.log.Debugf("has %d blocks in height: %d", len(proposedBlocks), height)
 	keepTxs := make(map[string]struct{}, len(block.Txs))
 	for _, tx := range block.Txs {
