@@ -72,7 +72,7 @@ type KeyValuePair struct {
 	Key        string `json:"key,omitempty"`
 	Value      string `json:"value,omitempty"`
 	Unique     bool   `json:"unique,omitempty"`
-	RepeatRate int    `json:"repeatRate,omitempty"`
+	RandomRate int    `json:"randomRate,omitempty"`
 }
 
 type Detail struct {
@@ -579,36 +579,36 @@ var (
 	resultStr   = "exec result, orgid: %s, loop_id: %d, method1: %s, txid: %s, resp: %+v"
 )
 
-var repeatRate = 0
+var randomRate = 0
 var totalSentTxs = 1
-var totalRepeatSentTxs = 1
+var totalRandomSentTxs = 1
 
 func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey, orgId string, userCrtPath string, loopId int, ps []*KeyValuePair) error {
 	txId := utils.GetRandTxId()
 
 	// 构造Payload
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	repeatRateTmp := 0
+	randomRateTmp := 0
 	for _, p := range ps {
-		if p.RepeatRate > 100 || p.RepeatRate < 0 {
-			panic("repeatRate must int in [0,100]")
+		if p.RandomRate > 100 || p.RandomRate < 0 {
+			panic("randomRate must int in [0,100]")
 		}
 
-		if p.RepeatRate > 0 {
-			if repeatRateTmp > 0 {
-				panic("repeatRate used once by one key")
+		if p.RandomRate > 0 {
+			if randomRateTmp > 0 {
+				panic("randomRate used once by one key")
 			}
-			repeatRateTmp = p.RepeatRate
-			repeatRate = p.RepeatRate
+			randomRateTmp = p.RandomRate
+			randomRate = p.RandomRate
 		}
 
 		key := p.Key
 		val := []byte(p.Value)
 		totalSentTxs += 1
-		if repeatRate > 0 && p.RepeatRate > 0 {
-			if repeatRate > (totalRepeatSentTxs * 100 / totalSentTxs) {
+		if randomRate > 0 && p.RandomRate > 0 {
+			if randomRate > (totalRandomSentTxs * 100 / totalSentTxs) {
 				val = []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano()))
-				totalRepeatSentTxs += 1
+				totalRandomSentTxs += 1
 			}
 		} else if p.Unique {
 			val = []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano()))
@@ -623,11 +623,11 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 		if err != nil {
 			fmt.Println(err)
 		}
-		rate := totalRepeatSentTxs * 100 / totalSentTxs
-		if totalRepeatSentTxs == 1 {
+		rate := totalRandomSentTxs * 100 / totalSentTxs
+		if totalRandomSentTxs == 1 {
 			rate = 0
 		}
-		fmt.Printf("totalSentTxs:%d\t totalRepeatSentTxs:%d\t repeatRate:%d \t param:%s\t \n", totalSentTxs, totalRepeatSentTxs-1, rate, string(j))
+		fmt.Printf("totalSentTxs:%d\t totalRandomSentTxs:%d\t randomRate:%d \t param:%s\t \n", totalSentTxs, totalRandomSentTxs-1, rate, string(j))
 	}
 
 	// 支持evm
