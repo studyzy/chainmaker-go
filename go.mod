@@ -6,7 +6,7 @@ require (
 	chainmaker.org/chainmaker-go/blockchain v0.0.0
 	chainmaker.org/chainmaker-go/rpcserver v0.0.0-00010101000000-000000000000
 	chainmaker.org/chainmaker-go/txpool v0.0.0
-	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211012062258-a0408edb4a1c
+	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211013023845-6792e74fdd6d
 	chainmaker.org/chainmaker/logger/v2 v2.0.0
 	chainmaker.org/chainmaker/txpool-batch/v2 v2.0.0-20211013035004-190b3acb8eb8
 	chainmaker.org/chainmaker/txpool-single/v2 v2.0.0-20211013035055-0b3b640215ad

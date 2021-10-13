@@ -13,7 +13,7 @@ require (
 	chainmaker.org/chainmaker-go/txpool v0.0.0
 	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211011130949-b332c3193ef5
-	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211012062258-a0408edb4a1c
+	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211013023845-6792e74fdd6d
 	chainmaker.org/chainmaker/logger/v2 v2.0.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211011124513-b828aaef61ff
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210929132906-a818e778c41b
