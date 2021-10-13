@@ -12,10 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	payload *common.Payload
-)
-
 type ParamMultiSign struct {
 	Key    string
 	Value  string
@@ -107,7 +103,8 @@ func multiSignQueryCMD() *cobra.Command {
 
 func multiSignReq() error {
 	var (
-		err error
+		err     error
+		payload *common.Payload
 	)
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
@@ -160,6 +157,7 @@ func multiSignVote() error {
 		adminKey string
 		adminCrt string
 		err      error
+		payload  *common.Payload
 	)
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
