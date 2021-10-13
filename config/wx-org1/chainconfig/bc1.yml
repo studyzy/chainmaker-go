@@ -17,6 +17,15 @@ crypto:
 contract:
   enable_sql_support: false
 
+# 虚拟机配置
+vm:
+  # 虚拟机支持列表
+  support_list:
+    - "wasmer"
+    - "gasm"
+    - "evm"
+    - "wxvm"
+
 # 交易、区块相关配置
 block:
   tx_timestamp_verify: true # 是否需要开启交易时间戳校验
