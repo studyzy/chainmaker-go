@@ -13,7 +13,7 @@ fi
 
 ./send_proposal_request_tool parallel invoke  \
 --method=increase  \
---pairs="[{\"value\": \"value_1\", \"key\": \"value\", \"unique\": false}, {\"value\": \"name_1\", \"key\": \"name\",\"unique\":true}, {\"value\": \"key_1\", \"key\": \"key\",\"unique\":true}]"   \
+--pairs="[{\"value\": \"value_1\", \"key\": \"value\", \"unique\": false}, {\"value\": \"name_1\", \"key\": \"name\",\"repeatRate\": 10}, {\"value\": \"key_1\", \"key\": \"key\",\"unique\":true}]"   \
 --ip=127.0.0.1  \
 --port=12301  \
 --hosts=localhost:12301  \
@@ -31,7 +31,7 @@ fi
 --contract-name=${contract_name} \
 -I=wx-org1.chainmaker.org \
 --sleepTime=100  \
---threadNum=300  \
+--threadNum=10  \
 --loopNum=1000  \
 --timeout=30  \
 --printTime=1  \

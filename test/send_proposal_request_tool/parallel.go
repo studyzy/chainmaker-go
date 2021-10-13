@@ -69,9 +69,10 @@ var (
 )
 
 type KeyValuePair struct {
-	Key    string `json:"key,omitempty"`
-	Value  string `json:"value,omitempty"`
-	Unique bool   `json:"unique,omitempty"`
+	Key        string `json:"key,omitempty"`
+	Value      string `json:"value,omitempty"`
+	Unique     bool   `json:"unique,omitempty"`
+	RepeatRate int    `json:"repeatRate,omitempty"`
 }
 
 type Detail struct {
@@ -578,24 +579,55 @@ var (
 	resultStr   = "exec result, orgid: %s, loop_id: %d, method1: %s, txid: %s, resp: %+v"
 )
 
+var repeatRate = 0
+var totalSentTxs = 1
+var totalRepeatSentTxs = 1
+
 func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey, orgId string, userCrtPath string, loopId int, ps []*KeyValuePair) error {
 	txId := utils.GetRandTxId()
 
 	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{}
+	pairs := make([]*commonPb.KeyValuePair, 0)
+	repeatRateTmp := 0
 	for _, p := range ps {
+		if p.RepeatRate > 100 || p.RepeatRate < 0 {
+			panic("repeatRate must int in [0,100]")
+		}
+
+		if p.RepeatRate > 0 {
+			if repeatRateTmp > 0 {
+				panic("repeatRate used once by one key")
+			}
+			repeatRateTmp = p.RepeatRate
+			repeatRate = p.RepeatRate
+		}
+
 		key := p.Key
 		val := []byte(p.Value)
-		if p.Unique {
+		totalSentTxs += 1
+		if repeatRate > 0 && p.RepeatRate > 0 {
+			if repeatRate > (totalRepeatSentTxs * 100 / totalSentTxs) {
+				val = []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano()))
+				totalRepeatSentTxs += 1
+			}
+		} else if p.Unique {
 			val = []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano()))
 		}
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   key,
 			Value: val,
 		})
-		if showKey {
-			fmt.Printf("key:%s val:%s\n", key, val)
+	}
+	if showKey {
+		j, err := json.Marshal(pairs)
+		if err != nil {
+			fmt.Println(err)
 		}
+		rate := totalRepeatSentTxs * 100 / totalSentTxs
+		if totalRepeatSentTxs == 1 {
+			rate = 0
+		}
+		fmt.Printf("totalSentTxs:%d\t totalRepeatSentTxs:%d\t repeatRate:%d \t param:%s\t \n", totalSentTxs, totalRepeatSentTxs-1, rate, string(j))
 	}
 
 	// 支持evm
