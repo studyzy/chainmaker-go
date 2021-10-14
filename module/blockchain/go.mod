@@ -11,6 +11,7 @@ require (
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
 	chainmaker.org/chainmaker-go/sync v0.0.0
 	chainmaker.org/chainmaker-go/txpool v0.0.0
+	chainmaker.org/chainmaker-go/vm v0.0.0
 	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211014142031-0a2a2aac316c
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211014122130-4ba9d85a64f8
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211014134424-9431ffcc5bbc
@@ -24,6 +25,7 @@ require (
 	chainmaker.org/chainmaker/vm v0.0.0-20211014150836-d6eae08ad3bd
 	chainmaker.org/chainmaker/vm-evm v0.0.0-20211014155012-e69085fedd2f
 	chainmaker.org/chainmaker/vm-gasm v0.0.0-20211014154622-4c1c925eacdd
+	chainmaker.org/chainmaker/vm-native v0.0.0-20211014145655-91f98409dbbd // indirect
 	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211014154818-0f4ed6551187
 	chainmaker.org/chainmaker/vm-wxvm v0.0.0-20211014155330-6a66e3935c65
 	github.com/fatih/color v1.13.0 // indirect
@@ -43,6 +45,7 @@ replace (
 	chainmaker.org/chainmaker-go/subscriber => ../subscriber
 	chainmaker.org/chainmaker-go/sync => ../sync
 	chainmaker.org/chainmaker-go/txpool => ../txpool
+	chainmaker.org/chainmaker-go/vm => ../vm
 	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
 	google.golang.org/grpc v1.40.0 => google.golang.org/grpc v1.26.0
 )
