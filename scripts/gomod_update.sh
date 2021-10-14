@@ -11,22 +11,30 @@ cd ../module/accesscontrol
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
+go get chainmaker.org/chainmaker/localconf/v2@${BRANCH}
+go get chainmaker.org/chainmaker/utils/v2@${BRANCH}
 go mod tidy
 
 cd ../consensus
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
+go get chainmaker.org/chainmaker/localconf/v2@${BRANCH}
+go get chainmaker.org/chainmaker/chainconf/v2@${BRANCH}
+go get chainmaker.org/chainmaker/utils/v2@${BRANCH}
 go get chainmaker.org/chainmaker/vm-native@${BRANCH}
+go get chainmaker.org/chainmaker/logger/v2@${BRANCH}
 go mod tidy
 # go test ./...
 cd ../core
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
-go get chainmaker.org/chainmaker/vm-native@${BRANCH}
+go get chainmaker.org/chainmaker/localconf/v2@${BRANCH}
+go get chainmaker.org/chainmaker/chainconf/v2@${BRANCH}
+go get chainmaker.org/chainmaker/utils/v2@${BRANCH}
 go get chainmaker.org/chainmaker/vm@${BRANCH}
-go get chainmaker.org/chainmaker/store/v2@${BRANCH}
+go get chainmaker.org/chainmaker/logger/v2@${BRANCH}
 go mod tidy
 # go test ./...
 
@@ -35,15 +43,22 @@ cd ../net
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
+go get chainmaker.org/chainmaker/logger/v2@${BRANCH}
+go get chainmaker.org/chainmaker/chainmaker-net-common@${BRANCH}
+go get chainmaker.org/chainmaker/chainmaker-net-liquid@${BRANCH}
+go get chainmaker.org/chainmaker/chainmaker-net-libp2p@${BRANCH}
+
 go mod tidy
 # go test ./...
 cd ../rpcserver
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
-go get chainmaker.org/chainmaker/vm-native@${BRANCH}
+go get chainmaker.org/chainmaker/localconf/v2@${BRANCH}
+go get chainmaker.org/chainmaker/chainconf/v2@${BRANCH}
 go get chainmaker.org/chainmaker/utils/v2@${BRANCH}
-go get chainmaker.org/chainmaker/store/v2@${BRANCH}
+go get chainmaker.org/chainmaker/vm@${BRANCH}
+go get chainmaker.org/chainmaker/logger/v2@${BRANCH}
 go mod tidy
 ## go test ./...
 cd ../snapshot
@@ -80,6 +95,12 @@ go get chainmaker.org/chainmaker/vm-wasmer@${BRANCH}
 go get chainmaker.org/chainmaker/vm-gasm@${BRANCH}
 go get chainmaker.org/chainmaker/vm-wxvm@${BRANCH}
 go get chainmaker.org/chainmaker/vm-evm@${BRANCH}
+go get chainmaker.org/chainmaker/localconf/v2@${BRANCH}
+go get chainmaker.org/chainmaker/chainconf/v2@${BRANCH}
+go get chainmaker.org/chainmaker/txpool-batch/v2@${BRANCH}
+go get chainmaker.org/chainmaker/vm@${BRANCH}
+go get chainmaker.org/chainmaker/utils/v2@${BRANCH}
+
 go mod tidy
 
 # go test ./...
@@ -98,18 +119,18 @@ go mod tidy
 #go mod tidy
 #cd ../wxvm
 #go mod tidy
-cd ../../test
-go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
-go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
-go get chainmaker.org/chainmaker/common/v2@${BRANCH}
-go mod tidy
-go build ./...
-cd ../tools/cmc
-go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
-go get chainmaker.org/chainmaker/sdk-go/v2@${BRANCH}
-go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
-go get chainmaker.org/chainmaker/common/v2@${BRANCH}
-go mod tidy
+#cd ../../test
+#go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
+#go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
+#go get chainmaker.org/chainmaker/common/v2@${BRANCH}
+#go mod tidy
+#go build ./...
+#cd ../tools/cmc
+#go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
+#go get chainmaker.org/chainmaker/sdk-go/v2@${BRANCH}
+#go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
+#go get chainmaker.org/chainmaker/common/v2@${BRANCH}
+#go mod tidy
 ## go test ./...
 go build .
 cd ../scanner

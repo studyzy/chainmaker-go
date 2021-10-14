@@ -169,12 +169,12 @@ func (pp *permissionedPkACProvider) Watch(chainConfig *config.ChainConfig) error
 }
 
 func (pp *permissionedPkACProvider) ContractNames() []string {
-	return []string{syscontract.SystemContract_PUBKEY_MANAGEMENT.String()}
+	return []string{syscontract.SystemContract_PUBKEY_MANAGE.String()}
 }
 
 func (pp *permissionedPkACProvider) Callback(contractName string, payloadBytes []byte) error {
 	switch contractName {
-	case syscontract.SystemContract_PUBKEY_MANAGEMENT.String():
+	case syscontract.SystemContract_PUBKEY_MANAGE.String():
 		return pp.systemContractCallbackPublicKeyManagementCase(payloadBytes)
 	default:
 		pp.acService.log.Debugf("unwatched smart contract [%s]", contractName)

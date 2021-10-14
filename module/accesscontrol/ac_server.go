@@ -294,9 +294,9 @@ func (acs *accessControlService) createDefaultResourcePolicy(localOrgId string) 
 		syscontract.CertManageFunction_CERT_ADD.String(), policySpecialWrite)
 
 	// Disable pubkey management for cert mode
-	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGEMENT.String()+"-"+
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGE.String()+"-"+
 		syscontract.PubkeyManageFunction_PUBKEY_ADD.String(), policyForbidden)
-	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGEMENT.String()+"-"+
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGE.String()+"-"+
 		syscontract.PubkeyManageFunction_PUBKEY_DELETE.String(), policyForbidden)
 
 	//for private compute
@@ -514,9 +514,9 @@ func (acs *accessControlService) createDefaultResourcePolicyForPK(localOrgId str
 	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
 		syscontract.ContractManageFunction_REVOKE_CONTRACT.String(), policyConfig)
 
-	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGEMENT.String()+"-"+
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGE.String()+"-"+
 		syscontract.PubkeyManageFunction_PUBKEY_ADD.String(), policySelfConfig)
-	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGEMENT.String()+"-"+
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGE.String()+"-"+
 		syscontract.PubkeyManageFunction_PUBKEY_DELETE.String(), policySelfConfig)
 }
 

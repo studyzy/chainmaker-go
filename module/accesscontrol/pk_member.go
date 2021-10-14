@@ -148,7 +148,7 @@ func newPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map,
 	}
 
 	publicKeyIdex := pubkeyHash(pkBytes)
-	publicKeyInfoBytes, err := acs.dataStore.ReadObject(syscontract.SystemContract_PUBKEY_MANAGEMENT.String(), []byte(publicKeyIdex))
+	publicKeyInfoBytes, err := acs.dataStore.ReadObject(syscontract.SystemContract_PUBKEY_MANAGE.String(), []byte(publicKeyIdex))
 	if err != nil {
 		return nil, fmt.Errorf("new public key member failed: %s", err.Error())
 	}
