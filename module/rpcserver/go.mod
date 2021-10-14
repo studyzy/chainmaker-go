@@ -5,6 +5,7 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/blockchain v0.0.0-00010101000000-000000000000
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
+	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211014142031-0a2a2aac316c // indirect
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211014122130-4ba9d85a64f8
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211014134424-9431ffcc5bbc
 	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211014131951-892d098049bc
@@ -12,6 +13,9 @@ require (
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
 	chainmaker.org/chainmaker/store/v2 v2.0.0-20211014154101-7b199f0df636
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211014131421-43de8d9fe869
+	chainmaker.org/chainmaker/vm v0.0.0-20211014150836-d6eae08ad3bd // indirect
+	chainmaker.org/chainmaker/vm-evm v0.0.0-20211014155012-e69085fedd2f // indirect
+	chainmaker.org/chainmaker/vm-gasm v0.0.0-20211014154622-4c1c925eacdd // indirect
 	chainmaker.org/chainmaker/vm-native v0.0.0-20211014145655-91f98409dbbd
 	github.com/gogo/protobuf v1.3.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0

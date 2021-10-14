@@ -8,7 +8,7 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 
-type Provider func() (protocol.VmInstancesManager, error)
+type Provider func(chainId string) (protocol.VmInstancesManager, error)
 
 var vmProviders = make(map[string]Provider)
 
@@ -42,9 +42,9 @@ var VmTypeToRunTimeType = map[string]common.RuntimeType{
 
 var RunTimeTypeToVmType = map[common.RuntimeType]string{
 	common.RuntimeType_GASM:        "GASM",
-	common.RuntimeType_WASMER:      "GASM",
-	common.RuntimeType_WXVM:        "GASM",
-	common.RuntimeType_EVM:         "GASM",
-	common.RuntimeType_DOCKER_GO:   "GASM",
-	common.RuntimeType_DOCKER_JAVA: "GASM",
+	common.RuntimeType_WASMER:      "WASMER",
+	common.RuntimeType_WXVM:        "WXVM",
+	common.RuntimeType_EVM:         "EVM",
+	common.RuntimeType_DOCKER_GO:   "DOCKERGO",
+	common.RuntimeType_DOCKER_JAVA: "DOCKERJAVA",
 }
