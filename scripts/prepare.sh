@@ -22,6 +22,7 @@ BUILD_CONFIG_PATH=${BUILD_PATH}/config
 CRYPTOGEN_TOOL_PATH=${PROJECT_PATH}/tools/chainmaker-cryptogen
 CRYPTOGEN_TOOL_BIN=${CRYPTOGEN_TOOL_PATH}/bin/chainmaker-cryptogen
 CRYPTOGEN_TOOL_CONF=${CRYPTOGEN_TOOL_PATH}/config/crypto_config_template.yml
+CRYPTOGEN_TOOL_PKCS11_KEYS=${CRYPTOGEN_TOOL_PATH}/config/pkcs11_keys.yml
 
 BC_YML_TRUST_ROOT_LINE=126
 BC_YML_TRUST_ROOT_LINE_END=146
@@ -112,10 +113,11 @@ function generate_certs() {
     fi
 
     cp $CRYPTOGEN_TOOL_CONF crypto_config.yml
+    cp $CRYPTOGEN_TOOL_PKCS11_KEYS pkcs11_keys.yml
 
     xsed "s%count: 4%count: ${NODE_CNT}%g" crypto_config.yml
 
-    ${CRYPTOGEN_TOOL_BIN} generate -c ./crypto_config.yml
+    ${CRYPTOGEN_TOOL_BIN} generate -c ./crypto_config.yml  -p ./pkcs11_keys.yml
 }
 
 function generate_config() {
@@ -205,7 +207,7 @@ function generate_config() {
                     cp $CONFIG_TPL_PATH/chainconfig/bc_solo.tpl node$i/chainconfig/bc$j.yml
                     xsed "s%{consensus_type}%0%g" node$i/chainconfig/bc$j.yml
                 else
-                    cp $CONFIG_TPL_PATH/chainconfig/bc_1.yml node$i/chainconfig/bc$j.yml
+                    cp $CONFIG_TPL_PATH/chainconfig/bc_solo.tpl node$i/chainconfig/bc$j.yml
                     xsed "s%{consensus_type}%$CONSENSUS_TYPE%g" node$i/chainconfig/bc$j.yml
                 fi
             elif [ $NODE_CNT -eq 4 ] || [ $NODE_CNT -eq 7 ]; then

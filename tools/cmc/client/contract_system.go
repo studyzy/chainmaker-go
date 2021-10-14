@@ -59,6 +59,12 @@ func systemContractCMD() *cobra.Command {
 	systemContractCmd.AddCommand(stakeReadSystemContractAddr())
 	systemContractCmd.AddCommand(stakeReadCompleteUnBoundingEpochNumber())
 
+	// system contract manage
+	systemContractCmd.AddCommand(systemContractManageCMD())
+
+	// system contract multi sign
+	systemContractCmd.AddCommand(systemContractMultiSignCMD())
+
 	// DPoS-stake contract
 	return systemContractCmd
 }

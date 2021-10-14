@@ -67,6 +67,9 @@ var (
 	validator string
 	epochID   string
 
+	grantContractList  []string
+	revokeContractList []string
+
 	trustMemberOrgId    string
 	trustMemberInfoPath string
 	trustMemberRole     string
@@ -117,6 +120,8 @@ const (
 	flagDelegator              = "delegator"
 	flagValidator              = "validator"
 	flagEpochID                = "epoch-id"
+	flagGrantContractList      = "grant-contract-list"
+	flagRevokeContractList     = "revoke-contract-list"
 )
 
 func ClientCMD() *cobra.Command {
@@ -207,6 +212,8 @@ func init() {
 	flags.StringVar(&delegator, flagDelegator, "", "specify delegator address")
 	flags.StringVar(&validator, flagValidator, "", "specify validator address")
 	flags.StringVar(&epochID, flagEpochID, "", "specify epoch id")
+	flags.StringSliceVar(&grantContractList, flagGrantContractList, nil, "specify grant list")
+	flags.StringSliceVar(&revokeContractList, flagRevokeContractList, nil, "specify revoke list")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {
