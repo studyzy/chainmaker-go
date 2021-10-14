@@ -8,8 +8,10 @@ require (
 	chainmaker.org/chainmaker-go/txpool v0.0.0
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211013023845-6792e74fdd6d
 	chainmaker.org/chainmaker/logger/v2 v2.0.0
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014072047-7c79e697ffa5 // indirect
 	chainmaker.org/chainmaker/txpool-batch/v2 v2.0.0-20211013035004-190b3acb8eb8
 	chainmaker.org/chainmaker/txpool-single/v2 v2.0.0-20211013035055-0b3b640215ad
+	chainmaker.org/chainmaker/vm-evm v0.0.0-20211014084328-aa697b65315d // indirect
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
 	github.com/prometheus/client_golang v1.11.0

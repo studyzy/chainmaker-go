@@ -10,9 +10,9 @@ require (
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211013023845-6792e74fdd6d
 	chainmaker.org/chainmaker/logger/v2 v2.0.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211011124513-b828aaef61ff
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210927062046-68813f263c0b
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014072047-7c79e697ffa5
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210916084713-abd13154c26b
-	chainmaker.org/chainmaker/vm v0.0.0-20211009033650-5123c6160898
+	chainmaker.org/chainmaker/vm v0.0.0-20211014080114-9a2dce05d8f9
 	github.com/gogo/protobuf v1.3.2
 	github.com/panjf2000/ants/v2 v2.4.3
 	github.com/prometheus/client_golang v1.11.0

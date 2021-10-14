@@ -16,15 +16,15 @@ require (
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211013023845-6792e74fdd6d
 	chainmaker.org/chainmaker/logger/v2 v2.0.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211011124513-b828aaef61ff
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210929132906-a818e778c41b
-	chainmaker.org/chainmaker/store/v2 v2.0.0-20211009100304-856ce14a7318
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014072047-7c79e697ffa5
+	chainmaker.org/chainmaker/store/v2 v2.0.0-20211012062734-30383fc805fd
 	chainmaker.org/chainmaker/txpool-batch/v2 v2.0.0-20211013035004-190b3acb8eb8
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210916084713-abd13154c26b
-	chainmaker.org/chainmaker/vm v0.0.0-20211009033650-5123c6160898
-	chainmaker.org/chainmaker/vm-evm v0.0.0-20210916091920-b915815eb88b
-	chainmaker.org/chainmaker/vm-gasm v0.0.0-20211011113052-073922cd3e28
-	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211011030923-6b5440e1e9f7
-	chainmaker.org/chainmaker/vm-wxvm v0.0.0-20210918101823-dce1c76fb189
+	chainmaker.org/chainmaker/vm v0.0.0-20211014080114-9a2dce05d8f9
+	chainmaker.org/chainmaker/vm-evm v0.0.0-20211014084328-aa697b65315d
+	chainmaker.org/chainmaker/vm-gasm v0.0.0-20211014080455-d5aa5b23cc7c
+	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211014094850-8c2debacd874
+	chainmaker.org/chainmaker/vm-wxvm v0.0.0-20211014095650-d445d308dddc
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20210113012101-fb4e108d2519 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
