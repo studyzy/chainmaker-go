@@ -209,6 +209,29 @@ func (bc *Blockchain) initChainConf() (err error) {
 		return err
 	}
 
+	authType := strings.ToLower(bc.chainConf.ChainConfig().AuthType)
+	if authType == "" {
+		authType = protocol.PermissionedWithCert
+	}
+
+	if authType == protocol.Identity {
+		authType = protocol.PermissionedWithCert
+	}
+
+	localAuthType := strings.ToLower(localconf.ChainMakerConfig.AuthType)
+
+	if localAuthType == "" {
+		localAuthType = protocol.PermissionedWithCert
+	}
+
+	if localAuthType == protocol.Identity {
+		localAuthType = protocol.PermissionedWithCert
+	}
+
+	if authType != localAuthType {
+		return fmt.Errorf("auth type of chain config mismatch the local config")
+	}
+
 	bc.chainNodeList, err = bc.chainConf.GetConsensusNodeIdList()
 	if err != nil {
 		bc.log.Errorf("load node list of chain config failed, %s", err)
@@ -251,6 +274,30 @@ func (bc *Blockchain) initCache() (err error) {
 			bc.log.Errorf("invoke chain config genesis failed, %s", err)
 			return err
 		}
+
+		authType := strings.ToLower(chainConfig.AuthType)
+		if authType == "" {
+			authType = protocol.PermissionedWithCert
+		}
+
+		if authType == protocol.Identity {
+			authType = protocol.PermissionedWithCert
+		}
+
+		localAuthType := strings.ToLower(localconf.ChainMakerConfig.AuthType)
+
+		if localAuthType == "" {
+			localAuthType = protocol.PermissionedWithCert
+		}
+
+		if localAuthType == protocol.Identity {
+			localAuthType = protocol.PermissionedWithCert
+		}
+
+		if authType != localAuthType {
+			return fmt.Errorf("auth type of chain config mismatch the local config")
+		}
+
 		genesisBlock, rwSetList, err := utils.CreateGenesis(chainConfig)
 		if err != nil {
 			return fmt.Errorf("create chain [%s] genesis failed, %s", bc.chainId, err.Error())
