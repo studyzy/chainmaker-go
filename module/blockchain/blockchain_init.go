@@ -172,11 +172,12 @@ func (bc *Blockchain) initStore() (err error) {
 
 	err = container.Register(storeFactory.NewStore,
 		container.Parameters(map[int]interface{}{0: bc.chainId, 1: config}),
-		container.DependsOn(map[int]string{2: "store"}))
+		container.DependsOn(map[int]string{2: "store"}),
+		container.Name(bc.chainId))
 	if err != nil {
 		return err
 	}
-	err = container.Resolve(&bc.store)
+	err = container.Resolve(&bc.store, container.ResolveName(bc.chainId))
 	if err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
