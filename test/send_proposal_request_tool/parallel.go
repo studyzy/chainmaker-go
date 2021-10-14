@@ -69,9 +69,10 @@ var (
 )
 
 type KeyValuePair struct {
-	Key    string `json:"key,omitempty"`
-	Value  string `json:"value,omitempty"`
-	Unique bool   `json:"unique,omitempty"`
+	Key        string `json:"key,omitempty"`
+	Value      string `json:"value,omitempty"`
+	Unique     bool   `json:"unique,omitempty"`
+	RandomRate int    `json:"randomRate,omitempty"`
 }
 
 type Detail struct {
@@ -578,24 +579,55 @@ var (
 	resultStr   = "exec result, orgid: %s, loop_id: %d, method1: %s, txid: %s, resp: %+v"
 )
 
+var randomRate = 0
+var totalSentTxs = 1
+var totalRandomSentTxs = 1
+
 func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey, orgId string, userCrtPath string, loopId int, ps []*KeyValuePair) error {
 	txId := utils.GetRandTxId()
 
 	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{}
+	pairs := make([]*commonPb.KeyValuePair, 0)
+	randomRateTmp := 0
 	for _, p := range ps {
+		if p.RandomRate > 100 || p.RandomRate < 0 {
+			panic("randomRate must int in [0,100]")
+		}
+
+		if p.RandomRate > 0 {
+			if randomRateTmp > 0 {
+				panic("randomRate used once by one key")
+			}
+			randomRateTmp = p.RandomRate
+			randomRate = p.RandomRate
+		}
+
 		key := p.Key
 		val := []byte(p.Value)
-		if p.Unique {
+		totalSentTxs += 1
+		if randomRate > 0 && p.RandomRate > 0 {
+			if randomRate > (totalRandomSentTxs * 100 / totalSentTxs) {
+				val = []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano()))
+				totalRandomSentTxs += 1
+			}
+		} else if p.Unique {
 			val = []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano()))
 		}
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   key,
 			Value: val,
 		})
-		if showKey {
-			fmt.Printf("key:%s val:%s\n", key, val)
+	}
+	if showKey {
+		j, err := json.Marshal(pairs)
+		if err != nil {
+			fmt.Println(err)
 		}
+		rate := totalRandomSentTxs * 100 / totalSentTxs
+		if totalRandomSentTxs == 1 {
+			rate = 0
+		}
+		fmt.Printf("totalSentTxs:%d\t totalRandomSentTxs:%d\t randomRate:%d \t param:%s\t \n", totalSentTxs, totalRandomSentTxs-1, rate, string(j))
 	}
 
 	// 支持evm

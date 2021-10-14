@@ -28,14 +28,11 @@ var (
 	deadlineBlock int
 	payload       string
 	voteStatus    bool // true 赞成，false 不赞成
-	//adminOrgId    string // 签名者的组织
-	//adminKeyPath  string // 签名者的key
-	//adminCrtPath  string // 签名者的cert
 
 	multiTxId   string
 	payloadHash string
 
-	syscontractName string
+	sysContractName string
 	sysMethod       string
 	txId            string
 	height          uint64
@@ -43,7 +40,7 @@ var (
 	withRWSets      bool
 	useTLS          bool
 	runTime         int32
-	reqpairsString  string
+	reqPairsString  string
 	pairsString     string
 	pairsFile       string
 	method          string
@@ -69,10 +66,9 @@ func MultiSignReqCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&syscontractName, "syscontractName", "s", "", "specify syscontractName")
-	flags.StringVarP(&sysMethod, "sysMethod", "m", "", "specify sysMethod")
+	flags.StringVarP(&sysContractName, "sys-contract-name", "s", "", "specify syscontractName")
+	flags.StringVarP(&sysMethod, "sys-method", "m", "", "specify sysMethod")
 	flags.StringVarP(&pairsString, "pairs", "", "", "specify pairs")
-	//flags.StringVarP(&pairsFile, "pairs-file", "", "", "specify pairs file, if used, set --pairs=\"\"")
 	return cmd
 }
 
@@ -87,17 +83,13 @@ func MultiSignVoteCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&multiTxId, "multi_tx_id", "", "the multi sign req tx_id")
-	flags.StringVarP(&syscontractName, "syscontractName", "s", "", "specify syscontractName")
-	flags.StringVarP(&sysMethod, "sysMethod", "m", "", "specify sysMethod")
-	flags.StringVarP(&reqpairsString, "reqpairs", "", "", "specify reqpairs")
-	flags.Int64VarP(&reqTimestamp, "reqtimestamp", "", 0, "specify reqtimestamp")
-	flags.IntVarP(&memberNum, "memberNum", "", 2, "specify reqtimestamp")
+	flags.StringVar(&multiTxId, "multi-tx-id", "", "the multi sign req tx_id")
+	flags.StringVarP(&sysContractName, "sys-contract-name", "s", "", "specify syscontractName")
+	flags.StringVarP(&sysMethod, "sys-method", "m", "", "specify sysMethod")
+	flags.StringVarP(&reqPairsString, "req-pairs", "", "", "specify reqpairs")
+	flags.Int64VarP(&reqTimestamp, "req-timestamp", "", 0, "specify reqtimestamp")
+	flags.IntVarP(&memberNum, "member-num", "", 2, "specify reqtimestamp")
 
-	//flags.StringVarP(&pairsFile, "pairs-file", "", "", "specify pairs file, if used, set --pairs=\"\"")
-	//flags.StringVar(&adminOrgId, "admin_org_id", "", "the admin orgId")
-	//flags.StringVar(&adminKeyPath, "admin_key_path", "", "the admin keyPath")
-	//flags.StringVar(&adminCrtPath, "admin_crt_path", "", "the admin certPath")
 	return cmd
 }
 
@@ -112,7 +104,7 @@ func MultiSignQueryCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&multiTxId, "multi_tx_id", "", "the multi_sign req tx_id")
+	flags.StringVar(&multiTxId, "multi-tx-id", "", "the multi_sign req tx_id")
 	return cmd
 }
 
@@ -133,7 +125,7 @@ func multiSignReq() error {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   syscontract.MultiReq_SYS_CONTRACT_NAME.String(),
-		Value: []byte(syscontractName),
+		Value: []byte(sysContractName),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   syscontract.MultiReq_SYS_METHOD.String(),
@@ -196,14 +188,14 @@ func multiSignVote() error {
 	var reqpairs []*commonPb.KeyValuePair
 	reqpairs = append(reqpairs, &commonPb.KeyValuePair{
 		Key:   syscontract.MultiReq_SYS_CONTRACT_NAME.String(),
-		Value: []byte(syscontractName),
+		Value: []byte(sysContractName),
 	})
 	reqpairs = append(reqpairs, &commonPb.KeyValuePair{
 		Key:   syscontract.MultiReq_SYS_METHOD.String(),
 		Value: []byte(sysMethod),
 	})
 	var pms []*ParamMultiSign
-	json.Unmarshal([]byte(reqpairsString), &pms)
+	json.Unmarshal([]byte(reqPairsString), &pms)
 	for _, pm := range pms {
 		if pm.IsFile {
 			byteCode, err := ioutil.ReadFile(pm.Value)

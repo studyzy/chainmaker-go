@@ -3,17 +3,29 @@ module chainmaker.org/chainmaker-go/net
 go 1.15
 
 require (
-	chainmaker.org/chainmaker/chainmaker-net-common v0.0.6-0.20210929043521-02e40bf96300
-	chainmaker.org/chainmaker/chainmaker-net-libp2p v0.0.11-0.20210929043636-4e46c072735d
-	chainmaker.org/chainmaker/chainmaker-net-liquid v0.0.8-0.20210929043651-03cf1a4650f8
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211008100315-b70ecfa0c08f
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211011092036-d42992b75fd5
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210913154622-9f9774ed7d1b
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211009072509-e7d0967e05e8
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210928092254-cfa32191bfce
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210927062046-68813f263c0b
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
 	github.com/gogo/protobuf v1.3.2
+	github.com/libp2p/go-libp2p v0.11.0
+	github.com/libp2p/go-libp2p-circuit v0.3.1
+	github.com/libp2p/go-libp2p-core v0.6.1
+	github.com/libp2p/go-libp2p-discovery v0.5.0
+	github.com/libp2p/go-libp2p-kad-dht v0.10.0
+	github.com/libp2p/go-libp2p-pubsub v0.3.5
+	github.com/multiformats/go-multiaddr v0.3.1
 	github.com/stretchr/testify v1.7.0
+	github.com/tjfoc/gmsm v1.4.1
 )
 
-replace github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
+replace (
+	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
+	chainmaker.org/chainmaker-go/logger => ./../logger
+
+	github.com/libp2p/go-libp2p => ./p2p/libp2p
+	github.com/libp2p/go-libp2p-core => ./p2p/libp2pcore
+	github.com/libp2p/go-libp2p-pubsub => ./p2p/libp2ppubsub
+)

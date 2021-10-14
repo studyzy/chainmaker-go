@@ -3,18 +3,29 @@ module chainmaker.org/chainmaker-go/txpool
 go 1.15
 
 require (
-	chainmaker.org/chainmaker-go/monitor v0.0.0
-	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211008100315-b70ecfa0c08f
-	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210913154622-9f9774ed7d1b
-	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211009072509-e7d0967e05e8
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210927062046-68813f263c0b
-	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
-	github.com/gogo/protobuf v1.3.2
-	github.com/golang/mock v1.6.0
-	github.com/prometheus/client_golang v1.9.0
-	github.com/stretchr/testify v1.7.0
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211011130949-b332c3193ef5
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211011124513-b828aaef61ff // indirect
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210929132906-a818e778c41b
+	chainmaker.org/chainmaker/txpool-single/v2 v2.0.0-20211013035055-0b3b640215ad
+	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210916084713-abd13154c26b // indirect
+	github.com/StackExchange/wmi v1.2.1 // indirect
+	github.com/btcsuite/btcd v0.22.0-beta // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/google/uuid v1.3.0 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/lestrrat-go/strftime v1.0.5 // indirect
+	github.com/mitchellh/mapstructure v1.4.2 // indirect
+	github.com/pingcap/log v0.0.0-20210906054005-afc726e70354 // indirect
+	github.com/pingcap/tipb v0.0.0-20211008080435-3fd327dfce0e // indirect
+	github.com/prometheus/common v0.31.1 // indirect
+	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/shirou/gopsutil v3.21.9+incompatible // indirect
+	github.com/studyzy/sqlparse v0.0.0-20210525032257-e7b9574609c3 // indirect
+	go.uber.org/zap v1.19.1 // indirect
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
+	golang.org/x/net v0.0.0-20211011170408-caeb26a5c8c0 // indirect
+	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
+	golang.org/x/text v0.3.7 // indirect
+	google.golang.org/genproto v0.0.0-20211013025323-ce878158c4d4 // indirect
+	google.golang.org/grpc v1.41.0 // indirect
 )
-
-replace chainmaker.org/chainmaker-go/monitor => ../monitor

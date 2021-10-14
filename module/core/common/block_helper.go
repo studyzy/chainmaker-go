@@ -14,10 +14,10 @@ import (
 
 	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
-	"chainmaker.org/chainmaker-go/monitor"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker/common/v2/crypto/hash"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
+	"chainmaker.org/chainmaker/common/v2/monitor"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/localconf/v2"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
@@ -115,13 +115,13 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight uint64, preHash []byte,
 	ssLasts := vmStartTick - ssStartTick
 	bb.storeHelper.BeginDbTransaction(snapshot.GetBlockchainStore(), block.GetTxKey())
 	txRWSetMap, contractEventMap, err := bb.txScheduler.Schedule(block, validatedTxs, snapshot)
-	vmLasts := utils.CurrentTimeMillisSeconds() - vmStartTick
-	timeLasts = append(timeLasts, ssLasts, vmLasts)
-
 	if err != nil {
 		return nil, timeLasts, fmt.Errorf("schedule block(%d,%x) error %s",
 			block.Header.BlockHeight, block.Header.BlockHash, err)
 	}
+
+	vmLasts := utils.CurrentTimeMillisSeconds() - vmStartTick
+	timeLasts = append(timeLasts, ssLasts, vmLasts)
 
 	// deal with the special situation：
 	// 1. only one tx and schedule time out
@@ -137,11 +137,12 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight uint64, preHash []byte,
 		aclFailTxs,
 		bb.chainConf.ChainConfig().Crypto.Hash,
 		bb.log)
-	finalizeLasts := utils.CurrentTimeMillisSeconds() - finalizeStartTick
 	if err != nil {
 		return nil, timeLasts, fmt.Errorf("finalizeBlock block(%d,%s) error %s",
 			block.Header.BlockHeight, hex.EncodeToString(block.Header.BlockHash), err)
 	}
+
+	finalizeLasts := utils.CurrentTimeMillisSeconds() - finalizeStartTick
 	timeLasts = append(timeLasts, finalizeLasts)
 	// get txs schedule timeout and put back to txpool
 	var txsTimeout = make([]*commonpb.Transaction, 0)
@@ -424,7 +425,7 @@ func CheckBlockDigests(block *commonpb.Block, txHashes [][]byte, hashType string
 }
 
 func CheckVacuumBlock(block *commonpb.Block, consensusType consensus.ConsensusType) error {
-	if 0 == block.Header.TxCount {
+	if block.Header.TxCount == 0 {
 		if utils.CanProposeEmptyBlock(consensusType) {
 			// for consensus that allows empty block, skip txs verify
 			return nil
@@ -546,11 +547,13 @@ func (vb *VerifierBlock) ValidateBlock(
 	startVMTick := utils.CurrentTimeMillisSeconds()
 	vb.storeHelper.BeginDbTransaction(snapshot.GetBlockchainStore(), block.GetTxKey())
 	txRWSetMap, txResultMap, err := vb.txScheduler.SimulateWithDag(block, snapshot)
-	vmLasts := utils.CurrentTimeMillisSeconds() - startVMTick
-	timeLasts = append(timeLasts, vmLasts)
 	if err != nil {
 		return nil, nil, timeLasts, fmt.Errorf("simulate %s", err)
 	}
+
+	vmLasts := utils.CurrentTimeMillisSeconds() - startVMTick
+	timeLasts = append(timeLasts, vmLasts)
+
 	if block.Header.TxCount != uint32(len(txRWSetMap)) {
 		return nil, nil, timeLasts, fmt.Errorf("simulate txcount expect %d, got %d",
 			block.Header.TxCount, len(txRWSetMap))
@@ -824,7 +827,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 
 func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height uint64) []*commonpb.Transaction {
 	proposedBlocks := chain.proposalCache.GetProposedBlocksAt(height)
-	txRetry := make([]*commonpb.Transaction, 0, localconf.ChainMakerConfig.TxPoolConfig.BatchMaxSize)
+	txRetry := make([]*commonpb.Transaction, 0, len(block.Txs))
 	chain.log.Debugf("has %d blocks in height: %d", len(proposedBlocks), height)
 	keepTxs := make(map[string]struct{}, len(block.Txs))
 	for _, tx := range block.Txs {
