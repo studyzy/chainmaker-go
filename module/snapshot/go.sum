@@ -1,13 +1,11 @@
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210901114756-9114511c2b70/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210906095952-6d8f2c6cede0/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
-chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210909033927-2a4cfc146579/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211014122130-4ba9d85a64f8 h1:ixgO6Cy6tXOnmbR1GlPtFZ6X5o0TCJULOLFBa/x/KEg=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211014122130-4ba9d85a64f8/go.mod h1:jedib7j/RzHzLk0Z4axQ8jZX5gRCdtnRf1WYAMGzYL0=
-chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210913154622-9f9774ed7d1b h1:OZrG2iel8/je9kHOIh2JHehg6YzI0eq2KUFg7OojlAE=
-chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210913154622-9f9774ed7d1b/go.mod h1:SPqpohsoeMrRFhPHnDQMRiWylLr5PfMQIlxbrPppzhI=
-chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907133316-af00cea33c97/go.mod h1:/6mAB4cPLK2GB9epL3uU8srK/iMXZb2dbg2lcJa+3bg=
-chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d h1:D27rC2lDGsVH1piY1jCR8eTIPsqJGCWeWgt9XeXN4l0=
-chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d/go.mod h1:/6mAB4cPLK2GB9epL3uU8srK/iMXZb2dbg2lcJa+3bg=
+chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211014134424-9431ffcc5bbc h1:AhliSbsBedpQLLaK2E41CiuZCtc2XHreB033NISbxn4=
+chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211014134424-9431ffcc5bbc/go.mod h1:p3YhnL3L/axKerYbJ0OdYiMCyyGMprbKwTGtupNlA0U=
+chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211014131951-892d098049bc h1:vBQ1J49ZzcOCwqT6wToB6P/DMo1eOBg1ie6aC7o3jBw=
+chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211014131951-892d098049bc/go.mod h1:b9ffhdSIm8e8uykKpSc7irKmN995drbPq/+Rm2diCvk=
 chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2/go.mod h1:gDZodc1Kp6snzGXugS/REqfCqNNizhniQmjeOKUVf64=
 chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d h1:YwcGWY1EbNA9QO8qLYcrnpvh1qgnrOalzJRpqnljO/s=
 chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d/go.mod h1:gDZodc1Kp6snzGXugS/REqfCqNNizhniQmjeOKUVf64=
@@ -430,6 +428,7 @@ github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5
 github.com/mgechev/dots v0.0.0-20190921121421-c36f7dcfbb81/go.mod h1:KQ7+USdGKfpPjXk4Ga+5XxQM4Lm4e3gAogrreFAYpOg=
 github.com/mgechev/revive v1.0.2/go.mod h1:rb0dQy1LVAxW9SWy5R3LPUjevzUbUS316U5MFySA2lo=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
+github.com/miekg/pkcs11 v1.0.3 h1:iMwmD7I5225wv84WxIG/bmxz9AXjWvTWIbM/TYHvWtw=
 github.com/miekg/pkcs11 v1.0.3/go.mod h1:XsNlhZGX73bx86s2hdc/FuaLm2CPZJemRLMA+WTFxgs=
 github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1/go.mod h1:pD8RvIylQ358TN4wwqatJ8rNavkEINozVn9DtGI3dfQ=
 github.com/minio/sha256-simd v0.1.1-0.20190913151208-6de447530771/go.mod h1:B5e1o+1/KgNmWrSQK08Y6Z1Vb5pwIktudl0J58iy0KM=
