@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	logger2 "chainmaker.org/chainmaker/logger/v2"
-	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -142,7 +141,7 @@ func TestVerifySelfPrincipal(t *testing.T) {
 	require.NotNil(t, endorsement)
 	principal, err := test1CertACProvider.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig,
 		[]*common.EndorsementEntry{endorsement}, []byte(testMsg), testOrg1)
-
+	require.Nil(t, err)
 	ok, err := test1CertACProvider.VerifyPrincipal(principal)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
@@ -202,6 +201,55 @@ func TestVerifyMajorityPrincipal(t *testing.T) {
 
 }
 
+func TestVerifyAllPrincipal(t *testing.T) {
+	orgMemberMap := testInitFunc(t)
+	//all
+	orgMemberInfo1 := orgMemberMap[testOrg1]
+	endorsement1, err := testCreateEndorsementEntry(orgMemberInfo1, protocol.RoleAdmin, testHashType, testMsg)
+	require.Nil(t, err)
+	require.NotNil(t, endorsement1)
+
+	orgMemberInfo2 := orgMemberMap[testOrg2]
+	endorsement2, err := testCreateEndorsementEntry(orgMemberInfo2, protocol.RoleAdmin, testHashType, testMsg)
+	require.Nil(t, err)
+	require.NotNil(t, endorsement2)
+
+	orgMemberInfo3 := orgMemberMap[testOrg3]
+	endorsement3, err := testCreateEndorsementEntry(orgMemberInfo3, protocol.RoleAdmin, testHashType, testMsg)
+	require.Nil(t, err)
+	require.NotNil(t, endorsement3)
+
+	orgMemberInfo4 := orgMemberMap[testOrg4]
+	endorsement4, err := testCreateEndorsementEntry(orgMemberInfo4, protocol.RoleAdmin, testHashType, testMsg)
+	require.Nil(t, err)
+	require.NotNil(t, endorsement4)
+
+	ok, err := testVerifyPrincipal(test1CertACProvider, protocol.ResourceNameAllTest,
+		[]*common.EndorsementEntry{endorsement1, endorsement2, endorsement3, endorsement4})
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+
+	validEndorsements, err := testGetValidEndorsements(test1CertACProvider, protocol.ResourceNameUpdateConfig,
+		[]*common.EndorsementEntry{endorsement1, endorsement2, endorsement3, endorsement4})
+
+	require.Nil(t, err)
+	require.Equal(t, len(validEndorsements), 4)
+
+	//all invalid
+
+	ok, err = testVerifyPrincipal(test1CertACProvider, protocol.ResourceNameUpdateConfig,
+		[]*common.EndorsementEntry{endorsement1, endorsement2})
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+
+	validEndorsements, err = testGetValidEndorsements(test1CertACProvider, protocol.ResourceNameUpdateConfig,
+		[]*common.EndorsementEntry{endorsement1, endorsement2})
+
+	require.Nil(t, err)
+	require.Equal(t, len(validEndorsements), 2)
+
+}
+
 func TestVerifyTrustMemberPrincipal(t *testing.T) {
 	orgMemberMap := testInitFunc(t)
 	//read
@@ -236,7 +284,7 @@ func testCreateEndorsementEntry(orgMember *orgMember, roleType protocol.Role, ha
 	var (
 		sigResource    []byte
 		err            error
-		signerResource *accesscontrol.Member
+		signerResource *pbac.Member
 	)
 	switch roleType {
 	case protocol.RoleConsensusNode:
@@ -292,7 +340,7 @@ func testGetValidEndorsements(provider protocol.AccessControlProvider,
 	if err != nil {
 		return nil, err
 	}
-	return test1CertACProvider.(*certACProvider).GetValidEndorsements(principal)
+	return provider.(*certACProvider).GetValidEndorsements(principal)
 }
 
 func TestVerifyRelatedMaterial(t *testing.T) {

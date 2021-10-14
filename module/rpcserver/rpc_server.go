@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package rpcserver
 
 import (
+	"chainmaker.org/chainmaker/protocol/v2"
 	"context"
 	"encoding/hex"
 	"errors"
@@ -277,6 +278,15 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 			grpc_middleware.WithStreamServerChain(
 				BlackListStreamInterceptor(),
 			),
+		}
+	}
+
+	if strings.ToLower(localconf.ChainMakerConfig.AuthType) == protocol.PermissionedWithKey ||
+		strings.ToLower(localconf.ChainMakerConfig.AuthType) == protocol.Public {
+		if localconf.ChainMakerConfig.RpcConfig.TLSConfig.Mode != TLS_MODE_DISABLE {
+			localconf.ChainMakerConfig.RpcConfig.TLSConfig.Mode = TLS_MODE_DISABLE
+			log.Infof("the tls mode has been automatically set to [disable] according to the authType:[%s]",
+				localconf.ChainMakerConfig.AuthType)
 		}
 	}
 

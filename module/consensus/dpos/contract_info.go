@@ -13,14 +13,17 @@ import (
 
 	"chainmaker.org/chainmaker/vm-native/dposmgr"
 
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	dpospb "chainmaker.org/chainmaker/pb-go/v2/consensus/dpos"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"github.com/gogo/protobuf/proto"
+	goproto "github.com/gogo/protobuf/proto"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
+const DposOrgId = "dpos_org_id"
 const ModuleName = "dpos_module"
 
 // getEpochInfo get epoch info from ledger
@@ -129,6 +132,45 @@ func (impl *DPoSImpl) createEpochRwSet(epoch *syscontract.Epoch) (*commonpb.TxRW
 				ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 				Key:          dposmgr.ToEpochKey(fmt.Sprintf("%d", epoch.EpochId)),
 				Value:        bz,
+			},
+		},
+	}
+	return rw, nil
+}
+
+func (impl *DPoSImpl) createValidatorsRwSet(epoch *syscontract.Epoch) (*commonpb.TxRWSet, error) {
+
+	nodeIDs, err := impl.getNodeIDsFromValidators(epoch)
+	if err != nil || len(nodeIDs) == 0 {
+		impl.log.Errorf("create validators rwSet failed, reason: %s", err)
+		return nil, err
+	}
+
+	chainConfig, err := GetChainConfig(impl.stateDB)
+	if err != nil {
+		impl.log.Errorf("create validators rwSet failed, reason: %s", err)
+		return nil, err
+	}
+	orgConfig := &configPb.OrgConfig{
+		OrgId:  DposOrgId,
+		NodeId: nodeIDs,
+	}
+	chainConfig.Consensus.Nodes[0] = orgConfig
+
+	//chainConfig.Sequence = chainConfig.Sequence + 1
+	pbccPayload, err := goproto.Marshal(chainConfig)
+	if err != nil {
+		err = fmt.Errorf("proto marshal pbcc failed, err: %s", err.Error())
+		impl.log.Errorf("create validators rwSet failed, reason: %s", err)
+		return nil, err
+	}
+	rw := &commonpb.TxRWSet{
+		TxId: "",
+		TxWrites: []*commonpb.TxWrite{
+			{
+				ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
+				Key:          []byte(syscontract.SystemContract_CHAIN_CONFIG.String()),
+				Value:        pbccPayload,
 			},
 		},
 	}

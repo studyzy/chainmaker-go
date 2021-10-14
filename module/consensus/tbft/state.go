@@ -104,7 +104,9 @@ func (cache *consensusStateCache) getConsensusState(height uint64) *ConsensusSta
 
 func (cache *consensusStateCache) gc(height uint64) {
 	for k := range cache.cache {
-		if k < (height - cache.size) {
+		//if k < (height - cache.size) {
+		cache.cache[k].logger.Debugf("state delete ,gc params: %d,%d,%d", k, cache.size, height)
+		if (k + cache.size) <= height {
 			delete(cache.cache, k)
 		}
 	}
