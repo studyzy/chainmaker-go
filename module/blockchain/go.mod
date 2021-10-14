@@ -11,7 +11,7 @@ require (
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
 	chainmaker.org/chainmaker-go/sync v0.0.0
 	chainmaker.org/chainmaker-go/txpool v0.0.0
-	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211011073602-d17527b03602
+	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211014070728-bf029ab80da0
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211011114226-30eafbbd6523
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211009063450-f9db84192eea
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
