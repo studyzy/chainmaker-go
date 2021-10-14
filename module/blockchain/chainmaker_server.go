@@ -80,6 +80,7 @@ func (server *ChainMakerServer) initNet() error {
 	}
 
 	authType := localconf.ChainMakerConfig.AuthType
+	emptyAuthType := ""
 
 	// load tls keys and cert path
 	keyPath := localconf.ChainMakerConfig.NetConfig.TLSConfig.PrivKeyFile
@@ -96,7 +97,7 @@ func (server *ChainMakerServer) initNet() error {
 	switch strings.ToLower(authType) {
 	case protocol.PermissionedWithKey, protocol.Public:
 		pubKeyMode = true
-	case protocol.PermissionedWithCert, protocol.Identity:
+	case protocol.PermissionedWithCert, protocol.Identity, emptyAuthType:
 		pubKeyMode = false
 		certPath = localconf.ChainMakerConfig.NetConfig.TLSConfig.CertFile
 		if !filepath.IsAbs(certPath) {
