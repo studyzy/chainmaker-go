@@ -393,25 +393,25 @@ var testAdmin4PKInfo = &testPKInfo{
 	TestSK8,
 }
 
-var testClient1PKInfo = &testPKInfo{
-	TestPK9,
-	TestSK9,
-}
+// var testClient1PKInfo = &testPKInfo{
+// 	TestPK9,
+// 	TestSK9,
+// }
 
-var testClient2PKInfo = &testPKInfo{
-	TestPK10,
-	TestSK10,
-}
+// var testClient2PKInfo = &testPKInfo{
+// 	TestPK10,
+// 	TestSK10,
+// }
 
-var testClient3PKInfo = &testPKInfo{
-	TestPK11,
-	TestSK11,
-}
+// var testClient3PKInfo = &testPKInfo{
+// 	TestPK11,
+// 	TestSK11,
+// }
 
-var testClient4PKInfo = &testPKInfo{
-	TestPK12,
-	TestSK12,
-}
+// var testClient4PKInfo = &testPKInfo{
+// 	TestPK12,
+// 	TestSK12,
+// }
 
 const (
 	testPermissionedKeyAuthType = "permissionedWithKey"

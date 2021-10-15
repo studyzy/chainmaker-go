@@ -214,8 +214,7 @@ func (cp *certACProvider) initTrustMembers(trustMembers []*config.TrustMemberCon
 }
 
 func (cp *certACProvider) loadTrustMembers(memberInfo string) (*trustMemberCached, bool) {
-	tempSyncMap := *cp.trustMembers
-	cached, ok := tempSyncMap.Load(string(memberInfo))
+	cached, ok := cp.trustMembers.Load(string(memberInfo))
 	if ok {
 		return cached.(*trustMemberCached), ok
 	}
@@ -538,7 +537,8 @@ func (cp *certACProvider) newNoCacheMember(pbMember *pbac.Member) (member protoc
 		if pbMember.MemberType == pbac.MemberType_CERT {
 			isCompressed = false
 		}
-		certMember, err := newCertMemberFromParam(cached.trustMember.OrgId, cached.trustMember.Role,
+		var certMember *certificateMember
+		certMember, err = newCertMemberFromParam(cached.trustMember.OrgId, cached.trustMember.Role,
 			cp.acService.hashType, isCompressed, []byte(cached.trustMember.MemberInfo))
 		if err != nil {
 			return nil, isTrustMember, err

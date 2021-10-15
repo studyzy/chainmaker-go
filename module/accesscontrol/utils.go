@@ -5,7 +5,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	"sync"
 
 	"chainmaker.org/chainmaker/common/v2/cert"
 	bccrypto "chainmaker.org/chainmaker/common/v2/crypto"
@@ -43,11 +42,6 @@ func pubkeyHash(pubkey []byte) string {
 	pkHash := sha256.Sum256(pubkey)
 	strPkHash := base58.Encode(pkHash[:])
 	return strPkHash
-}
-
-func loadSyncMap(syncMap *sync.Map, key string) (interface{}, bool) {
-	tempSyncMap := *syncMap
-	return tempSyncMap.Load(key)
 }
 
 func InitCertSigningMember(chainConfig *config.ChainConfig, localOrgId,
