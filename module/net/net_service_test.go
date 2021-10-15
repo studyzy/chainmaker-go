@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// nolint: revive
 func TestNetService(t *testing.T) {
 	certPath := filepath.Join("./testdata/cert")
 	pidPath := filepath.Join("./testdata/pid")

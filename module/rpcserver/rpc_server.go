@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package rpcserver
 
 import (
-	"chainmaker.org/chainmaker/protocol/v2"
 	"context"
 	"encoding/hex"
 	"errors"
@@ -26,6 +25,7 @@ import (
 	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
+	"chainmaker.org/chainmaker/protocol/v2"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"

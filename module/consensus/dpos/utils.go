@@ -147,13 +147,20 @@ func GetNodeIDsFromValidators(store protocol.BlockchainStore, validators []strin
 
 func GetChainConfig(store protocol.BlockchainStore) (*configPb.ChainConfig, error) {
 	var chainConfig configPb.ChainConfig
-	bytes, err := store.ReadObject(syscontract.SystemContract_CHAIN_CONFIG.String(), []byte(syscontract.SystemContract_CHAIN_CONFIG.String()))
+	bytes, err := store.ReadObject(
+		syscontract.SystemContract_CHAIN_CONFIG.String(),
+		[]byte(syscontract.SystemContract_CHAIN_CONFIG.String()),
+	)
 	if err != nil || len(bytes) == 0 {
 		return nil, fmt.Errorf("read chainConfig failed, reason: %s", err)
 	}
 	err = goproto.Unmarshal(bytes, &chainConfig)
 	if err != nil {
-		err = fmt.Errorf("unmarshal chainConfig failed, contractName %s err: %+v", syscontract.SystemContract_CHAIN_CONFIG.String(), err)
+		err = fmt.Errorf(
+			"unmarshal chainConfig failed, contractName %s err: %+v",
+			syscontract.SystemContract_CHAIN_CONFIG.String(),
+			err,
+		)
 		return nil, err
 	}
 	return &chainConfig, nil

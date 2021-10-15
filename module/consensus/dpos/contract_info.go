@@ -11,13 +11,12 @@ import (
 	"fmt"
 	"math/big"
 
-	"chainmaker.org/chainmaker/vm-native/dposmgr"
-
-	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	dpospb "chainmaker.org/chainmaker/pb-go/v2/consensus/dpos"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/vm-native/dposmgr"
 	"github.com/gogo/protobuf/proto"
 	goproto "github.com/gogo/protobuf/proto"
 	"github.com/syndtr/goleveldb/leveldb/util"

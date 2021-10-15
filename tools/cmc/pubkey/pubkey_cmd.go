@@ -33,7 +33,7 @@ var (
 
 var (
 	sdkConfPath        string
-	clientKeyFilePaths string
+	clientKeyFilePaths string // nolint: deadcode, varcheck, unused
 	chainId            string
 	adminKeyFilePaths  string
 	adminOrgIds        string
@@ -41,7 +41,7 @@ var (
 
 const (
 	flagSdkConfPath        = "sdk-conf-path"
-	flagClientKeyFilePaths = "client-key-file-paths"
+	flagClientKeyFilePaths = "client-key-file-paths" // nolint: deadcode, varcheck
 	flagChainId            = "chain-id"
 	flagAdminKeyFilePaths  = "admin-key-file-paths"
 	flagAdminOrgIds        = "admin-org-ids"
@@ -159,7 +159,12 @@ func cliAddPubKey() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
+		e, err := sdkutils.MakePkEndorserWithPath(
+			adminKeys[i],
+			crypto.HashAlgoMap[client.GetHashType()],
+			adminOrgs[i],
+			payload,
+		)
 		if err != nil {
 			return err
 		}
@@ -214,7 +219,12 @@ func cliDelPubKey() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
+		e, err := sdkutils.MakePkEndorserWithPath(
+			adminKeys[i],
+			crypto.HashAlgoMap[client.GetHashType()],
+			adminOrgs[i],
+			payload,
+		)
 		if err != nil {
 			return err
 		}

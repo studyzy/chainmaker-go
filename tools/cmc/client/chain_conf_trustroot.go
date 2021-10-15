@@ -113,6 +113,7 @@ func updateTrustRootCMD() *cobra.Command {
 	return cmd
 }
 
+// nolint: gocyclo
 func configTrustRoot(op int) error {
 	var adminKeys []string
 	var adminCrts []string
@@ -190,14 +191,24 @@ func configTrustRoot(op int) error {
 
 			endorsementEntrys[i] = e
 		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
-			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
+			e, err := sdkutils.MakePkEndorserWithPath(
+				adminKeys[i],
+				crypto.HashAlgoMap[client.GetHashType()],
+				adminOrgs[i],
+				payload,
+			)
 			if err != nil {
 				return err
 			}
 
 			endorsementEntrys[i] = e
 		} else {
-			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], "", payload)
+			e, err := sdkutils.MakePkEndorserWithPath(
+				adminKeys[i],
+				crypto.HashAlgoMap[client.GetHashType()],
+				"",
+				payload,
+			)
 			if err != nil {
 				return err
 			}
