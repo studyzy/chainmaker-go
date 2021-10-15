@@ -737,7 +737,8 @@ func (acs *accessControlService) newCertMember(pbMember *pbac.Member) (protocol.
 	return newCertMemberFromPb(pbMember, acs)
 }
 
-func (acs *accessControlService) newPkMember(member *pbac.Member, adminList, consensusList *sync.Map) (protocol.Member, error) {
+func (acs *accessControlService) newPkMember(member *pbac.Member, adminList,
+	consensusList *sync.Map) (protocol.Member, error) {
 
 	memberCache := acs.getMemberFromCache(member)
 	if memberCache != nil {

@@ -1422,6 +1422,7 @@ func (consensus *ConsensusTBFTImpl) verifyVote(voteProto *tbftpb.Vote) error {
 	return nil
 }
 
+// nolint: deadcode, unused
 func publicKeyValidateVoter(vote *tbftpb.Vote) error {
 	signer := vote.Endorsement.Signer
 	pk, err := asym.PublicKeyFromPEM(signer.MemberInfo)

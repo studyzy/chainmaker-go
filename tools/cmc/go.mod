@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211014122130-4ba9d85a64f8
-	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d // indirect
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
 	chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20211014094716-611dd7b3ca8f

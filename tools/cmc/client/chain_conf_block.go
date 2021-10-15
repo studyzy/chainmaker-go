@@ -109,7 +109,12 @@ func updateBlockInterval() error {
 
 			endorsementEntrys[i] = e
 		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
-			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
+			e, err := sdkutils.MakePkEndorserWithPath(
+				adminKeys[i],
+				crypto.HashAlgoMap[client.GetHashType()],
+				adminOrgs[i],
+				payload,
+			)
 			if err != nil {
 				return err
 			}

@@ -25,6 +25,7 @@ var _ protocol.AccessControlProvider = (*pkACProvider)(nil)
 var NilPkACProvider ACProvider = (*pkACProvider)(nil)
 
 const (
+	//admin trust orgId
 	AdminPublicKey = "public"
 	// chainconfig the DPoS of orgId
 	DposOrgId = "dpos_org_id"
@@ -345,7 +346,8 @@ func (p *pkACProvider) createDefaultResourcePolicy() {
 		syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String(), pubPolicyMajorityAdmin)
 }
 
-func (p *pkACProvider) verifyPrincipalPolicy(principal, refinedPrincipal protocol.Principal, pol *policy) (bool, error) {
+func (p *pkACProvider) verifyPrincipalPolicy(principal,
+	refinedPrincipal protocol.Principal, pol *policy) (bool, error) {
 	endorsements := refinedPrincipal.GetEndorsement()
 	rule := pol.GetRule()
 	switch rule {

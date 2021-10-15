@@ -1,9 +1,9 @@
 go 1.15
 
 require (
-	chainmaker.org/chainmaker/chainmaker-net-common v0.0.7-0.20211014133020-64870e6458e6
-	chainmaker.org/chainmaker/chainmaker-net-libp2p v0.0.12-0.20211014133622-55e6e91528a9
-	chainmaker.org/chainmaker/chainmaker-net-liquid v0.0.9-0.20211014134338-aacc27fab1e2
+	chainmaker.org/chainmaker/chainmaker-net-common v0.0.7-0.20211015122443-7b81b47a2129
+	chainmaker.org/chainmaker/chainmaker-net-libp2p v0.0.12-0.20211015123020-5c1a99a9086b
+	chainmaker.org/chainmaker/chainmaker-net-liquid v0.0.9-0.20211015122708-d98635e71016
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211014122130-4ba9d85a64f8
 	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211014131951-892d098049bc
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d

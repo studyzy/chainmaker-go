@@ -11,6 +11,7 @@ import (
 	"strings"
 )
 
+// nolint: deadcode, unused
 type a interface {
 }
 

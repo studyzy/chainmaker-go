@@ -130,3 +130,4 @@ go mod tidy
 
 cd ./main
 go build -o chainmaker
+

@@ -18,16 +18,31 @@ func init() {
 	txpool.RegisterTxPoolProvider(batch.TxPoolType, batch.NewBatchTxPool)
 
 	// vm
-	vm.RegisterVmProvider("GASM", func(chainId string) (protocol.VmInstancesManager, error) {
-		return &gasm.InstancesManager{}, nil
-	})
-	vm.RegisterVmProvider("WASMER", func(chainId string) (protocol.VmInstancesManager, error) {
-		return wasmer.NewInstancesManager(chainId), nil
-	})
-	vm.RegisterVmProvider("WXVM", func(chainId string) (protocol.VmInstancesManager, error) {
-		return &wxvm.InstancesManager{}, nil
-	})
-	vm.RegisterVmProvider("EVM", func(chainId string) (protocol.VmInstancesManager, error) {
-		return &evm.InstancesManager{}, nil
-	})
+	vm.RegisterVmProvider(
+		"GASM",
+		func(chainId string) (protocol.VmInstancesManager, error) {
+			return &gasm.InstancesManager{}, nil
+		},
+	)
+
+	vm.RegisterVmProvider(
+		"WASMER",
+		func(chainId string) (protocol.VmInstancesManager, error) {
+			return wasmer.NewInstancesManager(chainId), nil
+		},
+	)
+
+	vm.RegisterVmProvider(
+		"WXVM",
+		func(chainId string) (protocol.VmInstancesManager, error) {
+			return &wxvm.InstancesManager{}, nil
+		},
+	)
+
+	vm.RegisterVmProvider(
+		"EVM",
+		func(chainId string) (protocol.VmInstancesManager, error) {
+			return &evm.InstancesManager{}, nil
+		},
+	)
 }

@@ -200,7 +200,7 @@ func (pp *permissionedPkACProvider) systemContractCallbackPublicKeyManagementCas
 func (pp *permissionedPkACProvider) systemContractCallbackPublicKeyManagementDeleteCase(payload *common.Payload) error {
 	for _, param := range payload.Parameters {
 		if param.Key == PUBLIC_KEYS {
-			pp.acService.memberCache.Remove(param.Value)
+			pp.acService.memberCache.Remove(string(param.Value))
 			pp.acService.log.Debugf("The public key was removed from the cache,[%v]", param.Value)
 		}
 	}
@@ -337,7 +337,8 @@ func (pp *permissionedPkACProvider) VerifyPrincipal(principal protocol.Principal
 }
 
 //GetValidEndorsements filters all endorsement entries and returns all valid ones
-func (pp *permissionedPkACProvider) GetValidEndorsements(principal protocol.Principal) ([]*common.EndorsementEntry, error) {
+func (pp *permissionedPkACProvider) GetValidEndorsements(principal protocol.Principal) (
+	[]*common.EndorsementEntry, error) {
 	if atomic.LoadInt32(&pp.acService.orgNum) <= 0 {
 		return nil, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
 	}

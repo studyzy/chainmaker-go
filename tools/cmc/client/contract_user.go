@@ -315,7 +315,13 @@ func createUserContract() error {
 		fmt.Printf("EVM contract name in hex: %s\n", contractName)
 	}
 
-	payload, err := client.CreateContractCreatePayload(contractName, version, byteCodePath, common.RuntimeType(rt), kvs)
+	payload, err := client.CreateContractCreatePayload(
+		contractName,
+		version,
+		byteCodePath,
+		common.RuntimeType(rt),
+		kvs,
+	)
 	if err != nil {
 		return err
 	}
@@ -330,7 +336,12 @@ func createUserContract() error {
 
 			endorsementEntrys[i] = e
 		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
-			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
+			e, err := sdkutils.MakePkEndorserWithPath(
+				adminKeys[i],
+				crypto.HashAlgoMap[client.GetHashType()],
+				adminOrgs[i],
+				payload,
+			)
 			if err != nil {
 				return err
 			}
@@ -563,7 +574,12 @@ func upgradeUserContract() error {
 
 			endorsementEntrys[i] = e
 		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
-			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
+			e, err := sdkutils.MakePkEndorserWithPath(
+				adminKeys[i],
+				crypto.HashAlgoMap[client.GetHashType()],
+				adminOrgs[i],
+				payload,
+			)
 			if err != nil {
 				return err
 			}
@@ -652,7 +668,12 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 
 			endorsementEntrys[i] = e
 		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
-			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
+			e, err := sdkutils.MakePkEndorserWithPath(
+				adminKeys[i],
+				crypto.HashAlgoMap[client.GetHashType()],
+				adminOrgs[i],
+				payload,
+			)
 			if err != nil {
 				return err
 			}

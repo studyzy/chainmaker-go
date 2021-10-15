@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -19,6 +18,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/net"
 	"chainmaker.org/chainmaker-go/subscriber"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"chainmaker.org/chainmaker/common/v2/helper"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/localconf/v2"
