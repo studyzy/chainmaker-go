@@ -200,7 +200,7 @@ func (pp *permissionedPkACProvider) systemContractCallbackPublicKeyManagementCas
 func (pp *permissionedPkACProvider) systemContractCallbackPublicKeyManagementDeleteCase(payload *common.Payload) error {
 	for _, param := range payload.Parameters {
 		if param.Key == PUBLIC_KEYS {
-			pp.acService.memberCache.Remove(param.Value)
+			pp.acService.memberCache.Remove(string(param.Value))
 			pp.acService.log.Debugf("The public key was removed from the cache,[%v]", param.Value)
 		}
 	}
