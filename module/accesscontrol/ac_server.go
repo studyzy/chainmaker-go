@@ -27,9 +27,9 @@ import (
 
 // Special characters allowed to define customized access rules
 const (
-	LIMIT_DELIMITER = "/"
-	PARAM_CERTS     = "certs"
-
+	LIMIT_DELIMITER              = "/"
+	PARAM_CERTS                  = "certs"
+	PUBLIC_KEYS                  = "pubkey"
 	unsupportedRuleErrorTemplate = "bad configuration: unsupported rule [%s]"
 )
 
@@ -149,10 +149,10 @@ var (
 		},
 	)
 
-	//policyForbidden = newPolicy(
-	//	protocol.RuleForbidden,
-	//	nil,
-	//	nil)
+	policyForbidden = newPolicy(
+		protocol.RuleForbidden,
+		nil,
+		nil)
 
 	policyAllTest = newPolicy(
 		protocol.RuleAll,
@@ -200,8 +200,7 @@ type accessControlService struct {
 
 	exceptionalPolicyMap *sync.Map // map[string]*policy , resourceName -> *policy
 
-	trustMembers []*config.TrustMemberConfig
-
+	//local cache for member
 	memberCache *concurrentlru.Cache
 
 	dataStore protocol.BlockchainStore
@@ -210,25 +209,27 @@ type accessControlService struct {
 
 	// hash algorithm for chains
 	hashType string
+
+	authType string
 }
 
-type cachedMember struct {
+type memberCached struct {
 	member    protocol.Member
 	certChain []*bcx509.Certificate
 }
 
-func initAccessControlService(hashType, localOrgId string, chainConf *config.ChainConfig,
+func initAccessControlService(hashType, localOrgId, authType string, chainConf *config.ChainConfig,
 	store protocol.BlockchainStore, log protocol.Logger) *accessControlService {
 	acService := &accessControlService{
 		orgNum:                0,
 		orgList:               &sync.Map{},
 		resourceNamePolicyMap: &sync.Map{},
 		exceptionalPolicyMap:  &sync.Map{},
-		trustMembers:          chainConf.TrustMembers,
-		memberCache:           concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.SignerCacheSize),
+		memberCache:           concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.CertCacheSize),
 		dataStore:             store,
 		log:                   log,
 		hashType:              hashType,
+		authType:              authType,
 	}
 	acService.initResourcePolicy(chainConf.ResourcePolicies, localOrgId)
 	return acService
@@ -291,6 +292,12 @@ func (acs *accessControlService) createDefaultResourcePolicy(localOrgId string) 
 		syscontract.CertManageFunction_CERTS_QUERY.String(), policySpecialRead)
 	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
 		syscontract.CertManageFunction_CERT_ADD.String(), policySpecialWrite)
+
+	// Disable pubkey management for cert mode
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGE.String()+"-"+
+		syscontract.PubkeyManageFunction_PUBKEY_ADD.String(), policyForbidden)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGE.String()+"-"+
+		syscontract.PubkeyManageFunction_PUBKEY_DELETE.String(), policyForbidden)
 
 	//for private compute
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
@@ -370,8 +377,157 @@ func (acs *accessControlService) createDefaultResourcePolicy(localOrgId string) 
 		syscontract.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
 }
 
-func (acs *accessControlService) initResourcePolicy(resourcePolicies []*config.ResourcePolicy, localOrgId string) {
-	acs.createDefaultResourcePolicy(localOrgId)
+func (acs *accessControlService) createDefaultResourcePolicyForPK(localOrgId string) {
+
+	policyArchive.orgList = []string{localOrgId}
+
+	acs.resourceNamePolicyMap.Store(protocol.ResourceNameReadData, policyRead)
+	acs.resourceNamePolicyMap.Store(protocol.ResourceNameWriteData, policyWrite)
+	acs.resourceNamePolicyMap.Store(protocol.ResourceNameUpdateSelfConfig, policySelfConfig)
+	acs.resourceNamePolicyMap.Store(protocol.ResourceNameUpdateConfig, policyConfig)
+	acs.resourceNamePolicyMap.Store(protocol.ResourceNameConsensusNode, policyConsensus)
+	acs.resourceNamePolicyMap.Store(protocol.ResourceNameP2p, policyP2P)
+
+	// only used for test
+	acs.resourceNamePolicyMap.Store(protocol.ResourceNameAllTest, policyAllTest)
+	acs.resourceNamePolicyMap.Store("test_2", policyLimitTestAny)
+	acs.resourceNamePolicyMap.Store("test_2_admin", policyLimitTestAdmin)
+	acs.resourceNamePolicyMap.Store("test_3/4", policyPortionTestAny)
+	acs.resourceNamePolicyMap.Store("test_3/4_admin", policyPortionTestAnyAdmin)
+
+	// for txtype
+	acs.resourceNamePolicyMap.Store(common.TxType_QUERY_CONTRACT.String(), policyRead)
+	acs.resourceNamePolicyMap.Store(common.TxType_INVOKE_CONTRACT.String(), policyWrite)
+	acs.resourceNamePolicyMap.Store(common.TxType_SUBSCRIBE.String(), policySubscribe)
+	acs.resourceNamePolicyMap.Store(common.TxType_ARCHIVE.String(), policyArchive)
+
+	// exceptional resourceName opened for light user
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_BY_HEIGHT.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_BY_HASH.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HASH.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_BY_TX_ID.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_TX_BY_TX_ID.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_LAST_CONFIG_BLOCK.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_LAST_BLOCK.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_FULL_BLOCK_BY_HEIGHT.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_TX_ID.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_HASH.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_HEADER_BY_HEIGHT.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_ARCHIVED_BLOCK_HEIGHT.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERTS_QUERY.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERT_ADD.String(), policySpecialWrite)
+
+	// Disable certificate management for pk mode
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERT_ADD.String(), policyForbidden)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERTS_FREEZE.String(), policyForbidden)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERTS_UNFREEZE.String(), policyForbidden)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERTS_DELETE.String(), policyForbidden)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERTS_REVOKE.String(), policyForbidden)
+	// Disable trust member management for pk mode
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_NODE_ID_ADD.String(), policyForbidden)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_NODE_ID_DELETE.String(), policyForbidden)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_NODE_ID_UPDATE.String(), policyForbidden)
+
+	//for private compute
+	acs.resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String()+"-"+
+		syscontract.PrivateComputeFunction_SAVE_CA_CERT.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String()+"-"+
+		syscontract.PrivateComputeFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
+
+	// system contract interface resource definitions
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_CORE_UPDATE.String(), policyConfig)
+
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_BLOCK_UPDATE.String(), policyConfig)
+
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
+
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_TRUST_MEMBER_ADD.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_TRUST_MEMBER_DELETE.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_TRUST_MEMBER_UPDATE.String(), policyConfig)
+
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_NODE_ORG_ADD.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_NODE_ORG_DELETE.String(), policyConfig)
+
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_CONSENSUS_EXT_UPDATE.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_CONSENSUS_EXT_DELETE.String(), policyConfig)
+
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_PERMISSION_ADD.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_PERMISSION_UPDATE.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_PERMISSION_DELETE.String(), policyConfig)
+
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_INIT_CONTRACT.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_UPGRADE_CONTRACT.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_FREEZE_CONTRACT.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_REVOKE_CONTRACT.String(), policyConfig)
+
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGE.String()+"-"+
+		syscontract.PubkeyManageFunction_PUBKEY_ADD.String(), policySelfConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGE.String()+"-"+
+		syscontract.PubkeyManageFunction_PUBKEY_DELETE.String(), policySelfConfig)
+}
+
+func (acs *accessControlService) initResourcePolicy(resourcePolicies []*config.ResourcePolicy,
+	localOrgId string) {
+	switch acs.authType {
+	case protocol.PermissionedWithCert, protocol.Identity:
+		acs.createDefaultResourcePolicy(localOrgId)
+	case protocol.PermissionedWithKey:
+		acs.createDefaultResourcePolicyForPK(localOrgId)
+	}
 	for _, resourcePolicy := range resourcePolicies {
 		if acs.validateResourcePolicy(resourcePolicy) {
 			policy := newPolicyFromPb(resourcePolicy.Policy)
@@ -481,6 +637,18 @@ func (acs *accessControlService) checkResourcePolicyRuleDefaultCase(policy *pbac
 	}
 }
 
+func (acs *accessControlService) lookUpMemberInCache(memberInfo string) (*memberCached, bool) {
+	ret, ok := acs.memberCache.Get(memberInfo)
+	if ok {
+		return ret.(*memberCached), true
+	}
+	return nil, false
+}
+
+func (acs *accessControlService) addMemberToCache(memberInfo string, member *memberCached) {
+	acs.memberCache.Add(memberInfo, member)
+}
+
 func (acs *accessControlService) addOrg(orgId string, orgInfo interface{}) {
 	_, loaded := acs.orgList.LoadOrStore(orgId, orgInfo)
 	if loaded {
@@ -565,26 +733,43 @@ func (acs *accessControlService) lookUpPolicyByResourceName(resourceName string)
 	return p.(*policy), nil
 }
 
-func (acs *accessControlService) lookUpMemberInCache(memberInfo string) (*cachedMember, bool) {
-	ret, ok := acs.memberCache.Get(memberInfo)
+func (acs *accessControlService) newCertMember(pbMember *pbac.Member) (protocol.Member, error) {
+	return newCertMemberFromPb(pbMember, acs)
+}
+
+func (acs *accessControlService) newPkMember(member *pbac.Member, adminList,
+	consensusList *sync.Map) (protocol.Member, error) {
+
+	memberCache := acs.getMemberFromCache(member)
+	if memberCache != nil {
+		return memberCache, nil
+	}
+	pkMember, err := newPkMemberFromAcs(member, adminList, consensusList, acs)
+	if err != nil {
+		return nil, fmt.Errorf("new public key member failed: %s", err.Error())
+	}
+	if pkMember.GetOrgId() != member.OrgId && member.OrgId != "" {
+		return nil, fmt.Errorf("new public key member failed: member orgId does not match on chain")
+	}
+	cached := &memberCached{
+		member:    pkMember,
+		certChain: nil,
+	}
+	acs.addMemberToCache(string(member.MemberInfo), cached)
+	return pkMember, nil
+}
+
+func (acs *accessControlService) getMemberFromCache(member *pbac.Member) protocol.Member {
+	cached, ok := acs.lookUpMemberInCache(string(member.MemberInfo))
 	if ok {
-		return ret.(*cachedMember), true
-	}
-	return nil, false
-}
-
-func (acs *accessControlService) addMemberToCache(memberInfo string, member *cachedMember) {
-	acs.memberCache.Add(memberInfo, member)
-}
-
-func (acs *accessControlService) newMember(member *pbac.Member) (protocol.Member, error) {
-	memberCached, ok := acs.lookUpMemberInCache(string(member.MemberInfo))
-	if ok && memberCached.member.GetOrgId() == member.OrgId {
 		acs.log.Debugf("member found in local cache")
-		return memberCached.member, nil
+		if cached.member.GetOrgId() != member.OrgId {
+			acs.log.Debugf("get member from cache failed: member orgId does not match on chain")
+			return nil
+		}
+		return cached.member
 	}
-	memberFactory := MemberFactory()
-	return memberFactory.NewMember(member, acs)
+	return nil
 }
 
 func (acs *accessControlService) verifyPrincipalPolicy(principal, refinedPrincipal protocol.Principal, p *policy) (
@@ -641,12 +826,14 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleSelfCase(targetOrg str
 			continue
 		}
 
-		member, err := acs.newMember(entry.Signer)
-		if err != nil {
-			acs.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
-				err.Error(), string(entry.Signer.MemberInfo))
+		member := acs.getMemberFromCache(entry.Signer)
+		if member == nil {
+			acs.log.Debugf(
+				"authentication warning: the member is not in member cache, memberInfo[%s]",
+				string(entry.Signer.MemberInfo))
 			continue
 		}
+
 		if member.GetRole() == role {
 			return true, nil
 		}
@@ -670,12 +857,14 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleAnyCase(p *policy, end
 			return true, nil
 		}
 
-		member, err := acs.newMember(endorsement.Signer)
-		if err != nil {
-			acs.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
-				err.Error(), string(endorsement.Signer.MemberInfo))
+		member := acs.getMemberFromCache(endorsement.Signer)
+		if member == nil {
+			acs.log.Debugf(
+				"authentication warning: the member is not in member cache, memberInfo[%s]",
+				string(endorsement.Signer.MemberInfo))
 			continue
 		}
+
 		if _, ok := roleList[member.GetRole()]; ok {
 			return true, nil
 		}
@@ -774,10 +963,11 @@ func (acs *accessControlService) getValidEndorsements(orgList map[string]bool, r
 			continue
 		}
 
-		member, err := acs.newMember(endorsement.Signer)
-		if err != nil {
-			acs.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
-				err.Error(), string(endorsement.Signer.MemberInfo))
+		member := acs.getMemberFromCache(endorsement.Signer)
+		if member == nil {
+			acs.log.Debugf(
+				"authentication warning: the member is not in member cache, memberInfo[%s]",
+				string(endorsement.Signer.MemberInfo))
 			continue
 		}
 

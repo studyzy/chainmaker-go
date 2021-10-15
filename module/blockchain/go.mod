@@ -11,35 +11,35 @@ require (
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
 	chainmaker.org/chainmaker-go/sync v0.0.0
 	chainmaker.org/chainmaker-go/txpool v0.0.0
-	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211008100315-b70ecfa0c08f
-	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210930065646-a343285bad02
-	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211009072509-e7d0967e05e8
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210927062046-68813f263c0b
-	chainmaker.org/chainmaker/store/v2 v2.0.0-20211009022637-e5e1cba4871b
-	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210916084713-abd13154c26b
-	chainmaker.org/chainmaker/vm v0.0.0-20210918104424-239140ec3366
-	chainmaker.org/chainmaker/vm-evm v0.0.0-20210916091920-b915815eb88b
-	chainmaker.org/chainmaker/vm-gasm v0.0.0-20210918095814-3f0ddfe29968
-	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211008132543-79cb76bb2f68
-	chainmaker.org/chainmaker/vm-wxvm v0.0.0-20210918101823-dce1c76fb189
-	github.com/mitchellh/mapstructure v1.4.1
+	chainmaker.org/chainmaker-go/vm v0.0.0
+	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211014142031-0a2a2aac316c
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211015124616-4d3c85fa0a79
+	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211014134424-9431ffcc5bbc
+	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
+	chainmaker.org/chainmaker/store/v2 v2.0.0-20211014154101-7b199f0df636
+	chainmaker.org/chainmaker/txpool-batch/v2 v2.0.0-20211014143342-e04da749db9b
+	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211014131421-43de8d9fe869
+	chainmaker.org/chainmaker/vm v0.0.0-20211015132050-2ad78bcdb1bf
+	github.com/fatih/color v1.13.0 // indirect
+	github.com/hokaccha/go-prettyjson v0.0.0-20210113012101-fb4e108d2519 // indirect
+	github.com/mattn/go-colorable v0.1.11 // indirect
+	github.com/mitchellh/mapstructure v1.4.2
+	github.com/spf13/cobra v1.2.1 // indirect
+	github.com/spf13/viper v1.9.0 // indirect
 )
 
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
 	chainmaker.org/chainmaker-go/consensus => ../consensus
 	chainmaker.org/chainmaker-go/core => ../core
-	chainmaker.org/chainmaker-go/monitor => ../monitor
 	chainmaker.org/chainmaker-go/net => ../net
 	chainmaker.org/chainmaker-go/snapshot => ../snapshot
 	chainmaker.org/chainmaker-go/subscriber => ../subscriber
 	chainmaker.org/chainmaker-go/sync => ../sync
 	chainmaker.org/chainmaker-go/txpool => ../txpool
-	//chainmaker.org/chainmaker-go/txpool/batchtxpool => ./../txpool/batch
-	github.com/libp2p/go-libp2p => ../net/p2p/libp2p
-	github.com/libp2p/go-libp2p-core => ../net/p2p/libp2pcore
-	github.com/libp2p/go-libp2p-pubsub => ../net/p2p/libp2ppubsub
+	chainmaker.org/chainmaker-go/vm => ../vm
+	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
 	google.golang.org/grpc v1.40.0 => google.golang.org/grpc v1.26.0
 )

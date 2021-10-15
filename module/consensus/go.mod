@@ -4,29 +4,36 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
-	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211008100315-b70ecfa0c08f
-	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210914062957-13e84972a921
-	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211009072509-e7d0967e05e8
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210927062046-68813f263c0b
+	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211014142031-0a2a2aac316c
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211015124616-4d3c85fa0a79
+	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211014134424-9431ffcc5bbc
+	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
 	chainmaker.org/chainmaker/raftwal/v2 v2.0.3
-	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
-	chainmaker.org/chainmaker/vm-native v0.0.0-20210922090336-9f8289cf0433
+	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211014131421-43de8d9fe869
+	chainmaker.org/chainmaker/vm-native v0.0.0-20211015131410-ff8bcfcf009b
+	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/kr/pretty v0.2.0 // indirect
+	github.com/mitchellh/mapstructure v1.4.1 // indirect
+	github.com/pingcap/errors v0.11.5-0.20201126102027-b0a155152ca3 // indirect
+	github.com/pingcap/log v0.0.0-20201112100606-8f1e84a3abc8 // indirect
+	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
+	github.com/studyzy/sqlparse v0.0.0-20210525032257-e7b9574609c3 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210305035536-64b5b1c73954
 	github.com/thoas/go-funk v0.8.0
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0
 	go.etcd.io/etcd/raft/v3 v3.5.0
 	go.etcd.io/etcd/server/v3 v3.5.0
 	go.uber.org/zap v1.19.1
+	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 // indirect
 )
 
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
-	github.com/libp2p/go-libp2p-core => ../net/p2p/libp2pcore
+	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
 )

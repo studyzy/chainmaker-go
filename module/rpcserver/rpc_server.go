@@ -18,13 +18,14 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/blockchain"
-	"chainmaker.org/chainmaker-go/monitor"
 	"chainmaker.org/chainmaker/common/v2/ca"
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	"chainmaker.org/chainmaker/common/v2/monitor"
 	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
+	"chainmaker.org/chainmaker/protocol/v2"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
@@ -277,6 +278,15 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 			grpc_middleware.WithStreamServerChain(
 				BlackListStreamInterceptor(),
 			),
+		}
+	}
+
+	if strings.ToLower(localconf.ChainMakerConfig.AuthType) == protocol.PermissionedWithKey ||
+		strings.ToLower(localconf.ChainMakerConfig.AuthType) == protocol.Public {
+		if localconf.ChainMakerConfig.RpcConfig.TLSConfig.Mode != TLS_MODE_DISABLE {
+			localconf.ChainMakerConfig.RpcConfig.TLSConfig.Mode = TLS_MODE_DISABLE
+			log.Infof("the tls mode has been automatically set to [disable] according to the authType:[%s]",
+				localconf.ChainMakerConfig.AuthType)
 		}
 	}
 

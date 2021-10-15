@@ -9,14 +9,17 @@ package blockchain
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 
-	"chainmaker.org/chainmaker/common/v2/container"
-	evm "chainmaker.org/chainmaker/vm-evm"
-	gasm "chainmaker.org/chainmaker/vm-gasm"
-	wasmer "chainmaker.org/chainmaker/vm-wasmer"
-	wxvm "chainmaker.org/chainmaker/vm-wxvm"
+	"chainmaker.org/chainmaker/store/v2"
+
+	componentVm "chainmaker.org/chainmaker-go/vm"
+
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+
+	batch "chainmaker.org/chainmaker/txpool-batch/v2"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/consensus"
@@ -29,17 +32,21 @@ import (
 	blockSync "chainmaker.org/chainmaker-go/sync"
 	"chainmaker.org/chainmaker-go/txpool"
 	"chainmaker.org/chainmaker/chainconf/v2"
+	"chainmaker.org/chainmaker/common/v2/container"
 	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
-	"chainmaker.org/chainmaker/store/v2"
 	"chainmaker.org/chainmaker/store/v2/conf"
 	"chainmaker.org/chainmaker/utils/v2"
 	"chainmaker.org/chainmaker/vm"
 	"github.com/mitchellh/mapstructure"
+)
+
+const (
+	PREFIX_dpos_stake_nodeId string = "stake.nodeID"
 )
 
 // Init all the modules.
@@ -152,7 +159,7 @@ func (bc *Blockchain) initStore() (err error) {
 		bc.log.Infof("store module existed, ignore.")
 		return
 	}
-	var storeFactory store.Factory
+	var storeFactory store.Factory // nolint: typecheck
 	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, bc.chainId)
 	err = container.Register(func() protocol.Logger { return storeLogger }, container.Name("store"))
 	if err != nil {
@@ -206,6 +213,30 @@ func (bc *Blockchain) initChainConf() (err error) {
 		bc.log.Errorf("init chain config failed, %s", err)
 		return err
 	}
+
+	authType := strings.ToLower(bc.chainConf.ChainConfig().AuthType)
+	if authType == "" {
+		authType = protocol.PermissionedWithCert
+	}
+
+	if authType == protocol.Identity {
+		authType = protocol.PermissionedWithCert
+	}
+
+	localAuthType := strings.ToLower(localconf.ChainMakerConfig.AuthType)
+
+	if localAuthType == "" {
+		localAuthType = protocol.PermissionedWithCert
+	}
+
+	if localAuthType == protocol.Identity {
+		localAuthType = protocol.PermissionedWithCert
+	}
+
+	if authType != localAuthType {
+		return fmt.Errorf("auth type of chain config mismatch the local config")
+	}
+
 	bc.chainNodeList, err = bc.chainConf.GetConsensusNodeIdList()
 	if err != nil {
 		bc.log.Errorf("load node list of chain config failed, %s", err)
@@ -248,6 +279,30 @@ func (bc *Blockchain) initCache() (err error) {
 			bc.log.Errorf("invoke chain config genesis failed, %s", err)
 			return err
 		}
+
+		authType := strings.ToLower(chainConfig.AuthType)
+		if authType == "" {
+			authType = protocol.PermissionedWithCert
+		}
+
+		if authType == protocol.Identity {
+			authType = protocol.PermissionedWithCert
+		}
+
+		localAuthType := strings.ToLower(localconf.ChainMakerConfig.AuthType)
+
+		if localAuthType == "" {
+			localAuthType = protocol.PermissionedWithCert
+		}
+
+		if localAuthType == protocol.Identity {
+			localAuthType = protocol.PermissionedWithCert
+		}
+
+		if authType != localAuthType {
+			return fmt.Errorf("auth type of chain config mismatch the local config")
+		}
+
 		genesisBlock, rwSetList, err := utils.CreateGenesis(chainConfig)
 		if err != nil {
 			return fmt.Errorf("create chain [%s] genesis failed, %s", bc.chainId, err.Error())
@@ -304,15 +359,29 @@ func (bc *Blockchain) initAC() (err error) {
 	//	return
 	//}
 	acFactory := accesscontrol.ACFactory()
-	bc.ac, err = acFactory.NewACProvider("CERT", bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
+	bc.ac, err = acFactory.NewACProvider(bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
 	if err != nil {
-		bc.log.Errorf("get organization information failed, %s", err.Error())
+		bc.log.Errorf("new ac provider failed, %s", err.Error())
 		return
 	}
 
-	bc.identity, err = accesscontrol.InitCertSigningMember(bc.chainConf.ChainConfig(), nodeConfig.OrgId,
-		nodeConfig.PrivKeyFile, nodeConfig.PrivKeyPassword, nodeConfig.CertFile)
-	if err != nil {
+	switch bc.chainConf.ChainConfig().AuthType {
+	case protocol.PermissionedWithCert, protocol.Identity:
+		bc.identity, err = accesscontrol.InitCertSigningMember(bc.chainConf.ChainConfig(), nodeConfig.OrgId,
+			nodeConfig.PrivKeyFile, nodeConfig.PrivKeyPassword, nodeConfig.CertFile)
+		if err != nil {
+			bc.log.Errorf("initialize identity failed, %s", err.Error())
+			return
+		}
+	case protocol.PermissionedWithKey, protocol.Public:
+		bc.identity, err = accesscontrol.InitPKSigningMember(bc.ac, nodeConfig.OrgId,
+			nodeConfig.PrivKeyFile, nodeConfig.PrivKeyPassword)
+		if err != nil {
+			bc.log.Errorf("initialize identity failed, %s", err.Error())
+			return
+		}
+	default:
+		err = fmt.Errorf("auth type doesn't exist")
 		bc.log.Errorf("initialize identity failed, %s", err.Error())
 		return
 	}
@@ -327,31 +396,38 @@ func (bc *Blockchain) initTxPool() (err error) {
 		bc.log.Infof("tx pool module existed, ignore.")
 		return
 	}
-	// init transaction pool
-	var (
-		txPoolFactory txpool.TxPoolFactory
-		txType        = txpool.SINGLE
-	)
-	if strings.ToUpper(localconf.ChainMakerConfig.TxPoolConfig.PoolType) == string(txpool.BATCH) {
-		txType = txpool.BATCH
+
+	txPoolType := txpool.TypeDefault
+
+	if value, ok := localconf.ChainMakerConfig.TxPoolConfig["pool_type"]; ok {
+		txPoolType, _ = value.(string)
+		txPoolType = strings.ToUpper(txPoolType)
 	}
 
-	txpoolLogger := logger.GetLoggerByChain(logger.MODULE_TXPOOL, bc.chainId)
-	bc.txPool, err = txPoolFactory.NewTxPool(txpoolLogger,
-		txType,
-		txpool.WithNodeId(localconf.ChainMakerConfig.NodeConfig.NodeId),
-		txpool.WithMsgBus(bc.msgBus),
-		txpool.WithChainId(bc.chainId),
-		txpool.WithNetService(bc.netService),
-		txpool.WithBlockchainStore(bc.store),
-		txpool.WithSigner(bc.identity),
-		txpool.WithChainConf(bc.chainConf),
-		txpool.WithAccessControl(bc.ac),
+	txPoolLogger := logger.GetLoggerByChain(logger.MODULE_TXPOOL, bc.chainId)
+	txPoolProvider := txpool.GetTxPoolProvider(txPoolType)
+	if txPoolProvider == nil {
+		return errors.New("get txPool provider failed, expected txPool not found")
+	}
+
+	currentTxPool, err := txPoolProvider(
+		localconf.ChainMakerConfig.NodeConfig.NodeId,
+		bc.chainId,
+		bc.store,
+		bc.msgBus,
+		bc.chainConf,
+		bc.ac,
+		txPoolLogger,
+		localconf.ChainMakerConfig.MonitorConfig.Enabled,
+		localconf.ChainMakerConfig.TxPoolConfig,
 	)
+
 	if err != nil {
 		bc.log.Errorf("new tx pool failed, %s", err)
 		return err
 	}
+
+	bc.txPool = currentTxPool
 	bc.initModules[moduleNameTxPool] = struct{}{}
 	return nil
 }
@@ -364,13 +440,109 @@ func (bc *Blockchain) initVM() (err error) {
 	}
 	// init VM
 	if bc.netService == nil {
-		bc.vmMgr = vm.NewVmManager(wasmer.NewVmPoolManager(bc.chainId), &evm.InstancesManager{},
-			&gasm.InstancesManager{}, &wxvm.InstancesManager{}, localconf.ChainMakerConfig.GetStorePath(),
-			bc.ac, &soloChainNodesInfoProvider{}, bc.chainConf)
+		/*
+			bc.vmMgr = vm.NewVmManager(
+				wasmer.NewVmPoolManager(bc.chainId),
+				&evm.InstancesManager{},
+				&gasm.InstancesManager{},
+				&wxvm.InstancesManager{},
+				localconf.ChainMakerConfig.GetStorePath(),
+				bc.ac, &soloChainNodesInfoProvider{},
+				bc.chainConf,
+			)
+		*/
+
+		/*
+			bc.vmMgr = vm.NewVmManager(
+				map[common.RuntimeType]protocol.VmInstancesManager{
+					common.RuntimeType_GASM:   &gasm.InstancesManager{},
+					common.RuntimeType_WXVM:   &wxvm.InstancesManager{},
+					common.RuntimeType_EVM:    &evm.InstancesManager{},
+					common.RuntimeType_WASMER: &wasmer.InstancesManager{},
+				},
+				localconf.ChainMakerConfig.GetStorePath(),
+				bc.ac,
+				&soloChainNodesInfoProvider{},
+				bc.chainConf,
+			)
+		*/
+
+		chainConfig, err := chainconf.Genesis(bc.genesis)
+		if err != nil {
+			bc.log.Errorf("invoke chain config genesis failed, %s", err)
+			return err
+		}
+
+		supportedVmManagerList := make(map[common.RuntimeType]protocol.VmInstancesManager)
+
+		for _, vmType := range chainConfig.Vm.SupportList {
+			vmInstancesManagerProvider := componentVm.GetVmProvider(vmType)
+			vmInstancesManager, err := vmInstancesManagerProvider(bc.chainId)
+			if err != nil {
+				bc.log.Errorf("")
+			}
+			supportedVmManagerList[componentVm.VmTypeToRunTimeType[strings.ToUpper(vmType)]] = vmInstancesManager
+		}
+
+		bc.vmMgr = vm.NewVmManager(
+			supportedVmManagerList,
+			localconf.ChainMakerConfig.GetStorePath(),
+			bc.ac,
+			&soloChainNodesInfoProvider{},
+			bc.chainConf,
+		)
 	} else {
-		bc.vmMgr = vm.NewVmManager(wasmer.NewVmPoolManager(bc.chainId), &evm.InstancesManager{},
-			&gasm.InstancesManager{}, &wxvm.InstancesManager{}, localconf.ChainMakerConfig.GetStorePath(),
-			bc.ac, bc.netService.GetChainNodesInfoProvider(), bc.chainConf)
+		/*
+			bc.vmMgr = vm.NewVmManager(
+				wasmer.NewVmPoolManager(bc.chainId),
+				&evm.InstancesManager{},
+				&gasm.InstancesManager{},
+				&wxvm.InstancesManager{},
+				localconf.ChainMakerConfig.GetStorePath(),
+				bc.ac,
+				bc.netService.GetChainNodesInfoProvider(),
+				bc.chainConf,
+			)
+		*/
+
+		/*
+			bc.vmMgr = vm.NewVmManager(
+				map[common.RuntimeType]protocol.VmInstancesManager{
+					common.RuntimeType_GASM: &gasm.InstancesManager{},
+					common.RuntimeType_WXVM: &wxvm.InstancesManager{},
+					common.RuntimeType_EVM:  &evm.InstancesManager{},
+				},
+				localconf.ChainMakerConfig.GetStorePath(),
+				bc.ac,
+				bc.netService.GetChainNodesInfoProvider(),
+				bc.chainConf,
+			)
+		*/
+
+		chainConfig, err := chainconf.Genesis(bc.genesis)
+		if err != nil {
+			bc.log.Errorf("invoke chain config genesis failed, %s", err)
+			return err
+		}
+
+		supportedVmManagerList := make(map[common.RuntimeType]protocol.VmInstancesManager)
+
+		for _, vmType := range chainConfig.Vm.SupportList {
+			vmInstancesManagerProvider := componentVm.GetVmProvider(vmType)
+			vmInstancesManager, err := vmInstancesManagerProvider(bc.chainId)
+			if err != nil {
+				bc.log.Errorf("")
+			}
+			supportedVmManagerList[componentVm.VmTypeToRunTimeType[strings.ToUpper(vmType)]] = vmInstancesManager
+		}
+
+		bc.vmMgr = vm.NewVmManager(
+			supportedVmManagerList,
+			localconf.ChainMakerConfig.GetStorePath(),
+			bc.ac,
+			bc.netService.GetChainNodesInfoProvider(),
+			bc.chainConf,
+		)
 	}
 	bc.initModules[moduleNameVM] = struct{}{}
 	return
@@ -406,9 +578,15 @@ func (bc *Blockchain) initCore() (err error) {
 	}
 
 	// turn off consensus turbo when txpool is single txpool
-	if bc.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo &&
-		strings.ToUpper(localconf.ChainMakerConfig.TxPoolConfig.PoolType) != string(txpool.BATCH) {
-		bc.log.Warnf("invaild consensus message setting, consensus message turbo turn off.")
+	txPoolType := txpool.TypeDefault
+	value, ok := localconf.ChainMakerConfig.TxPoolConfig["pool_type"]
+	if ok {
+		txPoolType, _ = value.(string)
+		txPoolType = strings.ToUpper(txPoolType)
+	}
+
+	if bc.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo && txPoolType != batch.TxPoolType {
+		bc.log.Warnf("invalid consensus message setting, consensus message turbo turn off.")
 		bc.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo = false
 	}
 
@@ -443,14 +621,27 @@ func (bc *Blockchain) initConsensus() (err error) {
 	// init consensus module
 	var consensusFactory consensus.Factory
 	id := localconf.ChainMakerConfig.NodeConfig.NodeId
-	nodes := bc.chainConf.ChainConfig().Consensus.Nodes
-	nodeIds := make([]string, len(nodes))
+	var nodeIds []string
 	isConsensusNode := false
-	for i, node := range nodes {
-		for _, nid := range node.NodeId {
-			nodeIds[i] = nid
-			if nid == id {
-				isConsensusNode = true
+	if bc.getConsensusType() == consensusPb.ConsensusType_DPOS {
+		dposConfigs := bc.chainConf.ChainConfig().Consensus.DposConfig
+		for _, dposConfig := range dposConfigs {
+			if strings.HasPrefix(dposConfig.Key, PREFIX_dpos_stake_nodeId) {
+				nodeIds = append(nodeIds, string(dposConfig.Value))
+				if string(dposConfig.Value) == id {
+					isConsensusNode = true
+				}
+			}
+		}
+	} else {
+		nodes := bc.chainConf.ChainConfig().Consensus.Nodes
+		nodeIds = make([]string, len(nodes))
+		for i, node := range nodes {
+			for _, nid := range node.NodeId {
+				nodeIds[i] = nid
+				if nid == id {
+					isConsensusNode = true
+				}
 			}
 		}
 	}

@@ -31,6 +31,7 @@ var (
 	chainId            string
 	adminKeyFilePaths  string
 	adminCrtFilePaths  string
+	adminOrgIds        string
 )
 
 var (
@@ -59,6 +60,8 @@ func NewTeeCMD() *cobra.Command {
 		"specify admin key file paths, use ',' to separate")
 	teeFlags.StringVar(&adminCrtFilePaths, "admin-crt-file-paths", "",
 		"specify admin cert file paths, use ',' to separate")
+	teeFlags.StringVar(&adminOrgIds, "admin-org-ids", "",
+		"specify admin org-ids, use ',' to separate")
 
 	teeCmd.AddCommand(uploadCaCertCmd())
 	teeCmd.AddCommand(uploadReportCmd())
@@ -87,4 +90,17 @@ func createMultiSignAdmins(adminKeyFilePaths string, adminCrtFilePaths string) (
 	}
 
 	return adminKeys, adminCrts, nil
+}
+
+func createMultiSignAdminsForPK(adminKeyFilePaths string, adminOrgIds string) ([]string, []string, error) {
+	adminKeys := strings.Split(adminKeyFilePaths, ",")
+	adminOrgs := strings.Split(adminOrgIds, ",")
+	if len(adminKeys) == 0 || len(adminOrgs) == 0 {
+		return nil, nil, errors.New("no admin users given for sign payload")
+	}
+	if len(adminKeys) != len(adminOrgs) {
+		return nil, nil, fmt.Errorf("admin keys num(%v) is not equals org-id num(%v)", len(adminKeys), len(adminOrgs))
+	}
+
+	return adminKeys, adminOrgs, nil
 }

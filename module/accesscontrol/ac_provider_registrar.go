@@ -10,13 +10,13 @@ package accesscontrol
 import (
 	"reflect"
 
-	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 func init() {
-	RegisterACProvider(pbac.MemberType_CERT.String(), NilCertACProvider)
-	RegisterACProvider(pbac.MemberType_CERT_HASH.String(), NilCertACProvider)
+	RegisterACProvider(protocol.PermissionedWithCert, NilCertACProvider)
+	RegisterACProvider(protocol.PermissionedWithKey, NilPermissionedPkACProvider)
+	RegisterACProvider(protocol.Public, NilPkACProvider)
 }
 
 var acProviderRegistry = map[string]reflect.Type{}
@@ -26,18 +26,18 @@ type ACProvider interface {
 		store protocol.BlockchainStore, log protocol.Logger) (protocol.AccessControlProvider, error)
 }
 
-func RegisterACProvider(memberType string, acp ACProvider) {
-	_, found := acProviderRegistry[memberType]
+func RegisterACProvider(authType string, acp ACProvider) {
+	_, found := acProviderRegistry[authType]
 	if found {
-		panic("accesscontrol provider[" + memberType + "] already registered!")
+		panic("accesscontrol provider[" + authType + "] already registered!")
 	}
-	acProviderRegistry[memberType] = reflect.TypeOf(acp)
+	acProviderRegistry[authType] = reflect.TypeOf(acp)
 }
 
-func NewACProviderByMemberType(memberType string) ACProvider {
-	t, found := acProviderRegistry[memberType]
+func NewACProviderByMemberType(authType string) ACProvider {
+	t, found := acProviderRegistry[authType]
 	if !found {
-		panic("accesscontrol provider[" + memberType + "] not found!")
+		panic("accesscontrol provider[" + authType + "] not found!")
 	}
 	return reflect.New(t).Elem().Interface().(ACProvider)
 }

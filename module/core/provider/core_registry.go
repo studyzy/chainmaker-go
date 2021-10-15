@@ -11,6 +11,10 @@ import (
 	"strings"
 )
 
+// nolint: deadcode, unused
+type a interface {
+}
+
 var coreEngineRegistry = map[string]reflect.Type{}
 
 // RegisterCoreEngineProvider add a type to the coreEngineRegistry. If type already registered, will panic.

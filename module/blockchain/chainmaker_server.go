@@ -18,6 +18,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/net"
 	"chainmaker.org/chainmaker-go/subscriber"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"chainmaker.org/chainmaker/common/v2/helper"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/localconf/v2"
@@ -33,10 +34,12 @@ const chainIdNotFoundErrorTemplate = "chain id %s not found"
 // ChainMakerServer manage all blockchains
 type ChainMakerServer struct {
 	// net shared by all chains
-	net net.Net
+	net protocol.Net
 
 	// blockchains known by this node
 	blockchains sync.Map // map[string]*Blockchain
+
+	readyC chan struct{}
 }
 
 // NewChainMakerServer create a new ChainMakerServer instance.
@@ -48,6 +51,7 @@ func NewChainMakerServer() *ChainMakerServer {
 func (server *ChainMakerServer) Init() error {
 	var err error
 	log.Debug("begin init chain maker server...")
+	server.readyC = make(chan struct{})
 	// 1) init net
 	if err = server.initNet(); err != nil {
 		return err
@@ -69,10 +73,16 @@ func (server *ChainMakerServer) initNet() error {
 	switch strings.ToLower(provider) {
 	case "libp2p":
 		netType = protocol.Libp2p
+	case "liquid":
+		netType = protocol.Liquid
 	default:
 		return errors.New("unsupported net provider")
 	}
-	// load tls key and cert path
+
+	authType := localconf.ChainMakerConfig.AuthType
+	emptyAuthType := ""
+
+	// load tls keys and cert path
 	keyPath := localconf.ChainMakerConfig.NetConfig.TLSConfig.PrivKeyFile
 	if !filepath.IsAbs(keyPath) {
 		keyPath, err = filepath.Abs(keyPath)
@@ -81,22 +91,34 @@ func (server *ChainMakerServer) initNet() error {
 		}
 	}
 	log.Infof("load net tls key file path: %s", keyPath)
-	certPath := localconf.ChainMakerConfig.NetConfig.TLSConfig.CertFile
-	if !filepath.IsAbs(certPath) {
-		certPath, err = filepath.Abs(certPath)
-		if err != nil {
-			return err
+
+	var certPath string
+	var pubKeyMode bool
+	switch strings.ToLower(authType) {
+	case protocol.PermissionedWithKey, protocol.Public:
+		pubKeyMode = true
+	case protocol.PermissionedWithCert, protocol.Identity, emptyAuthType:
+		pubKeyMode = false
+		certPath = localconf.ChainMakerConfig.NetConfig.TLSConfig.CertFile
+		if !filepath.IsAbs(certPath) {
+			certPath, err = filepath.Abs(certPath)
+			if err != nil {
+				return err
+			}
 		}
+		log.Infof("load net tls cert file path: %s", certPath)
+	default:
+		return errors.New("wrong auth type")
 	}
-	log.Infof("load net tls cert file path: %s", certPath)
 	// new net
 	var netFactory net.NetFactory
 	server.net, err = netFactory.NewNet(
 		netType,
+		net.WithReadySignalC(server.readyC),
 		net.WithListenAddr(localconf.ChainMakerConfig.NetConfig.ListenAddr),
-		net.WithCrypto(keyPath, certPath),
+		net.WithCrypto(pubKeyMode, keyPath, certPath),
 		net.WithPeerStreamPoolSize(localconf.ChainMakerConfig.NetConfig.PeerStreamPoolSize),
-		net.WithMaxPeerCountAllow(localconf.ChainMakerConfig.NetConfig.MaxPeerCountAllow),
+		net.WithMaxPeerCountAllowed(localconf.ChainMakerConfig.NetConfig.MaxPeerCountAllow),
 		net.WithPeerEliminationStrategy(localconf.ChainMakerConfig.NetConfig.PeerEliminationStrategy),
 		net.WithSeeds(localconf.ChainMakerConfig.NetConfig.Seeds...),
 		net.WithBlackAddresses(localconf.ChainMakerConfig.NetConfig.BlackList.Addresses...),
@@ -110,12 +132,16 @@ func (server *ChainMakerServer) initNet() error {
 		return errors.New(errMsg)
 	}
 
-	// read tls cert, then set the NodeId of local config
-	file, err := ioutil.ReadFile(certPath)
+	// read key file, then set the NodeId of local config
+	file, err := ioutil.ReadFile(keyPath)
 	if err != nil {
 		return err
 	}
-	nodeId, err := helper.GetLibp2pPeerIdFromCert(file)
+	privateKey, err := asym.PrivateKeyFromPEM(file, nil)
+	if err != nil {
+		return err
+	}
+	nodeId, err := helper.CreateLibp2pPeerIdWithPrivateKey(privateKey)
 	if err != nil {
 		return err
 	}
@@ -123,18 +149,17 @@ func (server *ChainMakerServer) initNet() error {
 
 	// load custom chain trust roots
 	for _, chainTrustRoots := range localconf.ChainMakerConfig.NetConfig.CustomChainTrustRoots {
-		for _, roots := range chainTrustRoots.TrustRoots {
-			rootBytes, err := ioutil.ReadFile(roots.Root)
-			if err != nil {
-				log.Errorf("load custom chain trust roots failed, %s", err.Error())
-				return err
+		roots := make([][]byte, 0, len(chainTrustRoots.TrustRoots))
+		for _, r := range chainTrustRoots.TrustRoots {
+			rootBytes, err2 := ioutil.ReadFile(r.Root)
+			if err2 != nil {
+				log.Errorf("load custom chain trust roots failed, %s", err2.Error())
+				return err2
 			}
-			err = server.net.AddTrustRoot(chainTrustRoots.ChainId, rootBytes)
-			if err != nil {
-				log.Errorf("add custom chain trust roots failed, %s", err.Error())
-				return err
-			}
+			roots = append(roots, rootBytes)
 		}
+		server.net.SetChainCustomTrustRoots(chainTrustRoots.ChainId, roots)
+		log.Infof("set custom trust roots for chain[%s] success.", chainTrustRoots.ChainId)
 	}
 	return nil
 }
@@ -220,6 +245,8 @@ func (server *ChainMakerServer) Start() error {
 		return true
 	})
 
+	// 3) ready
+	close(server.readyC)
 	return nil
 }
 

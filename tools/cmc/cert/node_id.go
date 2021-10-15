@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"chainmaker.org/chainmaker/common/v2/helper"
 	"github.com/spf13/cobra"
 )
@@ -26,21 +27,42 @@ func nodeIdCMD() *cobra.Command {
 	}
 
 	attachFlags(nodeIdCmd, []string{
-		flagNodeCertPath,
+		flagNodeCertPath, flagNodePkPath,
 	})
 
 	return nodeIdCmd
 }
 
 func getNodeId() error {
-	file, err := ioutil.ReadFile(nodeCertPath)
-	if err != nil {
-		return err
+	if nodeCertPath != "" {
+		file, err := ioutil.ReadFile(nodeCertPath)
+		if err != nil {
+			return err
+		}
+		nodeId, err := helper.GetLibp2pPeerIdFromCert(file)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("node id : %s \n", nodeId)
+		return nil
+	} else if nodePkPath != "" {
+		file, err := ioutil.ReadFile(nodePkPath)
+		if err != nil {
+			return err
+		}
+		pk, err := asym.PublicKeyFromPEM([]byte(file))
+		if err != nil {
+			return err
+		}
+		nodeId, err := helper.CreateLibp2pPeerIdWithPublicKey(pk)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("node id : %s \n", nodeId)
+		return nil
+	} else {
+		fmt.Printf("invalid parameter\n")
+		return nil
 	}
-	nodeId, err := helper.GetLibp2pPeerIdFromCert(file)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("node id : %s \n", nodeId)
-	return nil
+
 }

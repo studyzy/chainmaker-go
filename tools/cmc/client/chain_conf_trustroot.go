@@ -14,7 +14,10 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
 	"github.com/spf13/cobra"
 )
@@ -51,11 +54,10 @@ func addTrustRootCMD() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustRootCrtPath, flagTrustRootOrgId,
-		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagAdminOrgIds, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTrustRootOrgId)
 	cmd.MarkFlagRequired(flagTrustRootCrtPath)
@@ -76,11 +78,10 @@ func removeTrustRootCMD() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustRootCrtPath, flagTrustRootOrgId,
-		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagAdminOrgIds, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTrustRootOrgId)
 	cmd.MarkFlagRequired(flagTrustRootCrtPath)
@@ -101,11 +102,10 @@ func updateTrustRootCMD() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustRootCrtPath, flagTrustRootOrgId,
-		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagAdminOrgIds, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTrustRootOrgId)
 	cmd.MarkFlagRequired(flagTrustRootCrtPath)
@@ -113,15 +113,11 @@ func updateTrustRootCMD() *cobra.Command {
 	return cmd
 }
 
+// nolint: gocyclo
 func configTrustRoot(op int) error {
-	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return errAdminOrgIdKeyCertIsEmpty
-	}
-	if len(adminKeys) != len(adminCrts) {
-		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
-	}
+	var adminKeys []string
+	var adminCrts []string
+	var adminOrgs []string
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
 		userSignCrtFilePath, userSignKeyFilePath)
@@ -129,6 +125,31 @@ func configTrustRoot(op int) error {
 		return err
 	}
 	defer client.Stop()
+
+	if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+		adminCrts = strings.Split(adminCrtFilePaths, ",")
+		if len(adminKeys) == 0 || len(adminCrts) == 0 {
+			return errAdminOrgIdKeyCertIsEmpty
+		}
+		if len(adminKeys) != len(adminCrts) {
+			return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
+		}
+	} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+		adminOrgs = strings.Split(adminOrgIds, ",")
+		if len(adminKeys) == 0 || len(adminOrgs) == 0 {
+			return errAdminOrgIdKeyCertIsEmpty
+		}
+		if len(adminKeys) != len(adminOrgs) {
+			return fmt.Errorf(ADMIN_ORGID_KEY_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminOrgs))
+		}
+	} else {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+		if len(adminKeys) == 0 {
+			return errAdminOrgIdKeyCertIsEmpty
+		}
+	}
 
 	var trustRootBytes []string
 	if op == addTrustRoot || op == updateTrustRoot {
@@ -162,12 +183,38 @@ func configTrustRoot(op int) error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
-		if err != nil {
-			return err
-		}
+		if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+			e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
+			if err != nil {
+				return err
+			}
 
-		endorsementEntrys[i] = e
+			endorsementEntrys[i] = e
+		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+			e, err := sdkutils.MakePkEndorserWithPath(
+				adminKeys[i],
+				crypto.HashAlgoMap[client.GetHashType()],
+				adminOrgs[i],
+				payload,
+			)
+			if err != nil {
+				return err
+			}
+
+			endorsementEntrys[i] = e
+		} else {
+			e, err := sdkutils.MakePkEndorserWithPath(
+				adminKeys[i],
+				crypto.HashAlgoMap[client.GetHashType()],
+				"",
+				payload,
+			)
+			if err != nil {
+				return err
+			}
+
+			endorsementEntrys[i] = e
+		}
 	}
 
 	resp, err := client.SendChainConfigUpdateRequest(payload, endorsementEntrys, -1, syncResult)
