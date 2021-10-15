@@ -184,7 +184,7 @@ func publicNewPkMemberFromAcs(member *pbac.Member, adminList,
 		return nil, fmt.Errorf("new public key member failed: %s", err.Error())
 	}
 
-	adminMember, ok := adminList.Load(pkBytes)
+	adminMember, ok := adminList.Load(hex.EncodeToString(pkBytes))
 	if ok {
 		admin, _ := adminMember.(*publicAdminMemberModel)
 		return newPkMemberFromParam("", admin.pkBytes, protocol.RoleAdmin, hashType)
