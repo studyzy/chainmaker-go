@@ -21,12 +21,7 @@ require (
 	chainmaker.org/chainmaker/store/v2 v2.0.0-20211014154101-7b199f0df636
 	chainmaker.org/chainmaker/txpool-batch/v2 v2.0.0-20211014143342-e04da749db9b
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211014131421-43de8d9fe869
-	chainmaker.org/chainmaker/vm v0.0.0-20211014150836-d6eae08ad3bd
-	chainmaker.org/chainmaker/vm-evm v0.0.0-20211014155012-e69085fedd2f
-	chainmaker.org/chainmaker/vm-gasm v0.0.0-20211014154622-4c1c925eacdd
-	chainmaker.org/chainmaker/vm-native v0.0.0-20211014145655-91f98409dbbd // indirect
-	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211014154818-0f4ed6551187
-	chainmaker.org/chainmaker/vm-wxvm v0.0.0-20211014155330-6a66e3935c65
+	chainmaker.org/chainmaker/vm v0.0.0-20211015025118-d8b404b9d328
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20210113012101-fb4e108d2519 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect

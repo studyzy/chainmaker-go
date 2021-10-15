@@ -12,7 +12,7 @@ require (
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211014131421-43de8d9fe869
-	chainmaker.org/chainmaker/vm v0.0.0-20211014150836-d6eae08ad3bd
+	chainmaker.org/chainmaker/vm v0.0.0-20211015025118-d8b404b9d328
 	github.com/ethereum/go-ethereum v1.10.3 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/panjf2000/ants/v2 v2.4.3
