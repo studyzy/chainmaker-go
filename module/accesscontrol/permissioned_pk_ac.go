@@ -337,7 +337,8 @@ func (pp *permissionedPkACProvider) VerifyPrincipal(principal protocol.Principal
 }
 
 //GetValidEndorsements filters all endorsement entries and returns all valid ones
-func (pp *permissionedPkACProvider) GetValidEndorsements(principal protocol.Principal) ([]*common.EndorsementEntry, error) {
+func (pp *permissionedPkACProvider) GetValidEndorsements(principal protocol.Principal) (
+	[]*common.EndorsementEntry, error) {
 	if atomic.LoadInt32(&pp.acService.orgNum) <= 0 {
 		return nil, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
 	}

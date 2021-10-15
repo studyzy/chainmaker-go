@@ -103,7 +103,8 @@ func (cm *certificateMember) GetMember() (*pbac.Member, error) {
 	}, nil
 }
 
-func newCertMemberFromParam(orgId, role, hashType string, isCompressed bool, certPEM []byte) (*certificateMember, error) {
+func newCertMemberFromParam(orgId, role, hashType string, isCompressed bool,
+	certPEM []byte) (*certificateMember, error) {
 	var (
 		cert *bcx509.Certificate
 		err  error

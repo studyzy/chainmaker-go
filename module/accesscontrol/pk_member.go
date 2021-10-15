@@ -101,7 +101,8 @@ type signingPKMember struct {
 	sk bccrypto.PrivateKey
 }
 
-// When using public key instead of certificate, hashType is used to specify the hash algorithm while the signature algorithm is decided by the public key itself.
+// When using public key instead of certificate,
+//hashType is used to specify the hash algorithm while the signature algorithm is decided by the public key itself.
 func (spm *signingPKMember) Sign(hashType string, msg []byte) ([]byte, error) {
 	hash, ok := bccrypto.HashAlgoMap[hashType]
 	if !ok {
@@ -128,7 +129,7 @@ func newPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map,
 		return nil, fmt.Errorf("new public key member failed: %s", err.Error())
 	}
 
-	adminMember, ok := loadSyncMap(adminList, hex.EncodeToString(pkBytes))
+	adminMember, ok := adminList.Load(hex.EncodeToString(pkBytes))
 	if ok {
 		admin, _ := adminMember.(*adminMemberModel)
 		return newPkMemberFromParam(admin.orgId, admin.pkBytes, protocol.RoleAdmin, acs.hashType)
@@ -140,7 +141,7 @@ func newPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map,
 		return nil, fmt.Errorf("new public key member failed: create libp2p peer id with pk failed")
 	}
 
-	consensusMember, ok := loadSyncMap(consensusList, nodeId)
+	consensusMember, ok := consensusList.Load(nodeId)
 	if ok {
 		consensus, _ := consensusMember.(*consensusMemberModel)
 		return newPkMemberFromParam(consensus.orgId, pkBytes,
@@ -148,7 +149,8 @@ func newPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map,
 	}
 
 	publicKeyIdex := pubkeyHash(pkBytes)
-	publicKeyInfoBytes, err := acs.dataStore.ReadObject(syscontract.SystemContract_PUBKEY_MANAGE.String(), []byte(publicKeyIdex))
+	publicKeyInfoBytes, err := acs.dataStore.ReadObject(syscontract.SystemContract_PUBKEY_MANAGE.String(),
+		[]byte(publicKeyIdex))
 	if err != nil {
 		return nil, fmt.Errorf("new public key member failed: %s", err.Error())
 	}
@@ -167,7 +169,8 @@ func newPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map,
 		protocol.Role(publickInfo.Role), acs.hashType)
 }
 
-func publicNewPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map, hashType string) (*pkMember, error) {
+func publicNewPkMemberFromAcs(member *pbac.Member, adminList,
+	consensusList *sync.Map, hashType string) (*pkMember, error) {
 	if member.MemberType != pbac.MemberType_PUBLIC_KEY {
 		return nil, fmt.Errorf("new public key member failed: memberType and authType do not match")
 	}
@@ -181,7 +184,7 @@ func publicNewPkMemberFromAcs(member *pbac.Member, adminList, consensusList *syn
 		return nil, fmt.Errorf("new public key member failed: %s", err.Error())
 	}
 
-	adminMember, ok := loadSyncMap(adminList, hex.EncodeToString(pkBytes))
+	adminMember, ok := adminList.Load(pkBytes)
 	if ok {
 		admin, _ := adminMember.(*publicAdminMemberModel)
 		return newPkMemberFromParam("", admin.pkBytes, protocol.RoleAdmin, hashType)
@@ -193,7 +196,7 @@ func publicNewPkMemberFromAcs(member *pbac.Member, adminList, consensusList *syn
 		return nil, fmt.Errorf("new public key member failed: create libp2p peer id with pk failed")
 	}
 
-	_, ok = loadSyncMap(consensusList, nodeId)
+	_, ok = consensusList.Load(nodeId)
 	if ok {
 		return newPkMemberFromParam("", pkBytes,
 			protocol.RoleConsensusNode, hashType)
@@ -201,36 +204,37 @@ func publicNewPkMemberFromAcs(member *pbac.Member, adminList, consensusList *syn
 	return newPkMemberFromParam("", pkBytes, protocol.Role(""), hashType)
 }
 
-func newPkMemberFromParam(orgId string, pkBytes []byte, role protocol.Role, hashType string) (*pkMember, error) {
+func newPkMemberFromParam(orgId string, pkBytes []byte, role protocol.Role,
+	hashType string) (*pkMember, error) {
 
 	hash, ok := bccrypto.HashAlgoMap[hashType]
 	if !ok {
 		return nil, fmt.Errorf("sign failed: unsupport hash type")
 	}
 
-	var pkMember pkMember
-	pkMember.orgId = orgId
-	pkMember.hashType = hashType
+	var pkMem pkMember
+	pkMem.orgId = orgId
+	pkMem.hashType = hashType
 
 	pk, err := asym.PublicKeyFromDER(pkBytes)
 	if err != nil {
 		return nil, fmt.Errorf("setup pk member failed, err: %s", err.Error())
 	}
 
-	pkMember.pk = pk
-	pkMember.role = role
+	pkMem.pk = pk
+	pkMem.role = role
 	ski, err := commonCert.ComputeSKI(hash, pk.ToStandardKey())
 
 	if err != nil {
 		return nil, fmt.Errorf("setup pk member failed, err: %s", err.Error())
 	}
 
-	pkMember.uid = hex.EncodeToString(ski)
+	pkMem.uid = hex.EncodeToString(ski)
 	pkPem, err := pk.String()
 	if err != nil {
 		return nil, fmt.Errorf("setup pk member failed, err: %s", err.Error())
 	}
-	pkMember.id = pkPem
+	pkMem.id = pkPem
 
-	return &pkMember, nil
+	return &pkMem, nil
 }
