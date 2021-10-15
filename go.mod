@@ -13,15 +13,14 @@ require (
 	chainmaker.org/chainmaker/txpool-batch/v2 v2.0.0-20211014143342-e04da749db9b
 	chainmaker.org/chainmaker/txpool-single/v2 v2.0.0-20211014143121-4d03e65d1774
 	chainmaker.org/chainmaker/vm-evm v0.0.0-20211014155012-e69085fedd2f
-	chainmaker.org/chainmaker/vm-gasm v0.0.0-20211014154622-4c1c925eacdd
-	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211014154818-0f4ed6551187
+	chainmaker.org/chainmaker/vm-gasm v0.0.0-20211015025441-8759655d6959
+	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211015025224-eeceaad58327
 	chainmaker.org/chainmaker/vm-wxvm v0.0.0-20211014155330-6a66e3935c65
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
-
 )
 
 replace (
