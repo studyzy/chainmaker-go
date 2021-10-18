@@ -17,7 +17,10 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	"chainmaker.org/chainmaker/common/v2/crypto"
 
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
+
+	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -69,11 +72,10 @@ func NewPubkeyCMD() *cobra.Command {
 
 	pkCmd.MarkPersistentFlagRequired(flagSdkConfPath)
 	pkCmd.MarkPersistentFlagRequired(flagChainId)
-	pkCmd.MarkPersistentFlagRequired(flagAdminKeyFilePaths)
-	pkCmd.MarkPersistentFlagRequired(flagAdminOrgIds)
 
 	pkCmd.AddCommand(AddPKCmd())
 	pkCmd.AddCommand(DelPKCmd())
+	pkCmd.AddCommand(QueryPKCmd())
 
 	return pkCmd
 }
@@ -95,6 +97,8 @@ func AddPKCmd() *cobra.Command {
 
 	addPKCmd.Flags().AddFlagSet(flags)
 
+	addPKCmd.MarkFlagRequired(flagAdminKeyFilePaths)
+	addPKCmd.MarkFlagRequired(flagAdminOrgIds)
 	addPKCmd.MarkFlagRequired(flagPubkeyFilePath)
 	addPKCmd.MarkFlagRequired(flagOrgId)
 	addPKCmd.MarkFlagRequired(flagRole)
@@ -118,10 +122,32 @@ func DelPKCmd() *cobra.Command {
 
 	delPKCmd.Flags().AddFlagSet(flags)
 
+	delPKCmd.MarkFlagRequired(flagAdminKeyFilePaths)
+	delPKCmd.MarkFlagRequired(flagAdminOrgIds)
 	delPKCmd.MarkFlagRequired(flagPubkeyFilePath)
 	delPKCmd.MarkFlagRequired(flagOrgId)
 
 	return delPKCmd
+}
+
+func QueryPKCmd() *cobra.Command {
+	queryPKCmd := &cobra.Command{
+		Use:   "query",
+		Long:  "query pubkey info.",
+		Short: "query pubkey info.",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return cliQueryPubKey()
+		},
+	}
+
+	flags := &pflag.FlagSet{}
+	flags.StringVar(&pubkeyFile, flagPubkeyFilePath, "", "specify pubkey filename")
+
+	queryPKCmd.Flags().AddFlagSet(flags)
+
+	queryPKCmd.MarkFlagRequired(flagPubkeyFilePath)
+
+	return queryPKCmd
 }
 
 func cliAddPubKey() error {
@@ -154,7 +180,7 @@ func cliAddPubKey() error {
 
 	payload, err := client.CreatePubkeyAddPayload(string(pubkeyData), orgId, role)
 	if err != nil {
-		return fmt.Errorf("save enclave ca cert failed, %s", err.Error())
+		return fmt.Errorf("create pubkey query payload failed, %s", err.Error())
 	}
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
@@ -180,7 +206,7 @@ func cliAddPubKey() error {
 		return err
 	}
 
-	fmt.Println("command execute successfully.")
+	fmt.Printf("resp: %+v\n", resp)
 	return nil
 }
 
@@ -214,7 +240,7 @@ func cliDelPubKey() error {
 
 	payload, err := client.CreatePubkeyDelPayload(string(pubkeyData), orgId)
 	if err != nil {
-		return fmt.Errorf("save enclave ca cert failed, %s", err.Error())
+		return fmt.Errorf("create pubkey del payload failed, %s", err.Error())
 	}
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
@@ -240,7 +266,53 @@ func cliDelPubKey() error {
 		return err
 	}
 
-	fmt.Println("command execute successfully.")
+	fmt.Printf("resp: %+v\n", resp)
+	return nil
+}
+
+func cliQueryPubKey() error {
+	file, err := os.Open(pubkeyFile)
+	if err != nil {
+		return fmt.Errorf("open file '%s' error: %v", pubkeyFile, err)
+	}
+	defer file.Close()
+
+	pubkeyData, err := ioutil.ReadAll(file)
+	if err != nil {
+		return fmt.Errorf("read file '%v' error: %v", pubkeyFile, err)
+	}
+
+	client, err := CreateClientWithConfig()
+	if err != nil {
+		return fmt.Errorf("create user client failed, %s", err.Error())
+	}
+	defer client.Stop()
+
+	err = client.CheckNewBlockChainConfig()
+	if err != nil {
+		return fmt.Errorf("check new blockchains failed, %s", err.Error())
+	}
+
+	payload, err := client.CreatePubkeyQueryPayload(string(pubkeyData))
+	if err != nil {
+		return fmt.Errorf("create pubkey query payload failed, %s", err.Error())
+	}
+
+	resp, err := client.SendPubkeyManageRequest(payload, nil, 5, false)
+	if err != nil {
+		return err
+	}
+	err = util.CheckProposalRequestResp(resp, false)
+	if err != nil {
+		return err
+	}
+
+	info := &accesscontrol.PKInfo{}
+	if err = proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
+		return fmt.Errorf("Unmarshal error: %v", err)
+	}
+	fmt.Printf("org_id = %s, role = %s \n", info.OrgId, info.Role)
+
 	return nil
 }
 
