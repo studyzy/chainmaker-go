@@ -1,8 +1,6 @@
 chain_client:
   # 链ID
   chain_id: "chain1"
-  # 组织ID
-  org_id: ""
 
   # 客户端用户交易签名私钥路径
   user_sign_key_file_path: "./testdata/crypto-config-pk/public/user/user1/user1.key"
@@ -29,4 +27,4 @@ chain_client:
 
   rpc_client:
     # grpc客户端最大接受容量(MB)
-    max_receive_mesage_size: 16s
+    max_receive_mesage_size: 16
