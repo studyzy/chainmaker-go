@@ -35,7 +35,6 @@ import (
 	"chainmaker.org/chainmaker/common/v2/container"
 	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
-	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -566,15 +565,6 @@ func (bc *Blockchain) initCore() (err error) {
 		bc.snapshotManager = snapshotFactory.NewSnapshotEvidenceMgr(bc.store)
 	} else {
 		bc.snapshotManager = snapshotFactory.NewSnapshotManager(bc.store)
-	}
-
-	// init default consensus turbo config
-	if bc.chainConf.ChainConfig().Core.ConsensusTurboConfig == nil {
-		bc.chainConf.ChainConfig().Core.ConsensusTurboConfig = &configPb.ConsensusTurboConfig{
-			ConsensusMessageTurbo: false,
-			RetryTime:             0,
-			RetryInterval:         0,
-		}
 	}
 
 	// turn off consensus turbo when txpool is single txpool
