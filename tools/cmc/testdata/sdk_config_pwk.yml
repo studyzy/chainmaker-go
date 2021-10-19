@@ -5,9 +5,7 @@ chain_client:
   org_id: "wx-org1.chainmaker.org"
 
   # 客户端用户交易签名私钥路径
-  #user_sign_key_file_path: "./testdata/crypto-config-pk/permissioned-with-key/wx-org1/public-key/user/client1/client1.key"
-  user_sign_key_file_path: "./testdata/crypto-config-pk/permissioned-with-key/wx-org1/public-key/user/admin1/admin1.key"
-
+  user_sign_key_file_path: "./testdata/crypto-config-pk/permissioned-with-key/wx-org1/user/admin1/admin1.key"
   # 签名使用的哈希算法，和节点保持一直
   crypto:
     hash: SHA256
@@ -31,4 +29,4 @@ chain_client:
 
   rpc_client:
     # grpc客户端最大接受容量(MB)
-    max_receive_mesage_size: 16s
+    max_receive_mesage_size: 16
