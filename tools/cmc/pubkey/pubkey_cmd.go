@@ -307,6 +307,10 @@ func cliQueryPubKey() error {
 		return err
 	}
 
+	if resp.ContractResult.Result == nil || len(resp.ContractResult.Result) == 0 {
+		fmt.Printf("The pubkey does not exist\n")
+		return nil
+	}
 	info := &accesscontrol.PKInfo{}
 	if err = proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
 		return fmt.Errorf("Unmarshal error: %v", err)
