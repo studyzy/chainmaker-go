@@ -199,7 +199,8 @@ func (consensus *ConsensusRaftImpl) Start() error {
 	consensus.msgbus.Register(msgbus.RecvConsensusMsg, consensus)
 	err = chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_RAFT, consensus)
 	if err != nil {
-		return err
+		consensus.logger.Warnf("start ConsensusRaftImpl registerVerifier failed, [%v]", err)
+		//return err
 	}
 
 	return nil
