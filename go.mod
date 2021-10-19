@@ -11,10 +11,10 @@ require (
 	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
 	chainmaker.org/chainmaker/txpool-batch/v2 v2.0.0-20211019074609-46e3d29f0908
-	chainmaker.org/chainmaker/txpool-single/v2 v2.0.0-20211014143121-4d03e65d1774
+	chainmaker.org/chainmaker/txpool-single/v2 v2.0.0-20211018131403-7eb37f80a128
 	chainmaker.org/chainmaker/vm-evm v0.0.0-20211015132845-e5b020e52194
 	chainmaker.org/chainmaker/vm-gasm v0.0.0-20211015132440-9eaae17e2432
-	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211015132621-1d712c73f0c3
+	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211018084405-daf3e72a5d8a
 	chainmaker.org/chainmaker/vm-wxvm v0.0.0-20211015133128-53c7b2ac262f
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
