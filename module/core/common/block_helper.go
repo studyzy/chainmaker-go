@@ -283,7 +283,7 @@ func FinalizeBlock(
 		logger.Warnf("get tx merkle root error %s", err)
 		return err
 	}
-	logger.InfoDynamic(func() string {
+	logger.DebugDynamic(func() string {
 		return fmt.Sprintf("GetMerkleRoot(%s,%v) get %x", hashType, txHashes, block.Header.TxRoot)
 	})
 	block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
