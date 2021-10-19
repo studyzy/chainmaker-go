@@ -156,10 +156,8 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	}
 	service.logger.Debugf("init epoch, epochID: %d, index: %d, createHeight: %d",
 		epoch.epochId, epoch.index, epoch.createHeight)
-	if err := chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF,
-		service.governanceContract); err != nil {
-		return nil, err
-	}
+	_ = chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF,
+		service.governanceContract)
 	service.logger.Debugf("register config success")
 	service.initTimeOutConfig(service.governanceContract)
 	return service, nil
