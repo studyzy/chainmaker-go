@@ -182,14 +182,11 @@ func (consensus *ConsensusTBFTImpl) Start() error {
 	consensus.msgbus.Register(msgbus.VerifyResult, consensus)
 	consensus.msgbus.Register(msgbus.RecvConsensusMsg, consensus)
 	consensus.msgbus.Register(msgbus.BlockInfo, consensus)
-	err := chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_TBFT, consensus)
-	if err != nil {
-		return err
-	}
+	_ = chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_TBFT, consensus)
 
 	consensus.logger.Infof("start ConsensusTBFTImpl[%s]", consensus.Id)
 	consensus.timeScheduler.Start()
-	err = consensus.replayWal()
+	err := consensus.replayWal()
 	if err != nil {
 		return err
 	}
