@@ -446,13 +446,14 @@ func (acs *accessControlService) createDefaultResourcePolicyForPK(localOrgId str
 		syscontract.CertManageFunction_CERTS_DELETE.String(), policyForbidden)
 	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
 		syscontract.CertManageFunction_CERTS_REVOKE.String(), policyForbidden)
+
 	// Disable trust member management for pk mode
 	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-		syscontract.ChainConfigFunction_NODE_ID_ADD.String(), policyForbidden)
+		syscontract.ChainConfigFunction_TRUST_MEMBER_ADD.String(), policyForbidden)
 	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-		syscontract.ChainConfigFunction_NODE_ID_DELETE.String(), policyForbidden)
+		syscontract.ChainConfigFunction_TRUST_MEMBER_DELETE.String(), policyForbidden)
 	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-		syscontract.ChainConfigFunction_NODE_ID_UPDATE.String(), policyForbidden)
+		syscontract.ChainConfigFunction_TRUST_MEMBER_UPDATE.String(), policyForbidden)
 
 	//for private compute
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
@@ -476,11 +477,11 @@ func (acs *accessControlService) createDefaultResourcePolicyForPK(localOrgId str
 		syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
 
 	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-		syscontract.ChainConfigFunction_TRUST_MEMBER_ADD.String(), policyConfig)
+		syscontract.ChainConfigFunction_NODE_ID_ADD.String(), policyConfig)
 	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-		syscontract.ChainConfigFunction_TRUST_MEMBER_DELETE.String(), policyConfig)
+		syscontract.ChainConfigFunction_NODE_ID_DELETE.String(), policyConfig)
 	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-		syscontract.ChainConfigFunction_TRUST_MEMBER_UPDATE.String(), policyConfig)
+		syscontract.ChainConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
 
 	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
 		syscontract.ChainConfigFunction_NODE_ORG_ADD.String(), policyConfig)
