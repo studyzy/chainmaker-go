@@ -39,7 +39,7 @@ net:
     - "/ip4/127.0.0.1/tcp/11354/p2p/QmUqYTsHrRBGEBgovxJ5DQdarHMK4rQcxaQcfXEmyC6Yo7"
   tls:
     enabled: true
-    priv_key_file: ../config-pk/permissioned-with-key/wx-org1/public-key/node/consensus1/consensus1.key
+    priv_key_file: ../config-pk/permissioned-with-key/wx-org5/public-key/node/consensus1/consensus1.key
     cert_file:     ../config-sql/wx-org1/certs/node/consensus1/consensus1.tls.crt
 
 txpool:
