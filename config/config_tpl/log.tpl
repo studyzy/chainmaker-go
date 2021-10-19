@@ -18,7 +18,7 @@ log:
     rotation_time: 1              # 日志滚动时间，单位：小时
     log_in_console: false         # 是否展示日志到终端，仅限于调试使用
     show_color: true              # 是否打印颜色日志
-    # stack_trace_level: ERROR      # 设置 stack trace 日志级别，当日志信息大于等于此级别时将会输出 stack trace, 置空或无效级别将不会打开 stack trace
+#    stack_trace_level: ERROR      # 设置 stack trace 日志级别，当日志信息大于等于此级别时将会输出 stack trace, 置空或无效级别将不会打开 stack trace
   brief:
     log_level_default: {log_level}
     file_path: ../log/brief.log
@@ -26,7 +26,7 @@ log:
     rotation_time: 1              # 日志滚动时间，单位：小时
     log_in_console: false         # 是否展示日志到终端，仅限于调试使用
     show_color: true              # 是否打印颜色日志
-    # stack_trace_level: ERROR      # 设置 stack trace 日志级别，当日志信息大于等于此级别时将会输出 stack trace, 置空或无效级别将不会打开 stack trace
+#    stack_trace_level: ERROR      # 设置 stack trace 日志级别，当日志信息大于等于此级别时将会输出 stack trace, 置空或无效级别将不会打开 stack trace
   event:
     log_level_default: {log_level}
     file_path: ../log/event.log
@@ -34,4 +34,4 @@ log:
     rotation_time: 1              # 日志滚动间隔，单位：小时
     log_in_console: false         # 是否展示日志到终端，仅限于调试使用
     show_color: true              # 是否打印颜色日志
-    # stack_trace_level: ERROR      # 设置 stack trace 日志级别，当日志信息大于等于此级别时将会输出 stack trace, 置空或无效级别将不会打开 stack trace
+#    stack_trace_level: ERROR      # 设置 stack trace 日志级别，当日志信息大于等于此级别时将会输出 stack trace, 置空或无效级别将不会打开 stack trace
