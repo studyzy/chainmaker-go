@@ -767,7 +767,12 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 			}
 		}
 		// rollback sql
-		chain.log.Error("cache add block err: ", err)
+		if err == commonErrors.ErrBlockHadBeenCommited {
+			chain.log.Warn("cache add block err: ", err)
+		} else {
+			chain.log.Error("cache add block err: ", err)
+		}
+
 		if sqlErr := chain.storeHelper.RollBack(block, chain.blockchainStore); sqlErr != nil {
 			chain.log.Errorf("block [%d] rollback sql failed: %s", block.Header.BlockHeight, sqlErr)
 		}
@@ -782,6 +787,11 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 
 	height := block.Header.BlockHeight
 	if err = chain.isBlockLegal(block); err != nil {
+		if err == commonErrors.ErrBlockHadBeenCommited {
+			chain.log.Warnf("block illegal [%d](hash:%x), %s", height, block.Header.BlockHash, err)
+			return err
+		}
+
 		chain.log.Errorf("block illegal [%d](hash:%x), %s", height, block.Header.BlockHash, err)
 		return err
 	}
