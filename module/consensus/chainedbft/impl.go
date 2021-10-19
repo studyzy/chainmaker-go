@@ -158,7 +158,8 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		epoch.epochId, epoch.index, epoch.createHeight)
 	if err := chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF,
 		service.governanceContract); err != nil {
-		return nil, err
+		consensus.logger.Warnf("new consensus service registerVerifier failed, [%v]", err)
+		//return nil, err
 	}
 	service.logger.Debugf("register config success")
 	service.initTimeOutConfig(service.governanceContract)

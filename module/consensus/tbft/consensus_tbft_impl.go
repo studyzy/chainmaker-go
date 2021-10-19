@@ -184,7 +184,7 @@ func (consensus *ConsensusTBFTImpl) Start() error {
 	consensus.msgbus.Register(msgbus.BlockInfo, consensus)
 	err := chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_TBFT, consensus)
 	if err != nil {
-		consensus.logger.Infof("start ConsensusTBFTImpl registerVerifier failed, [%v]", err)
+		consensus.logger.Warnf("start ConsensusTBFTImpl registerVerifier failed, [%v]", err)
 		//return err
 	}
 
