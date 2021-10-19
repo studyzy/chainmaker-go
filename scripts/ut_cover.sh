@@ -15,7 +15,7 @@ function ut_cover() {
   coverage=$(echo ${total} | grep -P '\d+\.\d+(?=\%)' -o) #如果macOS 不支持grep -P选项，可以通过brew install grep更新grep
   if [ ! $JENKINS_MYSQL_PWD ]; then
     # 如果测试覆盖率低于N，认为ut执行失败
-      (( $(awk 'BEGIN {print ("'${coverage}'" >= "'$2'")}') )) || (echo "$1 单测覆盖率低于$2%"; exit 1)
+      (( $(awk "BEGIN {print (${coverage} >= $2)}") )) || (echo "$1 单测覆盖率: ${coverage} 低于 $2%"; exit 1)
   else
     if test -z "$GIT_COMMITTER"; then
         echo "no committer, ignore sql insert"
@@ -23,7 +23,6 @@ function ut_cover() {
       echo "insert into ut_result (committer, commit_id, branch, module_name, cover_rate, ci_pass) values ('${GIT_COMMITTER}','${GIT_COMMIT}','${GIT_BRACH_NAME}','${1}','${coverage}',true)" | mysql -h192.168.1.121 -P3316 -uroot -p${JENKINS_MYSQL_PWD} -Dchainmaker_test
     fi
   fi
-
 }
 set -e
 
