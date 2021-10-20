@@ -5,11 +5,11 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
 	chainmaker.org/chainmaker-go/net v0.0.0
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211018081711-f7191d1cd92f
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211020133403-66958ba788b8
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
 	chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20210908032542-7ce5c8a979e6
-	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211018092719-97aa142cdfcf
+	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211020061817-1e64a279af4f
 	github.com/ethereum/go-ethereum v1.10.4
 	github.com/gogo/protobuf v1.3.2
 	github.com/mr-tron/base58 v1.2.0
