@@ -5,14 +5,14 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/blockchain v0.0.0-00010101000000-000000000000
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211015124616-4d3c85fa0a79
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211018081711-f7191d1cd92f
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211014134424-9431ffcc5bbc
 	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
-	chainmaker.org/chainmaker/store/v2 v2.0.0-20211019032157-f444c1290416
-	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211014131421-43de8d9fe869
-	chainmaker.org/chainmaker/vm-native v0.0.0-20211019083431-a3f79be287c8
+	chainmaker.org/chainmaker/store/v2 v2.0.1-0.20211020032655-1d0873d2d80f
+	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211018092719-97aa142cdfcf
+	chainmaker.org/chainmaker/vm-native v0.0.0-20211019135243-790bb77d4996
 	github.com/gogo/protobuf v1.3.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/prometheus/client_golang v1.11.0
