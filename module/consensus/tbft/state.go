@@ -40,15 +40,6 @@ func NewConsensusState(logger *logger.CMLogger, id string) *ConsensusState {
 	return cs
 }
 
-//func (cs *ConsensusState) resetFromProto(csProto *tbftpb.ConsensusState, validatorSet *validatorSet) {
-//	cs.Height = csProto.Height
-//	cs.Round = csProto.Round
-//	cs.Step = csProto.Step
-//	cs.Proposal = NewProposalFromProto(csProto.Proposal)
-//	cs.VerifingProposal = NewProposalFromProto(csProto.VerifingProposal)
-//	cs.heightRoundVoteSet = newHeightRoundVoteSetFromProto(cs.logger, csProto.HeightRoundVoteSet, validatorSet)
-//}
-
 // toProto serializes the ConsensusState instance
 func (cs *ConsensusState) toProto() *tbftpb.ConsensusState {
 	if cs == nil {

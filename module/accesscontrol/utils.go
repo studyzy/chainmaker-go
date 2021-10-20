@@ -11,7 +11,6 @@ import (
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"chainmaker.org/chainmaker/common/v2/crypto/pkcs11"
 	"chainmaker.org/chainmaker/localconf/v2"
-	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/mr-tron/base58"
@@ -142,24 +141,18 @@ func InitPKSigningMember(ac protocol.AccessControlProvider,
 			}
 		}
 
-		publicKeyPEM, err := sk.PublicKey().String()
+		publicKeyBytes, err := sk.PublicKey().Bytes()
 		if err != nil {
 			return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
 		}
 
-		pbMember := &pbac.Member{
-			OrgId:      localOrgId,
-			MemberInfo: []byte(publicKeyPEM),
-			MemberType: pbac.MemberType_PUBLIC_KEY,
-		}
-
-		member, err := ac.NewMember(pbMember)
+		member, err := newPkMemberFromParam(localOrgId, publicKeyBytes, protocol.Role(""), ac.GetHashAlg())
 		if err != nil {
 			return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
 		}
 
 		return &signingPKMember{
-			*(member.(*pkMember)),
+			*member,
 			sk,
 		}, nil
 	}
