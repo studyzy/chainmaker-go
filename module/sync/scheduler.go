@@ -146,8 +146,8 @@ func (sch *scheduler) handleLivinessMsg() {
 	if exist && time.Since(reqTime) > sch.peerReqTimeout {
 		id := sch.pendingBlocks[sch.pendingRecvHeight]
 		sch.log.Debugf("block request [height: %d] time out from node[%s]", sch.pendingRecvHeight, id)
-		if currBlk := sch.ledger.GetLastCommittedBlock(); currBlk != nil && currBlk.Header.BlockHeight <
-			sch.pendingRecvHeight {
+		if currBlk := sch.ledger.GetLastCommittedBlock(); currBlk != nil &&
+			currBlk.Header.BlockHeight < sch.pendingRecvHeight {
 			sch.blockStates[sch.pendingRecvHeight] = newBlock
 		}
 		delete(sch.peers, id)
@@ -168,11 +168,10 @@ func (sch *scheduler) handleScheduleMsg() (queue.Item, error) {
 		//sch.log.Debugf("no need to sync block")
 		return nil, nil
 	}
-	pendingHeight = sch.nextHeightToReq()
-	//if pendingHeight = sch.nextHeightToReq(); pendingHeight < 0 {
-	//	sch.log.Debugf("pendingHeight: %d, block status %v", pendingHeight, sch.blockStates)
-	//	return nil, nil
-	//}
+	if pendingHeight = sch.nextHeightToReq(); pendingHeight == math.MaxUint64 {
+		sch.log.Debugf("pendingHeight: %d, block status %v", pendingHeight, sch.blockStates)
+		return nil, nil
+	}
 	if bz, err = proto.Marshal(&syncPb.BlockSyncReq{
 		BlockHeight: pendingHeight, BatchSize: sch.BatchesizeInEachReq,
 	}); err != nil {
@@ -189,7 +188,7 @@ func (sch *scheduler) handleScheduleMsg() (queue.Item, error) {
 		sch.pendingTime[i] = sch.lastRequest
 		sch.pendingBlocks[i] = peer
 	}
-	sch.log.Debugf("request block[height: %d] from node [%s], BatchesizeInReq: %d", pendingHeight, peer,
+	sch.log.Debugf("request block[height: %d] from node [%s], BatchesSizeInReq: %d", pendingHeight, peer,
 		sch.BatchesizeInEachReq)
 	if err := sch.sender.sendMsg(syncPb.SyncMsg_BLOCK_SYNC_REQ, bz, peer); err != nil {
 		return nil, err
@@ -227,8 +226,6 @@ func (sch *scheduler) isNeedSync() bool {
 		panic(err)
 	}
 	max := sch.maxHeight()
-	//sch.log.Debugf("currHeight: %d, max height:%d in peers, ret: %v", currHeight,
-	//	max, currHeight+1 < max || (currHeight+1 == max && time.Since(sch.lastRequest) > sch.reqTimeThreshold))
 	// The reason for the interval of 1 block is that the block to
 	// be synchronized is being processed by the consensus module.
 	return currHeight+1 < max || (currHeight+1 == max && time.Since(sch.lastRequest) > sch.reqTimeThreshold)
