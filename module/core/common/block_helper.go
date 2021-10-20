@@ -10,7 +10,9 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
+	"time"
 
 	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
@@ -23,6 +25,7 @@ import (
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"chainmaker.org/chainmaker/protocol/v2"
+	batch "chainmaker.org/chainmaker/txpool-batch/v2"
 	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -873,4 +876,61 @@ func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block) (
 			fmt.Errorf("block not verified [%d](hash:%x)", block.Header.BlockHeight, block.Header.BlockHash)
 	}
 	return lastProposed, rwSetMap, conEventMap, nil
+}
+
+func IfOpenConsensusMessageTurbo(chainConf protocol.ChainConf) bool {
+	value, ok := localconf.ChainMakerConfig.TxPoolConfig["pool_type"]
+	if ok {
+		txPoolType, _ := value.(string)
+		txPoolType = strings.ToUpper(txPoolType)
+
+		if chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo && txPoolType == batch.TxPoolType {
+			return true
+		}
+	}
+
+	return false
+}
+
+func ConsensusMessageTurbo(
+	block *commonpb.Block,
+	mode protocol.VerifyMode,
+	chainConf protocol.ChainConf,
+	txPool protocol.TxPool, logger protocol.Logger) (*commonpb.Block, error) {
+
+	if IfOpenConsensusMessageTurbo(chainConf) && protocol.SYNC_VERIFY != mode {
+		newBlock := &commonpb.Block{
+			Header:         block.Header,
+			Dag:            block.Dag,
+			Txs:            make([]*commonpb.Transaction, len(block.Txs)),
+			AdditionalData: block.AdditionalData,
+		}
+
+		txIds := utils.GetTxIds(block.Txs)
+		txsMap := make(map[string]*commonpb.Transaction)
+		maxRetryTime := chainConf.ChainConfig().Core.ConsensusTurboConfig.RetryTime
+		retryInterval := chainConf.ChainConfig().Core.ConsensusTurboConfig.RetryInterval
+		for i := uint64(0); i < maxRetryTime; i++ {
+			txsMap, _ = txPool.GetTxsByTxIds(txIds)
+			if len(txsMap) == len(block.Txs) {
+				break
+			}
+			logger.Debugf("txs map is not map with tx count,height[%d],map[%d],txcount[%d],retry[%d]",
+				block.Header.BlockHeight, len(txsMap), block.Header.TxCount, i+1)
+			if i+1 == maxRetryTime {
+				logger.Debugf("get txs by branchId fail,height[%d],map[%d],txcount[%d]",
+					block.Header.BlockHeight, len(txsMap), block.Header.TxCount)
+				return nil, fmt.Errorf("block[%d] verify time out error", block.Header.BlockHeight)
+			}
+			time.Sleep(time.Millisecond * time.Duration(retryInterval))
+		}
+
+		for i, tx := range block.Txs {
+			newBlock.Txs[i] = txsMap[tx.Payload.TxId]
+			newBlock.Txs[i].Result = block.Txs[i].Result
+		}
+		return newBlock, nil
+	}
+
+	return block, nil
 }
