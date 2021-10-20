@@ -3,15 +3,14 @@ module chainmaker.org/chainmaker-go/txpool
 go 1.15
 
 require (
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211015124616-4d3c85fa0a79
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211018081711-f7191d1cd92f
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
-	chainmaker.org/chainmaker/txpool-single/v2 v2.0.0-20211014143121-4d03e65d1774
+	chainmaker.org/chainmaker/txpool-single/v2 v2.0.0-20211018131403-7eb37f80a128
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/mitchellh/mapstructure v1.4.2 // indirect
 	github.com/pingcap/log v0.0.0-20210906054005-afc726e70354 // indirect
 	github.com/pingcap/tipb v0.0.0-20211008080435-3fd327dfce0e // indirect
