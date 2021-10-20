@@ -200,8 +200,16 @@ func (pp *permissionedPkACProvider) systemContractCallbackPublicKeyManagementCas
 func (pp *permissionedPkACProvider) systemContractCallbackPublicKeyManagementDeleteCase(payload *common.Payload) error {
 	for _, param := range payload.Parameters {
 		if param.Key == PUBLIC_KEYS {
-			pp.acService.memberCache.Remove(string(param.Value))
-			pp.acService.log.Debugf("The public key was removed from the cache,[%v]", param.Value)
+			pk, err := asym.PublicKeyFromPEM(param.Value)
+			if err != nil {
+				return fmt.Errorf("delete member cache failed, [%v]", err.Error())
+			}
+			pkStr, err := pk.String()
+			if err != nil {
+				return fmt.Errorf("delete member cache failed, [%v]", err.Error())
+			}
+			pp.acService.memberCache.Remove(pkStr)
+			pp.acService.log.Debugf("The public key was removed from the cache,[%v]", pkStr)
 		}
 	}
 	return nil
