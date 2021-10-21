@@ -61,6 +61,10 @@ chainmaker.org/chainmaker/vm-native v0.0.0-20211020143205-08aef826dd60 h1:npuvvT
 chainmaker.org/chainmaker/vm-native v0.0.0-20211020143205-08aef826dd60/go.mod h1:lULhTay50NuMtSfOCv+n/TZ/T4PGAI7kkDt6WffnLm0=
 chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211020022433-6ec40880917a h1:QvWKB9tem9jymiaLvWPoqh3YoB8Eecv8po34DE3Ly+I=
 chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211020022433-6ec40880917a/go.mod h1:7Ai1FjL9BAxmDJjbXocJZGYTGTJ/dmJCkuyIDCA2YlQ=
+chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211021034917-ad698656e4af h1:mJ4DZ5xcPftGRr+ug0yi8Xd5yMQvU/YdPQr/6DUgjNM=
+chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211021034917-ad698656e4af/go.mod h1:7Ai1FjL9BAxmDJjbXocJZGYTGTJ/dmJCkuyIDCA2YlQ=
+chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211021071318-b70fd419b9ff h1:S/CCjEMGjSvqzOjT03a33o0NYSY40FxZAmvsTBlWj9c=
+chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211021071318-b70fd419b9ff/go.mod h1:7Ai1FjL9BAxmDJjbXocJZGYTGTJ/dmJCkuyIDCA2YlQ=
 chainmaker.org/chainmaker/vm-wxvm v0.0.0-20211015133128-53c7b2ac262f h1:SGbWAxDC+TM7JydqUbkFcoi90wDHQXenBp5JOkkFys4=
 chainmaker.org/chainmaker/vm-wxvm v0.0.0-20211015133128-53c7b2ac262f/go.mod h1:3E6oHDbFXKYA2UU1YfL6VAewxwd6V7TaWF5SRrr8hiM=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
