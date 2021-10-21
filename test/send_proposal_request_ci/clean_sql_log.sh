@@ -10,7 +10,7 @@ rm -rf ../../main/panic.log
 rm -rf ../../../cmdata
 rm -rf ./*.log
 rm -rf ./data
-
+rm chainmaker
 #用户名密码在$HOME/.my.cnf 这个文件中，如果没有请创建。内容如下：
 #[mysql]
 #host=127.0.0.1
