@@ -222,6 +222,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	for i := 500; i < 1000; i++ {
 		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 	}
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 异常功能测试
 	if runtimeType == commonPb.RuntimeType_WASMER {

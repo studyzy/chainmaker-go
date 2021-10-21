@@ -213,7 +213,6 @@ func ProposalMultiRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, tx
 
 }
 
-
 func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
 	chainId, txId string, payload *commonPb.Payload, orgIdList []int) *commonPb.TxResponse {
 	return ProposalMultiRequest(sk3, client, txType, chainId, txId, payload, orgIdList, time.Now().Unix())
@@ -260,19 +259,19 @@ func ConstructQueryPayload(contractName, method string, pairs []*commonPb.KeyVal
 }
 
 func FreezeContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, contractName string,
-	runtimeType commonPb.RuntimeType) {
-	freezeOrUnfreezeOrRevoke(sk3, client, chainId, contractName, runtimeType, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
+	runtimeType commonPb.RuntimeType) string {
+	return freezeOrUnfreezeOrRevoke(sk3, client, chainId, contractName, runtimeType, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
 }
 func UnfreezeContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, contractName string,
-	runtimeType commonPb.RuntimeType) {
-	freezeOrUnfreezeOrRevoke(sk3, client, chainId, contractName, runtimeType, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
+	runtimeType commonPb.RuntimeType) string {
+	return freezeOrUnfreezeOrRevoke(sk3, client, chainId, contractName, runtimeType, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
 }
 func RevokeContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, contractName string,
-	runtimeType commonPb.RuntimeType) {
-	freezeOrUnfreezeOrRevoke(sk3, client, chainId, contractName, runtimeType, syscontract.ContractManageFunction_REVOKE_CONTRACT.String())
+	runtimeType commonPb.RuntimeType) string {
+	return freezeOrUnfreezeOrRevoke(sk3, client, chainId, contractName, runtimeType, syscontract.ContractManageFunction_REVOKE_CONTRACT.String())
 }
 func freezeOrUnfreezeOrRevoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, contractName string,
-	runtimeType commonPb.RuntimeType, method string) {
+	runtimeType commonPb.RuntimeType, method string) string {
 	txId := utils.GetRandTxId()
 
 	fmt.Printf("\n============ [%s] contract [%s] ============\n", method, txId)
@@ -289,4 +288,5 @@ func freezeOrUnfreezeOrRevoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient
 	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payload, []int{1, 2, 3, 4})
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.TxId, resp.ContractResult)
+	return txId
 }
