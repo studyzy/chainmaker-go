@@ -105,6 +105,12 @@ gomod:
 test-deploy:
 	cd scripts/test/ && ./quick_deploy.sh
 
+sql-qta:
+	cd test/send_proposal_request_ci && ./build.sh
+	cd test/send_proposal_request_ci && ./start_sql_tbft_4.sh
+	cd test/send_proposal_request_sql && go run main.go
+	cd test/send_proposal_request_ci && ./stop_sql_tbft_4.sh
+	cd test/send_proposal_request_ci && ./clean_sql_log.sh
 qta:
 	cd test/send_proposal_request_ci && ./build.sh
 	cd test/send_proposal_request_ci && ./start_solo.sh
