@@ -8,7 +8,7 @@
 chain_id: chain1        # 链标识
 version: v1.0.0         # 链版本
 sequence: 0             # 配置版本
-auth_type: "identity"   # 认证类型
+auth_type: "permissionedWithCert"   # 认证类型
 
 crypto:
   hash: SHA256
@@ -23,7 +23,7 @@ block:
   tx_timeout: 600  # 交易时间戳的过期时间(秒)
   block_tx_capacity: 2000  # 区块中最大交易数
   block_size: 10  # 区块最大限制，单位MB
-  block_interval: 20 # 出块间隔，单位:ms
+  block_interval: 200 # 出块间隔，单位:ms
 
 # core模块
 core:
@@ -105,3 +105,6 @@ resource_policies:
       org_list:
       role_list:
         - admin
+
+disabled_native_contract:
+  - CONTRACT_NAME
