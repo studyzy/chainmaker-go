@@ -331,6 +331,7 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 			}
 		}
 		newBlock.Txs = newTxs
+		bp.log.Debugf("turn on consensus message turbo, block[%d]", newBlock.Header.BlockHeight)
 	} else {
 		newBlock = block
 	}

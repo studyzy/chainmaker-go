@@ -929,6 +929,7 @@ func ConsensusMessageTurbo(
 			newBlock.Txs[i] = txsMap[tx.Payload.TxId]
 			newBlock.Txs[i].Result = block.Txs[i].Result
 		}
+		logger.Debugf("recover the block[%d], Txs[%v]", newBlock.Header.BlockHeight, newBlock.Txs)
 		return newBlock, nil
 	}
 
