@@ -48,4 +48,4 @@ fi
 # nohup ./chainmaker start -c ./config-sql/wx-org5/chainmaker.yml ci-sql-tbft > panic.log &
 
 sleep 4
-ps -ef|grep chainmaker
+ps -ef|grep chainmaker | grep "ci-sql-tbft"
