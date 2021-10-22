@@ -586,7 +586,7 @@ func (cp *certACProvider) GetMemberStatus(pbMember *pbac.Member) (pbac.MemberSta
 
 	member, err := cp.NewMember(pbMember)
 	if err != nil {
-		cp.acService.log.Infof("get member status error: %s", err.Error())
+		cp.acService.log.Infof("get member status: %s", err.Error())
 		return pbac.MemberStatus_INVALID, err
 	}
 
