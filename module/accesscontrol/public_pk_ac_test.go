@@ -73,13 +73,13 @@ func TestPublicPKVerifyAdminMajorityPrincipal(t *testing.T) {
 	require.NotNil(t, endorsement3)
 
 	ok, err := testVerifyPrincipal(test2PublicPKACProvider, syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-		syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(), []*common.EndorsementEntry{endorsement1, endorsement2, endorsement3})
+		syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), []*common.EndorsementEntry{endorsement1, endorsement2, endorsement3})
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 
 	validEndorsements, err := testPublicPKGetValidEndorsements(test2PublicPKACProvider,
 		syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-			syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(),
+			syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(),
 		[]*common.EndorsementEntry{endorsement1, endorsement2, endorsement3})
 
 	require.Nil(t, err)
@@ -89,14 +89,14 @@ func TestPublicPKVerifyAdminMajorityPrincipal(t *testing.T) {
 
 	ok, err = testVerifyPrincipal(test2PublicPKACProvider,
 		syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-			syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(),
+			syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(),
 		[]*common.EndorsementEntry{endorsement1, endorsement2})
 	require.NotNil(t, err)
 	require.Equal(t, false, ok)
 
 	validEndorsements, err = testPublicPKGetValidEndorsements(test2PublicPKACProvider,
 		syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-			syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(),
+			syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(),
 		[]*common.EndorsementEntry{endorsement1, endorsement2})
 
 	require.Nil(t, err)
