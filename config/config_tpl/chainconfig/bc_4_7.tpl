@@ -5,10 +5,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-chain_id: {chain_id}    # 链标识
-version: v2.0.0         # 链版本
-sequence: 0             # 配置版本
-auth_type: "identity"   # 认证类型
+chain_id: {chain_id}                # 链标识
+version: v2.0.0                     # 链版本
+sequence: 0                         # 配置版本
+auth_type: "permissionedWithCert"   # 认证类型
 
 crypto:
   hash: SHA256
@@ -29,10 +29,10 @@ block:
 core:
   tx_scheduler_timeout: 10 #  [0, 60] 交易调度器从交易池拿到交易后, 进行调度的时间
   tx_scheduler_validate_timeout: 10 # [0, 60] 交易调度器从区块中拿到交易后, 进行验证的超时时间
-  consensus_turbo_config:
-    consensus_message_turbo: true # 是否开启共识报文压缩
-    retry_time: 500 # 根据交易ID列表从交易池获取交易的重试次数
-    retry_interval: 20 # 重试间隔，单位:ms
+#  consensus_turbo_config:
+#    consensus_message_turbo: true # 是否开启共识报文压缩
+#    retry_time: 500 # 根据交易ID列表从交易池获取交易的重试次数
+#    retry_interval: 20 # 重试间隔，单位:ms
 
 # snapshot module
 snapshot:

@@ -12,10 +12,10 @@ cd ../../main
 
 pid=$(ps -ef | grep chainmaker | grep "\-c ../config" | grep -v grep | awk '{print $2}')
 if [ -z ${pid} ]; then
-  nohup ./chainmaker start -c ../config/wx-org1-solo/chainmaker.yml local-tbft >./panic.log &
-  echo "wx-org1 chainmaker is startting, pls check log..."
+  nohup ./chainmaker start -c ../config/wx-org1-solo/chainmaker.yml ci-solo >./panic.log &
+  echo "wx-solo chainmaker is startting, pls check log..."
 else
-  echo "wx-org1 chainmaker is already started"
+  echo "wx-solo chainmaker is already started"
 fi
 
 sleep 2

@@ -1,0 +1,32 @@
+chain_client:
+  # 链ID
+  chain_id: "chain1"
+  # 组织ID
+  org_id: "wx-org1.chainmaker.org"
+
+  # 客户端用户交易签名私钥路径
+  user_sign_key_file_path: "./testdata/crypto-config-pk/permissioned-with-key/wx-org1/user/admin1/admin1.key"
+  # 签名使用的哈希算法，和节点保持一直
+  crypto:
+    hash: SHA256
+  auth_type: permissionedWithKey
+
+  nodes:
+    - # 节点地址，格式为：IP:端口:连接数
+      node_addr: "127.0.0.1:12301"
+      # 节点连接数
+      conn_cnt: 10
+    - # 节点地址，格式为：IP:端口:连接数
+      node_addr: "127.0.0.1:12302"
+      # 节点连接数
+      conn_cnt: 10
+
+  archive:
+    # 数据归档链外存储相关配置
+    type: "mysql"
+    dest: "root:123456:localhost:3306"
+    secret_key: xxx
+
+  rpc_client:
+    # grpc客户端最大接受容量(MB)
+    max_receive_mesage_size: 16

@@ -84,8 +84,14 @@ func (impl *DPoSImpl) createDPoSRWSet(
 		impl.log.Errorf("create epoch rwSet error, reason: %s", err)
 		return nil, err
 	}
+	validatorsRwSet, err := impl.createValidatorsRwSet(newEpoch)
+	if err != nil {
+		impl.log.Errorf("create validators rwSet error, reason: %s", err)
+		return nil, err
+	}
 	// 5. Aggregate read-write set
 	unboundingRwSet.TxWrites = append(unboundingRwSet.TxWrites, epochRwSet.TxWrites...)
+	unboundingRwSet.TxWrites = append(unboundingRwSet.TxWrites, validatorsRwSet.TxWrites...)
 	impl.log.Debugf("end createDPoS rwSet: %v ", unboundingRwSet)
 	return unboundingRwSet, nil
 }

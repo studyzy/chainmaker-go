@@ -7,11 +7,19 @@ SPDX-License-Identifier: Apache-2.0
 
 package accesscontrol
 
-import "chainmaker.org/chainmaker/protocol/v2"
+import (
+	"fmt"
+	"strings"
+	"sync"
+
+	"chainmaker.org/chainmaker/pb-go/v2/consensus"
+	"chainmaker.org/chainmaker/protocol/v2"
+)
 
 type AcFactory struct {
 }
 
+var once sync.Once
 var acInstance *AcFactory
 
 func ACFactory() *AcFactory {
@@ -19,8 +27,37 @@ func ACFactory() *AcFactory {
 	return acInstance
 }
 
-func (af *AcFactory) NewACProvider(memberType string, chainConf protocol.ChainConf, localOrgId string,
+func (af *AcFactory) NewACProvider(chainConf protocol.ChainConf, localOrgId string,
 	store protocol.BlockchainStore, log protocol.Logger) (protocol.AccessControlProvider, error) {
-	p := NewACProviderByMemberType(memberType)
+
+	chainConf.ChainConfig().AuthType = strings.ToLower(chainConf.ChainConfig().AuthType)
+
+	// authType 和 consensusType 是否匹配
+	switch chainConf.ChainConfig().AuthType {
+	case protocol.PermissionedWithCert, protocol.Identity:
+		if chainConf.ChainConfig().Consensus.Type == consensus.ConsensusType_DPOS {
+			return nil,
+				fmt.Errorf("new ac provider failed, the consensus type does not match the authentication type")
+		}
+	case protocol.PermissionedWithKey:
+		if chainConf.ChainConfig().Consensus.Type == consensus.ConsensusType_DPOS {
+			return nil,
+				fmt.Errorf("new ac provider failed, the consensus type does not match the authentication type")
+		}
+	case protocol.Public:
+		if chainConf.ChainConfig().Consensus.Type == consensus.ConsensusType_TBFT ||
+			chainConf.ChainConfig().Consensus.Type == consensus.ConsensusType_HOTSTUFF ||
+			chainConf.ChainConfig().Consensus.Type == consensus.ConsensusType_RAFT ||
+			chainConf.ChainConfig().Consensus.Type == consensus.ConsensusType_MBFT {
+			return nil,
+				fmt.Errorf("new ac provid" +
+					"er failed, the consensus type does not match the authentication type")
+		}
+	default:
+		return nil,
+			fmt.Errorf("new ac provider failed, the auth type doesn't exist")
+	}
+
+	p := NewACProviderByMemberType(chainConf.ChainConfig().AuthType)
 	return p.NewACProvider(chainConf, localOrgId, store, log)
 }

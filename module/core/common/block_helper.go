@@ -10,7 +10,9 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
+	"time"
 
 	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
@@ -23,6 +25,7 @@ import (
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"chainmaker.org/chainmaker/protocol/v2"
+	batch "chainmaker.org/chainmaker/txpool-batch/v2"
 	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -283,7 +286,7 @@ func FinalizeBlock(
 		logger.Warnf("get tx merkle root error %s", err)
 		return err
 	}
-	logger.InfoDynamic(func() string {
+	logger.DebugDynamic(func() string {
 		return fmt.Sprintf("GetMerkleRoot(%s,%v) get %x", hashType, txHashes, block.Header.TxRoot)
 	})
 	block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
@@ -767,7 +770,12 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 			}
 		}
 		// rollback sql
-		chain.log.Error("cache add block err: ", err)
+		if err == commonErrors.ErrBlockHadBeenCommited {
+			chain.log.Warn("cache add block err: ", err)
+		} else {
+			chain.log.Error("cache add block err: ", err)
+		}
+
 		if sqlErr := chain.storeHelper.RollBack(block, chain.blockchainStore); sqlErr != nil {
 			chain.log.Errorf("block [%d] rollback sql failed: %s", block.Header.BlockHeight, sqlErr)
 		}
@@ -782,12 +790,17 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 
 	height := block.Header.BlockHeight
 	if err = chain.isBlockLegal(block); err != nil {
+		if err == commonErrors.ErrBlockHadBeenCommited {
+			chain.log.Warnf("block illegal [%d](hash:%x), %s", height, block.Header.BlockHash, err)
+			return err
+		}
+
 		chain.log.Errorf("block illegal [%d](hash:%x), %s", height, block.Header.BlockHash, err)
 		return err
 	}
 	lastProposed, rwSetMap, conEventMap := chain.proposalCache.GetProposedBlock(block)
 	if lastProposed == nil {
-		if _, rwSetMap, conEventMap, err = chain.checkLastProposedBlock(block); err != nil {
+		if lastProposed, rwSetMap, conEventMap, err = chain.checkLastProposedBlock(block); err != nil {
 			return err
 		}
 	}
@@ -795,17 +808,17 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	checkLasts := utils.CurrentTimeMillisSeconds() - startTick
 
 	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent, err := chain.commonCommit.CommitBlock(
-		block, rwSetMap, conEventMap)
+		lastProposed, rwSetMap, conEventMap)
 	if err != nil {
 		chain.log.Errorf("block common commit failed: %s, blockHeight: (%d)",
-			err.Error(), block.Header.BlockHeight)
+			err.Error(), lastProposed.Header.BlockHeight)
 	}
 
 	// Remove txs from txpool. Remove will invoke proposeSignal from txpool if pool size > txcount
 	startPoolTick := utils.CurrentTimeMillisSeconds()
-	txRetry := chain.syncWithTxPool(block, height)
-	chain.log.Infof("remove txs[%d] and retry txs[%d] in add block", len(block.Txs), len(txRetry))
-	chain.txPool.RetryAndRemoveTxs(txRetry, block.Txs)
+	txRetry := chain.syncWithTxPool(lastProposed, height)
+	chain.log.Infof("remove txs[%d] and retry txs[%d] in add block", len(lastProposed.Txs), len(txRetry))
+	chain.txPool.RetryAndRemoveTxs(txRetry, lastProposed.Txs)
 	poolLasts := utils.CurrentTimeMillisSeconds() - startPoolTick
 
 	chain.proposalCache.ClearProposedBlockAt(height)
@@ -817,7 +830,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	chain.log.Infof(
 		"commit block [%d](count:%d,hash:%x), "+
 			"time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,pubConEvent:%d,other:%d,total:%d,interval:%d)",
-		height, block.Header.TxCount, block.Header.BlockHash,
+		height, lastProposed.Header.TxCount, lastProposed.Header.BlockHash,
 		checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, pubEvent, otherLasts, elapsed, interval)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		chain.metricBlockCommitTime.WithLabelValues(chain.chainId).Observe(float64(elapsed) / 1000)
@@ -863,4 +876,64 @@ func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block) (
 			fmt.Errorf("block not verified [%d](hash:%x)", block.Header.BlockHeight, block.Header.BlockHash)
 	}
 	return lastProposed, rwSetMap, conEventMap, nil
+}
+
+func IfOpenConsensusMessageTurbo(chainConf protocol.ChainConf) bool {
+	value, ok := localconf.ChainMakerConfig.TxPoolConfig["pool_type"]
+	if ok {
+		txPoolType, _ := value.(string)
+		txPoolType = strings.ToUpper(txPoolType)
+
+		if chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo && txPoolType == batch.TxPoolType {
+			return true
+		}
+	}
+
+	return false
+}
+
+func RecoverBlock(
+	block *commonpb.Block,
+	mode protocol.VerifyMode,
+	chainConf protocol.ChainConf,
+	txPool protocol.TxPool, logger protocol.Logger) (*commonpb.Block, error) {
+
+	if IfOpenConsensusMessageTurbo(chainConf) && protocol.SYNC_VERIFY != mode {
+		newBlock := &commonpb.Block{
+			Header:         block.Header,
+			Dag:            block.Dag,
+			Txs:            make([]*commonpb.Transaction, len(block.Txs)),
+			AdditionalData: block.AdditionalData,
+		}
+
+		txIds := utils.GetTxIds(block.Txs)
+		txsMap := make(map[string]*commonpb.Transaction)
+		maxRetryTime := chainConf.ChainConfig().Core.ConsensusTurboConfig.RetryTime
+		retryInterval := chainConf.ChainConfig().Core.ConsensusTurboConfig.RetryInterval
+		for i := uint64(0); i < maxRetryTime; i++ {
+			txsMap, _ = txPool.GetTxsByTxIds(txIds)
+			if len(txsMap) == len(block.Txs) {
+				break
+			}
+			logger.Debugf("txs map is not map with tx count,height[%d],map[%d],txcount[%d],retry[%d]",
+				block.Header.BlockHeight, len(txsMap), block.Header.TxCount, i+1)
+			if i+1 == maxRetryTime {
+				logger.Debugf("get txs by branchId fail,height[%d],map[%d],txcount[%d]",
+					block.Header.BlockHeight, len(txsMap), block.Header.TxCount)
+				return nil, fmt.Errorf("block[%d] verify time out error", block.Header.BlockHeight)
+			}
+			time.Sleep(time.Millisecond * time.Duration(retryInterval))
+		}
+
+		for i := range block.Txs {
+			newBlock.Txs[i] = txsMap[block.Txs[i].Payload.TxId]
+			newBlock.Txs[i].Result = block.Txs[i].Result
+			logger.Debugf("recover the block[%d], TxId[%s, %s]",
+				newBlock.Header.BlockHeight, newBlock.Txs[i].Payload.TxId, newBlock.Txs[i].Payload.ContractName)
+		}
+
+		return newBlock, nil
+	}
+
+	return block, nil
 }

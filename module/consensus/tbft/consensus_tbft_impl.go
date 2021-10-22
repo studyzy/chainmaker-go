@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker/chainconf/v2"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/helper"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/common/v2/wal"
 	"chainmaker.org/chainmaker/localconf/v2"
@@ -180,14 +182,11 @@ func (consensus *ConsensusTBFTImpl) Start() error {
 	consensus.msgbus.Register(msgbus.VerifyResult, consensus)
 	consensus.msgbus.Register(msgbus.RecvConsensusMsg, consensus)
 	consensus.msgbus.Register(msgbus.BlockInfo, consensus)
-	err := chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_TBFT, consensus)
-	if err != nil {
-		return err
-	}
+	_ = chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_TBFT, consensus)
 
 	consensus.logger.Infof("start ConsensusTBFTImpl[%s]", consensus.Id)
 	consensus.timeScheduler.Start()
-	err = consensus.replayWal()
+	err := consensus.replayWal()
 	if err != nil {
 		return err
 	}
@@ -286,7 +285,7 @@ func (consensus *ConsensusTBFTImpl) Verify(consensusType consensuspb.ConsensusTy
 
 func (consensus *ConsensusTBFTImpl) updateChainConfig() (addedValidators []string, removedValidators []string,
 	err error) {
-	consensus.logger.Infof("[%s](%d/%d/%v) update chain config",
+	consensus.logger.Debugf("[%s](%d/%d/%v) update chain config",
 		consensus.Id, consensus.Height, consensus.Round, consensus.Step)
 
 	config := consensus.chainConf.ChainConfig().Consensus
@@ -296,7 +295,7 @@ func (consensus *ConsensusTBFTImpl) updateChainConfig() (addedValidators []strin
 		return nil, nil, err
 	}
 
-	consensus.logger.Infof("[%s](%d/%d/%v) update chain config, config: %v,"+
+	consensus.logger.Debugf("[%s](%d/%d/%v) update chain config, config: %v,"+
 		" TimeoutPropose: %v, TimeoutProposeDelta: %v, validators: %v",
 		consensus.Id, consensus.Height, consensus.Round, consensus.Step, config,
 		consensus.TimeoutPropose, consensus.TimeoutProposeDelta, validators)
@@ -447,7 +446,7 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(proposedBlock *consensus
 	}
 
 	// add DPoS consensus args in block
-	if consensus.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_DPOS {
+	if consensus.dpos != nil {
 		if err := consensus.dpos.CreateDPoSRWSet(block.Header.PreBlockHash, proposedBlock); err != nil {
 			consensus.logger.Errorf("[%s](%d/%d/%s) Create DPoS RWSets failed, reason: %s",
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
@@ -1420,52 +1419,22 @@ func (consensus *ConsensusTBFTImpl) verifyVote(voteProto *tbftpb.Vote) error {
 	return nil
 }
 
-//func (consensus *ConsensusTBFTImpl) verifyBlockSignatures(block *common.Block) error {
-//	consensus.logger.Debugf("[%s](%d/%d/%s) VerifyBlockSignatures block (%d-%x)",
-//		consensus.Id, consensus.Height, consensus.Round, consensus.Step,
-//		block.Header.BlockHeight, block.Header.BlockHash)
-//
-//	blockVoteSet, ok := block.AdditionalData.ExtraData[protocol.TBFTAddtionalDataKey]
-//	if !ok {
-//		return fmt.Errorf("verify block signature failed, block.AdditionalData.ExtraData[TBFTAddtionalDataKey] not exist")
-//	}
-//
-//	voteSetProto := new(tbftpb.VoteSet)
-//	if err := proto.Unmarshal(blockVoteSet, voteSetProto); err != nil {
-//		return err
-//	}
-//
-//	voteSet := NewVoteSetFromProto(consensus.logger, voteSetProto, consensus.validatorSet)
-//	hash, ok := voteSet.twoThirdsMajority()
-//	if !ok {
-//		// This should not happen
-//		return fmt.Errorf("voteSet without majority")
-//	}
-//
-//	if !bytes.Equal(hash, block.Header.BlockHash) {
-//		return fmt.Errorf("hash match failed, unmatch QC: %x to block hash: %v", hash, block.Header.BlockHash)
-//	}
-//
-//	consensus.logger.Debugf("[%s](%d/%d/%s) VerifyBlockSignatures block (%d-%x) success",
-//		consensus.Id, consensus.Height, consensus.Round, consensus.Step,
-//		block.Header.BlockHeight, block.Header.BlockHash)
-//	return nil
-//}
-
-//func (consensus *ConsensusTBFTImpl) persistState() {
-//	begin := time.Now()
-//	consensusStateProto := consensus.toProto()
-//	consensusStateBytes := mustMarshal(consensusStateProto)
-//	consensus.logger.Debugf("[%s](%d/%d/%s) persist state length: %v",
-//		consensus.Id, consensus.Height, consensus.Round, consensus.Step, len(consensusStateBytes))
-//	err := consensus.dbHandle.Put(consensusStateKey, consensusStateBytes)
-//	if err != nil {
-//		consensus.logger.Errorf("[%s](%d/%d/%s) persist failed, persist to db error: %v",
-//			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
-//	}
-//	d := time.Since(begin)
-//	consensus.metrics.AppendPersistStateDuration(consensus.Round, consensus.Step.String(), d)
-//}
+// nolint: deadcode, unused
+func publicKeyValidateVoter(vote *tbftpb.Vote) error {
+	signer := vote.Endorsement.Signer
+	pk, err := asym.PublicKeyFromPEM(signer.MemberInfo)
+	if err != nil {
+		return fmt.Errorf("get pk failed from signer, reason: %s", err)
+	}
+	uid, err := helper.CreateLibp2pPeerIdWithPublicKey(pk)
+	if err != nil {
+		return fmt.Errorf("createLibp2pId with pubkey failed, reason: %s", err)
+	}
+	if uid != vote.Voter {
+		return fmt.Errorf("verifyVote failed, unmatch uid: %v with vote: %v", uid, vote.Voter)
+	}
+	return nil
+}
 
 func (consensus *ConsensusTBFTImpl) getValidatorSet() *validatorSet {
 	consensus.Lock()

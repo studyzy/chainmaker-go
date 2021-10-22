@@ -131,14 +131,6 @@ func (pcs *PeerStateService) gossipState(state *tbftpb.GossipState) {
 	pcs.Lock()
 	defer pcs.Unlock()
 
-	// if state.Height < pcs.Height {
-	//   pcs.logger.Debugf("gossipState [%s](%d/%d/%s) skip send state to %s(%d/%d/%s)",
-	//     state.Id, state.Height, state.Round, state.Step,
-	//     pcs.Id, pcs.Height, pcs.Round, pcs.Step,
-	//   )
-	//   return
-	// }
-
 	tbftMsg := &tbftpb.TBFTMsg{
 		Type: tbftpb.TBFTMsgType_MSG_STATE,
 		Msg:  mustMarshal(state),

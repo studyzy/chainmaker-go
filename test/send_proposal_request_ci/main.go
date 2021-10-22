@@ -5,6 +5,10 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+/*
+sql rust test/wasm/rust-func-verify-2.0.0.wasm 源码所在目录：chainmaker-contract-sdk-rust - v2.0.0_dev - src/contract_functional_verify.rs
+sql tinygo go-test/wasm/go-func-verify-2.0.0.wasm 源码所在目录：chainmaker-contract-sdk-tinygo - develop - demo/main_functional_verify.go
+*/
 package main
 
 import (
@@ -25,27 +29,25 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
+	"chainmaker.org/chainmaker-go/test/common"
+	"chainmaker.org/chainmaker/common/v2/ca"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 	"chainmaker.org/chainmaker/common/v2/evmutils"
 	evm "chainmaker.org/chainmaker/common/v2/evmutils"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
-	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
-	"chainmaker.org/chainmaker/protocol/v2"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	"chainmaker.org/chainmaker-go/test/common"
-
-	"chainmaker.org/chainmaker/common/v2/ca"
-	"chainmaker.org/chainmaker/common/v2/crypto"
-	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/v2/discovery"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/utils/v2"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -86,7 +88,7 @@ func main() {
 func runTest() {
 	var (
 		conn   *grpc.ClientConn
-		client apiPb.RpcNodeClient
+		client *apiPb.RpcNodeClient
 		sk3    crypto.PrivateKey
 		err    error
 		txId   string
@@ -99,8 +101,8 @@ func runTest() {
 			return
 		}
 		defer conn.Close()
-
-		client = apiPb.NewRpcNodeClient(conn)
+		c := apiPb.NewRpcNodeClient(conn)
+		client = &c
 
 		file, err := ioutil.ReadFile(userKeyPath)
 		if err != nil {
@@ -113,18 +115,17 @@ func runTest() {
 		}
 	}
 	// 1) 合约创建
-	testCreate(sk3, &client, CHAIN1)
-	time.Sleep(4 * time.Second)
+	txId = testCreate(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 2) 执行合约
-	testUpgradeInvokeSum(sk3, &client, CHAIN1) // method [sum] not export, 合约升级后则有
+	testUpgradeInvokeSum(sk3, client, CHAIN1) // method [sum] not export, 合约升级后则有
 
-	txId = testInvokeFactSave(sk3, &client, CHAIN1)
-	time.Sleep(2 * time.Second)
-	testWaitTx(sk3, &client, CHAIN1, txId)
+	txId = testInvokeFactSave(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 3) 合约查询
-	_, result := testQueryFindByHash(sk3, &client, CHAIN1)
+	_, result := testQueryFindByHash(sk3, client, CHAIN1)
 	if string(result) != "{\"file_hash\":\"b4018d181b6f\",\"file_name\":\"长安链chainmaker\",\"time\":\"1615188470000\"}" {
 		fmt.Println("query result:", string(result))
 		log.Panicf("query error")
@@ -133,52 +134,51 @@ func runTest() {
 	}
 
 	// 4) 根据TxId查交易
-	testGetTxByTxId(sk3, &client, txId, CHAIN1)
+	testGetTxByTxId(sk3, client, txId, CHAIN1)
 
 	// 5) 根据区块高度查区块，若height为max，表示查当前区块
-	hash := testGetBlockByHeight(sk3, &client, CHAIN1, math.MaxUint64)
+	hash := testGetBlockByHeight(sk3, client, CHAIN1, math.MaxUint64)
 
 	// 6) 根据区块高度查区块（包含读写集），若height为-1，表示查当前区块
-	testGetBlockWithTxRWSetsByHeight(sk3, &client, CHAIN1, math.MaxUint64)
+	testGetBlockWithTxRWSetsByHeight(sk3, client, CHAIN1, math.MaxUint64)
 
 	// 7) 根据区块哈希查区块
-	testGetBlockByHash(sk3, &client, CHAIN1, hash)
+	testGetBlockByHash(sk3, client, CHAIN1, hash)
 
 	// 8) 根据区块哈希查区块（包含读写集）
-	testGetBlockWithTxRWSetsByHash(sk3, &client, CHAIN1, hash)
+	testGetBlockWithTxRWSetsByHash(sk3, client, CHAIN1, hash)
 
 	// 9) 根据TxId查区块
-	testGetBlockByTxId(sk3, &client, txId, CHAIN1)
+	testGetBlockByTxId(sk3, client, txId, CHAIN1)
 
 	// 10) 查询最新配置块
-	testGetLastConfigBlock(sk3, &client, CHAIN1)
+	testGetLastConfigBlock(sk3, client, CHAIN1)
 
 	// 11) 查询最新区块
-	testGetLastBlock(sk3, &client, CHAIN1)
+	testGetLastBlock(sk3, client, CHAIN1)
 
 	// 12) 查询链信息
-	testGetChainInfo(sk3, &client, CHAIN1)
+	testGetChainInfo(sk3, client, CHAIN1)
 
 	// 13) 合约升级
-	testUpgrade(sk3, &client, CHAIN1)
-	time.Sleep(4 * time.Second)
-
+	txId = testUpgrade(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
 	// 14) 合约执行
-	testUpgradeInvokeSum(sk3, &client, CHAIN1)
+	testUpgradeInvokeSum(sk3, client, CHAIN1)
 
 	// 15) 批量执行
-	txId = testInvokeFactSave(sk3, &client, CHAIN1)
-	time.Sleep(2 * time.Second)
-	testWaitTx(sk3, &client, CHAIN1, txId)
-	testPerformanceModeTransfer(sk3, &client, CHAIN1)
-	time.Sleep(5 * time.Second)
+	txId = testInvokeFactSave(sk3, client, CHAIN1)
+
+	testWaitTx(sk3, client, CHAIN1, txId)
+	txId = testPerformanceModeTransfer(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 16) 功能测试
-	testInvokeFunctionalVerify(sk3, &client, CHAIN1)
-	time.Sleep(5 * time.Second)
+	txId = testInvokeFunctionalVerify(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 17) KV迭代器测试
-	testKvIterator(sk3, &client)
+	testKvIterator(sk3, client)
 
 	// 18) 冻结、解冻、吊销用户合约功能测试
 	testFreezeOrUnfreezeOrRevokeFlow(sk3, client)
@@ -203,17 +203,18 @@ func printConfig(wasmType string) {
 }
 
 func testKvIterator(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
-	testInvokeMethod(sk3, client, "test_put_state")
-	time.Sleep(time.Second * 4)
+	txId := testInvokeMethod(sk3, client, "test_put_state")
+	testWaitTx(sk3, client, CHAIN1, txId)
+
 	r := testQueryMethod(sk3, client, "test_kv_iterator")
-	time.Sleep(time.Second * 4)
+
 	if "15" != string(r) {
 		panic("testKvIterator error count!=15 count=" + string(r))
 	} else {
 		fmt.Println("    【testKvIterator】 pass")
 	}
 }
-func testPerformanceModeTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
+func testPerformanceModeTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
 	fmt.Println("==============================================")
 	fmt.Println("==============================================")
 	fmt.Println("==============start batch invoke==============")
@@ -221,11 +222,12 @@ func testPerformanceModeTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeCli
 	fmt.Println("==============================================")
 	start := utils.CurrentTimeMillisSeconds()
 	wg := sync.WaitGroup{}
+	txId := ""
 	for j := 0; j < 10; j++ {
 		wg.Add(1)
 		go func() {
 			for j := 0; j < 10; j++ {
-				testInvokeFactSave(sk3, client, CHAIN1)
+				txId = testInvokeFactSave(sk3, client, CHAIN1)
 			}
 			wg.Done()
 		}()
@@ -234,68 +236,69 @@ func testPerformanceModeTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeCli
 	end := utils.CurrentTimeMillisSeconds()
 	spend := end - start
 	fmt.Println("发送100个交易所花时间", spend, "ms")
+	return txId
 }
-func testFreezeOrUnfreezeOrRevokeFlow(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
+func testFreezeOrUnfreezeOrRevokeFlow(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	fmt.Println("============================================================")
 	fmt.Println("============================================================")
 	fmt.Println("==============test freeze unfreeze revoke flow==============")
 	fmt.Println("============================================================")
 	fmt.Println("============================================================")
-
+	txId := ""
 	//执行合约
-	testInvokeFactSave(sk3, &client, CHAIN1)
-	testQueryFindByHash(sk3, &client, CHAIN1)
-	time.Sleep(4 * time.Second)
+	txId = testInvokeFactSave(sk3, client, CHAIN1)
+	testQueryFindByHash(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 冻结
-	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
-	time.Sleep(4 * time.Second)
-	testInvokeFactSave(sk3, &client, CHAIN1)
-	testQueryFindByHash(sk3, &client, CHAIN1)
-	time.Sleep(4 * time.Second)
+	txId = common.FreezeContract(sk3, client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
+	testWaitTx(sk3, client, CHAIN1, txId)
+	txId = testInvokeFactSave(sk3, client, CHAIN1)
+	testQueryFindByHash(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 解冻
-	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
-	time.Sleep(4 * time.Second)
-	testInvokeFactSave(sk3, &client, CHAIN1)
-	testQueryFindByHash(sk3, &client, CHAIN1)
-	time.Sleep(4 * time.Second)
+	txId = common.UnfreezeContract(sk3, client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, client, CHAIN1, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
+	testWaitTx(sk3, client, CHAIN1, txId)
+	txId = testInvokeFactSave(sk3, client, CHAIN1)
+	testQueryFindByHash(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 冻结
-	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
-	time.Sleep(4 * time.Second)
-	testInvokeFactSave(sk3, &client, CHAIN1)
-	testQueryFindByHash(sk3, &client, CHAIN1)
-	time.Sleep(4 * time.Second)
+	txId = common.FreezeContract(sk3, client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
+	testWaitTx(sk3, client, CHAIN1, txId)
+	txId = testInvokeFactSave(sk3, client, CHAIN1)
+	testQueryFindByHash(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 解冻
-	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
-	time.Sleep(4 * time.Second)
-	testInvokeFactSave(sk3, &client, CHAIN1)
-	testQueryFindByHash(sk3, &client, CHAIN1)
-	time.Sleep(4 * time.Second)
+	txId = common.UnfreezeContract(sk3, client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, client, CHAIN1, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
+	testWaitTx(sk3, client, CHAIN1, txId)
+	txId = testInvokeFactSave(sk3, client, CHAIN1)
+	testQueryFindByHash(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 冻结
-	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
-	time.Sleep(4 * time.Second)
+	txId = common.FreezeContract(sk3, client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
+	testWaitTx(sk3, client, CHAIN1, txId)
 	// 吊销
-	common.RevokeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
-	time.Sleep(4 * time.Second)
-	testInvokeFactSave(sk3, &client, CHAIN1)
-	testQueryFindByHash(sk3, &client, CHAIN1)
-	time.Sleep(4 * time.Second)
-	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
-	time.Sleep(4 * time.Second)
-	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
-	time.Sleep(4 * time.Second)
+	txId = common.RevokeContract(sk3, client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, client, CHAIN1, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
+	testWaitTx(sk3, client, CHAIN1, txId)
+	txId = testInvokeFactSave(sk3, client, CHAIN1)
+	testQueryFindByHash(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
+	txId = common.FreezeContract(sk3, client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
+	testWaitTx(sk3, client, CHAIN1, txId)
+	txId = common.UnfreezeContract(sk3, client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, client, CHAIN1, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
+	testWaitTx(sk3, client, CHAIN1, txId)
 }
 
 func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) []byte {
@@ -573,11 +576,11 @@ func testGetChainInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	fmt.Printf(logTempSendBlock, resp.ContractResult.Code, resp.ContractResult.Message, chainInfo)
 }
 
-func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
-	common.CreateContract(sk3, client, chainId, contractName, WasmPath, runtimeType)
+func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
+	return common.CreateContract(sk3, client, chainId, contractName, WasmPath, runtimeType)
 }
 
-func testUpgrade(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
+func testUpgrade(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
 	fmt.Println("============================================================")
 	fmt.Println("============================================================")
 	fmt.Println("========================test upgrade========================")
@@ -587,6 +590,7 @@ func testUpgrade(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId str
 	resp := common.UpgradeContract(sk3, client, chainId, contractName, WasmUpgradePath, runtimeType)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.TxId, resp.ContractResult)
+	return resp.TxId
 }
 
 var fileHash = "b4018d181b6f"
@@ -817,8 +821,8 @@ func evmtest() {
 		return
 	}
 	defer conn.Close()
-
-	client := apiPb.NewRpcNodeClient(conn)
+	c := apiPb.NewRpcNodeClient(conn)
+	client := &c
 
 	file, err := ioutil.ReadFile(userKeyPath)
 	if err != nil {
@@ -830,28 +834,29 @@ func evmtest() {
 		panic(err)
 	}
 	fmt.Println("---------------A(User1) 创建ERC20合约-------------")
-	testCreateEvm(sk3, &client, CHAIN1)
-	time.Sleep(4 * time.Second)
+	txId := testCreateEvm(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
 	fmt.Println("---------------查询A(User1) B(Admin1)账户余额-------------")
 
-	balanceA := testQueryBalance(sk3, &client, CHAIN1, userCrtPath)
+	balanceA := testQueryBalance(sk3, client, CHAIN1, userCrtPath)
 	if balanceA != "1000000000000000000000000000" {
 		fmt.Println("balance A not equal 1000000000000000000000000000 will skip evmtest for later fix")
 		return
 	}
-	balanceB := testQueryBalance(sk3, &client, CHAIN1, adminCrtPath)
+	balanceB := testQueryBalance(sk3, client, CHAIN1, adminCrtPath)
 	if balanceB != "0" {
 		panic("balance B not equal 0")
 	}
 	fmt.Println("---------------发起User1给Admin1的转账-------------")
-	testTransfer(sk3, &client, CHAIN1)
-	time.Sleep(4 * time.Second)
+	txId = testTransfer(sk3, client, CHAIN1)
+	testWaitTx(sk3, client, CHAIN1, txId)
+
 	fmt.Println("---------------查询AB账户余额-------------")
-	balanceA = testQueryBalance(sk3, &client, CHAIN1, userCrtPath)
+	balanceA = testQueryBalance(sk3, client, CHAIN1, userCrtPath)
 	if balanceA != "999999999999999999999999990" {
 		panic("balance A not equal 999999999999999999999999990")
 	}
-	balanceB = testQueryBalance(sk3, &client, CHAIN1, adminCrtPath)
+	balanceB = testQueryBalance(sk3, client, CHAIN1, adminCrtPath)
 	if balanceB != "10" {
 		panic("balance B not equal 10")
 	}
@@ -869,14 +874,14 @@ func convertHex2Bin(hexPath, binPath string) error {
 	return ioutil.WriteFile(binPath, bin, 777)
 }
 
-func testCreateEvm(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
+func testCreateEvm(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
 	convertHex2Bin(ByteCodeHexPath, ByteCodePath)
 	abi, err := ioutil.ReadFile(ABIPath)
 	if err != nil {
 		panic(err.Error())
 	}
 	AbiJson = string(abi)
-	common.CreateContract(sk3, client, chainId, contractName, ByteCodePath, runtimeType)
+	return common.CreateContract(sk3, client, chainId, contractName, ByteCodePath, runtimeType)
 }
 
 func testQueryBalance(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, certPath string) string {
@@ -953,7 +958,7 @@ func getSKI(certPath string) (string, error) {
 	return ski, nil
 }
 
-func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
+func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
 	txId := utils.GetRandTxId()
 	fmt.Printf("\n============ invoke contract [%s] ============\n", txId)
 
@@ -998,7 +1003,7 @@ func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 		fmt.Println(method0, "->", v)
 	}
 	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-
+	return txId
 }
 
 func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,

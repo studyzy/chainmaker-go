@@ -9,7 +9,6 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	"chainmaker.org/chainmaker-go/net"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/logger/v2"
@@ -44,7 +43,7 @@ type Blockchain struct {
 	msgBus msgbus.MessageBus
 
 	// net, shared with other blockchains
-	net net.Net
+	net protocol.Net
 
 	// netService
 	netService protocol.NetService
@@ -93,7 +92,7 @@ type Blockchain struct {
 }
 
 // NewBlockchain create a new Blockchain instance.
-func NewBlockchain(genesis string, chainId string, msgBus msgbus.MessageBus, net net.Net) *Blockchain {
+func NewBlockchain(genesis string, chainId string, msgBus msgbus.MessageBus, net protocol.Net) *Blockchain {
 	return &Blockchain{
 		log:          logger.GetLoggerByChain(logger.MODULE_BLOCKCHAIN, chainId),
 		genesis:      genesis,

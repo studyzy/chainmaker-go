@@ -10,6 +10,8 @@ package main
 import (
 	"strings"
 
+	"chainmaker.org/chainmaker-go/tools/cmc/pubkey"
+
 	"chainmaker.org/chainmaker-go/tools/cmc/archive"
 	"chainmaker.org/chainmaker-go/tools/cmc/bulletproofs"
 	"chainmaker.org/chainmaker-go/tools/cmc/cert"
@@ -44,6 +46,7 @@ For detailed logs, please see ./sdk.log
 	mainCmd.AddCommand(console.NewConsoleCMD(mainCmd))
 	mainCmd.AddCommand(bulletproofs.BulletproofsCMD())
 	mainCmd.AddCommand(tee.NewTeeCMD())
+	mainCmd.AddCommand(pubkey.NewPubkeyCMD())
 
 	// 后续改成go-sdk
 	//mainCmd.AddCommand(payload.PayloadCMD())

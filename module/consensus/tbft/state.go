@@ -40,15 +40,6 @@ func NewConsensusState(logger *logger.CMLogger, id string) *ConsensusState {
 	return cs
 }
 
-//func (cs *ConsensusState) resetFromProto(csProto *tbftpb.ConsensusState, validatorSet *validatorSet) {
-//	cs.Height = csProto.Height
-//	cs.Round = csProto.Round
-//	cs.Step = csProto.Step
-//	cs.Proposal = NewProposalFromProto(csProto.Proposal)
-//	cs.VerifingProposal = NewProposalFromProto(csProto.VerifingProposal)
-//	cs.heightRoundVoteSet = newHeightRoundVoteSetFromProto(cs.logger, csProto.HeightRoundVoteSet, validatorSet)
-//}
-
 // toProto serializes the ConsensusState instance
 func (cs *ConsensusState) toProto() *tbftpb.ConsensusState {
 	if cs == nil {
@@ -104,7 +95,9 @@ func (cache *consensusStateCache) getConsensusState(height uint64) *ConsensusSta
 
 func (cache *consensusStateCache) gc(height uint64) {
 	for k := range cache.cache {
-		if k < (height - cache.size) {
+		//if k < (height - cache.size) {
+		cache.cache[k].logger.Debugf("state delete ,gc params: %d,%d,%d", k, cache.size, height)
+		if (k + cache.size) <= height {
 			delete(cache.cache, k)
 		}
 	}

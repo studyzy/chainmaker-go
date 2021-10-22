@@ -15,31 +15,35 @@ import (
 )
 
 var (
-	algo         string
-	path         string
-	name         string
-	keyPath      string
-	hash         string
-	org          string
-	cn           string
-	ou           string
-	isCA         bool
-	caKeyPath    string
-	caCertPath   string
-	csrPath      string
-	crlPath      string
-	crtPath      string
-	nodeCertPath string
-	certPath     string
+	algo             string
+	path             string
+	name             string
+	keyPath          string
+	hash             string
+	org              string
+	cn               string
+	ou               string
+	isCA             bool
+	caKeyPath        string
+	caCertPath       string
+	csrPath          string
+	crlPath          string
+	crtPath          string
+	sdkConfPath      string
+	nodeCertPath     string
+	nodePkPath       string
+	pubkeyOrCertPath string
 )
 
 const (
-	flagCaKeyPath    = "ca-key-path"
-	flagCaCertPath   = "ca-cert-path"
-	flagCrlPath      = "crl-path"
-	flagCrtPath      = "crt-path"
-	flagNodeCertPath = "node-cert-path"
-	flagCertPath     = "cert-path"
+	flagCaKeyPath        = "ca-key-path"
+	flagCaCertPath       = "ca-cert-path"
+	flagCrlPath          = "crl-path"
+	flagCrtPath          = "crt-path"
+	flagSdkConfPath      = "sdk-conf-path"
+	flagNodeCertPath     = "node-cert-path"
+	flagNodePkPath       = "node-pk-path"
+	flagCertOrPubkeyPath = "pubkey-cert-path"
 )
 
 var requiredFlags = map[string]bool{
@@ -67,7 +71,9 @@ func init() {
 	flags.StringVar(&crlPath, flagCrlPath, "", "specify crl file path")
 	flags.StringVar(&crtPath, flagCrtPath, "", "specify crt file path")
 	flags.StringVar(&nodeCertPath, flagNodeCertPath, "", "specify node cert path")
-	flags.StringVar(&certPath, flagCertPath, "", "specify cert path")
+	flags.StringVar(&nodePkPath, flagNodePkPath, "", "specify node cert path")
+	flags.StringVar(&pubkeyOrCertPath, flagCertOrPubkeyPath, "", "specify user pubkey path or cert path")
+	flags.StringVar(&sdkConfPath, flagSdkConfPath, "", "specify sdk_conf path")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {

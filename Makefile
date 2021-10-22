@@ -8,14 +8,14 @@ else
     endif
 endif
 DATETIME=$(shell date "+%Y%m%d%H%M%S")
-VERSION=v2.0.2
+VERSION=v2.1.0
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 GIT_COMMIT = $(shell git log --pretty=format:'%h' -n 1)
 
 AARCH64="aarch64"
 CPU=$(shell uname -m)
 
-LOCALCONF_HOME=chainmaker.org/chainmaker-go/localconf
+LOCALCONF_HOME=chainmaker.org/chainmaker/localconf/v2
 GOLDFLAGS += -X "${LOCALCONF_HOME}.CurrentVersion=${VERSION}"
 GOLDFLAGS += -X "${LOCALCONF_HOME}.BuildDateTime=${DATETIME}"
 GOLDFLAGS += -X "${LOCALCONF_HOME}.GitBranch=${GIT_BRANCH}"
@@ -57,6 +57,9 @@ compile:
 cmc:
 	@cd tools/cmc && GOPATH=${GOPATH} go build -o ../../bin/cmc
 
+send-tool:
+	cd test/send_proposal_request_tool && go build -o ../../bin/send_proposal_request_tool
+
 scanner:
 	@cd tools/scanner && GOPATH=${GOPATH} go build -o ../../bin/scanner
 
@@ -87,8 +90,8 @@ ut:
 
 lint:
 	cd main && golangci-lint run ./...
-	cd module/accesscontrol && golangci-lint run ./...
-	cd module/blockchain && golangci-lint run ./...
+	cd module/accesscontrol && golangci-lint run .
+	cd module/blockchain && golangci-lint run .
 	cd module/consensus && golangci-lint run ./...
 	cd module/core && golangci-lint run ./...
 	cd module/net && golangci-lint run ./...
@@ -96,7 +99,6 @@ lint:
 	cd module/snapshot && golangci-lint run ./...
 	cd module/subscriber && golangci-lint run ./...
 	cd module/sync && golangci-lint run ./...
-	cd module/txpool && golangci-lint run ./...
 	cd tools/cmc && golangci-lint run ./...
 	cd tools/scanner && golangci-lint run ./...
 
@@ -106,6 +108,16 @@ gomod:
 test-deploy:
 	cd scripts/test/ && ./quick_deploy.sh
 
+sql-qta:
+	echo "clear environment"
+	cd test/send_proposal_request_ci && ./stop_sql_tbft_4.sh
+	cd test/send_proposal_request_ci && ./clean_sql_log.sh
+	echo "start new sql-qta test"
+	cd test/send_proposal_request_ci && ./build.sh
+	cd test/send_proposal_request_ci && ./start_sql_tbft_4.sh
+	cd test/send_proposal_request_sql && go run main.go
+	cd test/send_proposal_request_ci && ./stop_sql_tbft_4.sh
+	cd test/send_proposal_request_ci && ./clean_sql_log.sh
 qta:
 	cd test/send_proposal_request_ci && ./build.sh
 	cd test/send_proposal_request_ci && ./start_solo.sh

@@ -13,7 +13,10 @@ import (
 	"os"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -37,16 +40,14 @@ func uploadCaCertCmd() *cobra.Command {
 	uploadCaCertCmd.MarkFlagRequired("ca_cert")
 	uploadCaCertCmd.MarkFlagRequired("sdk-conf-path")
 	uploadCaCertCmd.MarkFlagRequired("admin-key-file-paths")
-	uploadCaCertCmd.MarkFlagRequired("admin-crt-file-paths")
 
 	return uploadCaCertCmd
 }
 
 func cliUploadCaCert() error {
-	adminKeys, adminCrts, err := createMultiSignAdmins(adminKeyFilePaths, adminCrtFilePaths)
-	if err != nil {
-		return err
-	}
+	var adminKeys []string
+	var adminCrts []string
+	var adminOrgs []string
 
 	file, err := os.Open(caCertFile)
 	if err != nil {
@@ -65,6 +66,18 @@ func cliUploadCaCert() error {
 	}
 	defer client.Stop()
 
+	if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+		adminKeys, adminCrts, err = createMultiSignAdmins(adminKeyFilePaths, adminCrtFilePaths)
+		if err != nil {
+			return err
+		}
+	} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+		adminKeys, adminOrgs, err = createMultiSignAdminsForPK(adminKeyFilePaths, adminOrgIds)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = client.CheckNewBlockChainConfig()
 	if err != nil {
 		return fmt.Errorf("check new blockchains failed, %s", err.Error())
@@ -77,11 +90,21 @@ func cliUploadCaCert() error {
 
 	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
-		if err != nil {
-			return err
+		if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+			e, err := sdkutils.MakeEndorserWithPath(adminKeys[i], adminCrts[i], payload)
+			if err != nil {
+				return err
+			}
+
+			endorsementEntrys[i] = e
+		} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+			e, err := sdkutils.MakePkEndorserWithPath(adminKeys[i], crypto.HashAlgoMap[client.GetHashType()], adminOrgs[i], payload)
+			if err != nil {
+				return err
+			}
+
+			endorsementEntrys[i] = e
 		}
-		endorsementEntrys[i] = e
 	}
 
 	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, 5, false)

@@ -582,14 +582,3 @@ func createPrecommitMsg(precommit *Vote) *tbftpb.TBFTMsg {
 
 	return tbftMsg
 }
-
-//func createStateMsg(state *tbftpb.ConsensusState) *tbftpb.TBFTMsg {
-//	data := mustMarshal(state)
-//
-//	tbftMsg := &tbftpb.TBFTMsg{
-//		Type: tbftpb.TBFTMsgType_MSG_STATE,
-//		Msg:  data,
-//	}
-//
-//	return tbftMsg
-//}

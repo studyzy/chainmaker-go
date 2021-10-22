@@ -208,15 +208,7 @@ func (bp *BlockProposerImpl) shouldProposeByBFT(height uint64) bool {
 	}
 	currentHeight := committedBlock.Header.BlockHeight
 	// proposing height must higher than current height
-	if currentHeight+1 != height {
-		return false
-	}
-	if bp.proposalCache.IsProposedAt(height) {
-		// this node is proposer and has proposed at this round before
-		bp.log.Debugf("proposer has proposed at [%d] ", height)
-		return false
-	}
-	return true
+	return currentHeight+1 == height
 }
 
 // proposeBlock, to check if proposer can propose block right now
@@ -314,7 +306,7 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 	_, txsRwSet, _ := bp.proposalCache.GetProposedBlock(block)
 
 	newBlock := new(commonpb.Block)
-	if bp.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo {
+	if common.IfOpenConsensusMessageTurbo(bp.chainConf) {
 		newBlock.Header = block.Header
 		newBlock.Dag = block.Dag
 		newTxs := make([]*commonpb.Transaction, len(block.Txs))
@@ -331,6 +323,7 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 			}
 		}
 		newBlock.Txs = newTxs
+		bp.log.Debugf("turn on consensus message turbo, block[%d]", newBlock.Header.BlockHeight)
 	} else {
 		newBlock = block
 	}
