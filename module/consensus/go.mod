@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
-	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211018091525-d7486a8e258f
+	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211022021409-145931a349d5
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211020133403-66958ba788b8
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211014134424-9431ffcc5bbc
 	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9

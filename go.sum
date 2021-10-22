@@ -1,5 +1,6 @@
-chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211018091525-d7486a8e258f h1:DrqYMvuN85p6ESxzXFh7Td0WJTkB9LLeAwenJcXlZHw=
 chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211018091525-d7486a8e258f/go.mod h1:n4PH9B79oekiOdXobVPGVUif1TxTZ2k7hudL/qboEzg=
+chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211022021409-145931a349d5 h1:rTMBv+t7dVrArnNa+uQh5tzAYByBfjac4G7C89whDmA=
+chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211022021409-145931a349d5/go.mod h1:n4PH9B79oekiOdXobVPGVUif1TxTZ2k7hudL/qboEzg=
 chainmaker.org/chainmaker/chainmaker-net-common v0.0.7-0.20211015122443-7b81b47a2129 h1:KgjGLJByh1J6Kvl8OXF9wDTpB9uESfXNvRmbq4+zCWc=
 chainmaker.org/chainmaker/chainmaker-net-common v0.0.7-0.20211015122443-7b81b47a2129/go.mod h1:fDQsZM4+8pfCEzSN0OTsVHiVFYtvgp51QcoR10MTREQ=
 chainmaker.org/chainmaker/chainmaker-net-libp2p v0.0.12-0.20211015123020-5c1a99a9086b h1:mtAubg0mQwfQObt5gbGCazLVgHLnXnm23uu0nMv/kjs=
@@ -36,11 +37,11 @@ chainmaker.org/chainmaker/store-badgerdb/v2 v2.0.0-20211014142151-5834328a7ec0/g
 chainmaker.org/chainmaker/store-leveldb/v2 v2.0.0-20211014142107-a19b25da57dd h1:YTzla7TX3ull3iovCYE5jlsBnD1UGp3+opawTUYV3Hg=
 chainmaker.org/chainmaker/store-leveldb/v2 v2.0.0-20211014142107-a19b25da57dd/go.mod h1:ahq6upUDytQXU1dV1Wp6SfhmKSdZWsnetoKFaikaUMQ=
 chainmaker.org/chainmaker/store-sqldb/v2 v2.0.0-20211014153514-357cc4cda3dd/go.mod h1:HQqgBU1mPCnk4z4cYSum1ev7GuePxiRiVbb0ek55i1E=
-chainmaker.org/chainmaker/store-sqldb/v2 v2.0.0-20211020135938-1ca0e282d7ce h1:2E2yhSqmH04u8EvtngwYUu++50AmK6GDuhXku6fE180=
-chainmaker.org/chainmaker/store-sqldb/v2 v2.0.0-20211020135938-1ca0e282d7ce/go.mod h1:HQqgBU1mPCnk4z4cYSum1ev7GuePxiRiVbb0ek55i1E=
+chainmaker.org/chainmaker/store-sqldb/v2 v2.0.0-20211021170425-a85b938a20f4 h1:gXN2CRZ5rtWdIXx6UOTg9nWhLCOLpSbgi0K8rvnynR8=
+chainmaker.org/chainmaker/store-sqldb/v2 v2.0.0-20211021170425-a85b938a20f4/go.mod h1:HQqgBU1mPCnk4z4cYSum1ev7GuePxiRiVbb0ek55i1E=
 chainmaker.org/chainmaker/store/v2 v2.0.0-20211014154101-7b199f0df636/go.mod h1:JeUwQ6rdPDe70tQtHEK5yu/aeYVzXk8h0zagm4py8BM=
-chainmaker.org/chainmaker/store/v2 v2.0.1-0.20211021025004-92f50442e520 h1:N/EYWYfbKI6DQUfzpbnGXEg8UBKjN2uaxfoxzMAiofk=
-chainmaker.org/chainmaker/store/v2 v2.0.1-0.20211021025004-92f50442e520/go.mod h1:XGF3H4cWR2fVgETEu2P8ge15y3tUQ37yx5xE3WD6IJg=
+chainmaker.org/chainmaker/store/v2 v2.0.1-0.20211021170501-189c26c2d357 h1:efAY9S8N1La1x3tBpiaUR7WjTozlfdbCBVgHZyK01/Q=
+chainmaker.org/chainmaker/store/v2 v2.0.1-0.20211021170501-189c26c2d357/go.mod h1:DqMDTyy8UUbdvmk2JKK3C9OsvtC+PBbJ3XoTOUQZrDY=
 chainmaker.org/chainmaker/txpool-batch/v2 v2.0.0-20211019074609-46e3d29f0908 h1:K8j73wJYLICL/Bnvj+0EuGS2SUcaZ7xllHkDhEesUjg=
 chainmaker.org/chainmaker/txpool-batch/v2 v2.0.0-20211019074609-46e3d29f0908/go.mod h1:YIC01oLj/wZsEwP158nBdSyx23IERyi8WlzAttWnrAo=
 chainmaker.org/chainmaker/txpool-single/v2 v2.0.0-20211018131403-7eb37f80a128 h1:G7l68EkN8LILnymNV1cEl+4SOsK7YSGm2oLlLoEw8Yg=
@@ -157,6 +158,7 @@ github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d/go.mod h1:3eOhrU
 github.com/StackExchange/wmi v1.2.1 h1:VIkavFPXSjcnS+O8yTq7NI32k0R5Aj+v39y29VYDOSA=
 github.com/StackExchange/wmi v1.2.1/go.mod h1:rcmrprowKIVzvc+NUiLncP2uuArMWLCbu9SBzvHz7e8=
 github.com/VictoriaMetrics/fastcache v1.5.7/go.mod h1:ptDBkNMQI4RtmVo8VS/XwRY6RoTu1dAWCbrk+6WsEM8=
+github.com/VictoriaMetrics/fastcache v1.6.0/go.mod h1:0qHz5QP0GMX4pfmMA/zt5RgfNuXJrTP0zS7DqpHGGTw=
 github.com/VividCortex/ewma v1.1.1/go.mod h1:2Tkkvm3sRDVXaiyucHiACn4cqf7DpdyLvmxzcbUokwA=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/Workiva/go-datastructures v1.0.52 h1:PLSK6pwn8mYdaoaCZEMsXBpBotr4HHn9abU0yMQt0NI=
@@ -369,8 +371,9 @@ github.com/envoyproxy/go-control-plane v0.9.10-0.20210907150352-cf90f659a021/go.
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5/go.mod h1:a2zkGnVExMxdzMo3M0Hi/3sEU+cWnZpSni0O6/Yb/P0=
 github.com/ethereum/go-ethereum v1.9.25/go.mod h1:vMkFiYLHI4tgPw4k2j4MHKoovchFE8plZ0M9VMk4/oM=
-github.com/ethereum/go-ethereum v1.10.3 h1:SEYOYARvbWnoDl1hOSks3ZJQpRiiRJe8ubaQGJQwq0s=
 github.com/ethereum/go-ethereum v1.10.3/go.mod h1:99onQmSd1GRGOziyGldI41YQb7EESX3Q4H41IfJgIQQ=
+github.com/ethereum/go-ethereum v1.10.4 h1:JPZPL2MHbegfFStcaOrrggMVIcf57OQHQ0J3UhjQ+xQ=
+github.com/ethereum/go-ethereum v1.10.4/go.mod h1:nEE0TP5MtxGzOMd7egIrbPJMQBnhVU3ELNxhBglIzhg=
 github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 h1:Ghm4eQYC0nEPnSJdVkTrXpu9KtoVCSo1hg7mtI7G9KU=
 github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239/go.mod h1:Gdwt2ce0yfBxPvZrHkprdPPTTS3N5rwmLE8T22KBXlw=
 github.com/fatih/color v1.3.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
@@ -656,6 +659,7 @@ github.com/hokaccha/go-prettyjson v0.0.0-20210113012101-fb4e108d2519 h1:nqAlWFEd
 github.com/hokaccha/go-prettyjson v0.0.0-20210113012101-fb4e108d2519/go.mod h1:pFlLw2CfqZiIBOx6BuCeRLCrfxBJipTY0nIOF/VbGcI=
 github.com/holiman/bloomfilter/v2 v2.0.3/go.mod h1:zpoh+gs7qcpqrHr3dB55AMiJwo0iURXE7ZOP9L9hSkA=
 github.com/holiman/uint256 v1.1.1/go.mod h1:y4ga/t+u+Xwd7CpDgZESaRcWy0I7XMlTMA25ApIH5Jw=
+github.com/holiman/uint256 v1.2.0/go.mod h1:y4ga/t+u+Xwd7CpDgZESaRcWy0I7XMlTMA25ApIH5Jw=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/hudl/fargo v1.3.0/go.mod h1:y3CKSmjA+wD2gak7sUSXTAoopbhU08POFhmITJgmKTg=
 github.com/huin/goupnp v1.0.0/go.mod h1:n9v9KO1tAxYH82qOn+UTIFQDmx5n1Zxd/ClZDMX7Bnc=
@@ -1883,6 +1887,7 @@ golang.org/x/sys v0.0.0-20210305230114-8fe3ee5dd75b/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20210315160823-c6e025ad8005/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210316164454-77fc1eacc6aa/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20210324051608-47abb6519492/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210330210617-4fbd30eecc44/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210420205809-ac73e9fd8988/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
