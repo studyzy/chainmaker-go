@@ -126,6 +126,7 @@ go get chainmaker.org/chainmaker/localconf/v2@${BRANCH}
 go get chainmaker.org/chainmaker/txpool-batch/v2@${BRANCH}
 go get chainmaker.org/chainmaker/txpool-single/v2@${BRANCH}
 go get chainmaker.org/chainmaker/logger/v2@${BRANCH}
+go get chainmaker.org/chainmaker/sdk-go/v2@${BRANCH}
 go mod tidy
 
 cd ./main

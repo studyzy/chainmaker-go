@@ -8,3 +8,4 @@ rm -rf ../../data
 rm -rf ../../log
 rm -rf ../../main/panic.log
 rm -rf ../../../cmdata
+rm -rf ./*.log
