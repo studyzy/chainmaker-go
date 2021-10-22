@@ -309,7 +309,7 @@ func (pp *permissionedPkACProvider) LookUpExceptionalPolicy(resourceName string)
 }
 
 func (pp *permissionedPkACProvider) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus, error) {
-	if _, err := pp.NewMember(member); err != nil {
+	if _, err := pp.newNodeMember(member); err != nil {
 		pp.acService.log.Infof("get member status error: %s", err.Error())
 		return pbac.MemberStatus_INVALID, err
 	}
@@ -371,4 +371,8 @@ func (pp *permissionedPkACProvider) GetValidEndorsements(principal protocol.Prin
 		roleList[roleRaw] = true
 	}
 	return pp.acService.getValidEndorsements(orgList, roleList, endorsements), nil
+}
+
+func (pp *permissionedPkACProvider) newNodeMember(member *pbac.Member) (protocol.Member, error) {
+	return pp.acService.newNodePkMember(member, pp.consensusMember)
 }

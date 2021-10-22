@@ -760,6 +760,33 @@ func (acs *accessControlService) newPkMember(member *pbac.Member, adminList,
 	return pkMember, nil
 }
 
+func (acs *accessControlService) newNodePkMember(member *pbac.Member,
+	consensusList *sync.Map) (protocol.Member, error) {
+
+	memberCache := acs.getMemberFromCache(member)
+	if memberCache != nil {
+		if memberCache.GetRole() != protocol.RoleConsensusNode &&
+			memberCache.GetRole() != protocol.RoleCommonNode &&
+			memberCache.GetRole() != protocol.RoleLight {
+			return nil, fmt.Errorf("get member from cache, the public key is not a node member")
+		}
+		return memberCache, nil
+	}
+	pkMember, err := newPkNodeMemberFromAcs(member, consensusList, acs)
+	if err != nil {
+		return nil, err
+	}
+	if pkMember.GetOrgId() != member.OrgId && member.OrgId != "" {
+		return nil, fmt.Errorf("new public key node member failed: member orgId does not match on chain")
+	}
+	cached := &memberCached{
+		member:    pkMember,
+		certChain: nil,
+	}
+	acs.addMemberToCache(string(member.MemberInfo), cached)
+	return pkMember, nil
+}
+
 func (acs *accessControlService) getMemberFromCache(member *pbac.Member) protocol.Member {
 	cached, ok := acs.lookUpMemberInCache(string(member.MemberInfo))
 	if ok {
