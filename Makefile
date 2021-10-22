@@ -57,6 +57,9 @@ compile:
 cmc:
 	@cd tools/cmc && GOPATH=${GOPATH} go build -o ../../bin/cmc
 
+send-tool:
+	cd test/send_proposal_request_tool && go build -o ../../bin/send_proposal_request_tool
+
 scanner:
 	@cd tools/scanner && GOPATH=${GOPATH} go build -o ../../bin/scanner
 
