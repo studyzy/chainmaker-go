@@ -12,7 +12,7 @@ require (
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
 	chainmaker.org/chainmaker/store/v2 v2.0.1-0.20211021170501-189c26c2d357
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211020061817-1e64a279af4f
-	chainmaker.org/chainmaker/vm-native v0.0.0-20211022072855-564d036bb5d3
+	chainmaker.org/chainmaker/vm-native v0.0.0-20211022083838-dc47692c7060
 	github.com/gogo/protobuf v1.3.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/prometheus/client_golang v1.11.0
