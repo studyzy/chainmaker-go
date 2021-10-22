@@ -1,5 +1,5 @@
-chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211018091525-d7486a8e258f h1:DrqYMvuN85p6ESxzXFh7Td0WJTkB9LLeAwenJcXlZHw=
-chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211018091525-d7486a8e258f/go.mod h1:n4PH9B79oekiOdXobVPGVUif1TxTZ2k7hudL/qboEzg=
+chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211022083213-24febecb45ee h1:VDAgDw0aPAv1c/RUlYBn/0MQpYDjO1TXDr5Q0A1Qg4I=
+chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211022083213-24febecb45ee/go.mod h1:n4PH9B79oekiOdXobVPGVUif1TxTZ2k7hudL/qboEzg=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211014122130-4ba9d85a64f8/go.mod h1:jedib7j/RzHzLk0Z4axQ8jZX5gRCdtnRf1WYAMGzYL0=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211015124616-4d3c85fa0a79/go.mod h1:jedib7j/RzHzLk0Z4axQ8jZX5gRCdtnRf1WYAMGzYL0=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211020133403-66958ba788b8 h1:M/QLsQY6pwfkFHkKoiCkWAOcgmWc0DXjgNBKJxKG3wc=
@@ -22,8 +22,8 @@ chainmaker.org/chainmaker/raftwal/v2 v2.0.3/go.mod h1:19ulESU/EH/OxbMpo1PJMsRoJD
 chainmaker.org/chainmaker/utils/v2 v2.0.0-20211014131421-43de8d9fe869/go.mod h1:zjDyAIfUBy7QIP96hW8Za0z56wL0O94tew82mKbrcLE=
 chainmaker.org/chainmaker/utils/v2 v2.0.0-20211020061817-1e64a279af4f h1:n3p4ZMUufPaxSX3zv0oe/x6BF7hgweVt9H3wk5d9U+E=
 chainmaker.org/chainmaker/utils/v2 v2.0.0-20211020061817-1e64a279af4f/go.mod h1:zjDyAIfUBy7QIP96hW8Za0z56wL0O94tew82mKbrcLE=
-chainmaker.org/chainmaker/vm-native v0.0.0-20211021115617-45314d2c3b69 h1:HhBmIQ/fWQn7LmjvSftbuws1l+wawKKiR6phceFbVxA=
-chainmaker.org/chainmaker/vm-native v0.0.0-20211021115617-45314d2c3b69/go.mod h1:VTuVseNEW2eg55oVJg97TZUL6uL3/x7o/TTDdAfjsMk=
+chainmaker.org/chainmaker/vm-native v0.0.0-20211022083838-dc47692c7060 h1:64Os9uXrm+ArgS6+vY3A2Nqw8yBC6gax8v33P0PKmN0=
+chainmaker.org/chainmaker/vm-native v0.0.0-20211022083838-dc47692c7060/go.mod h1:NKTj2ci0V1appJ64VebRbjZLDJHroHDV7BBtxQ3YFv4=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=

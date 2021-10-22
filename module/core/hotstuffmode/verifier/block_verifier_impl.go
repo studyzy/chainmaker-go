@@ -10,7 +10,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"sync"
-	"time"
 
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/core/common"
@@ -168,7 +167,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	}
 
 	startPoolTick := utils.CurrentTimeMillisSeconds()
-	newBlock, err := v.consensusMessageTurbo(block, mode)
+	newBlock, err := common.RecoverBlock(block, mode, v.chainConf, v.txPool, v.log)
 	if err != nil {
 		return err
 	}
@@ -222,46 +221,6 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		v.metricBlockVerifyTime.WithLabelValues(v.chainId).Observe(float64(elapsed) / 1000)
 	}
 	return nil
-}
-
-func (v *BlockVerifierImpl) consensusMessageTurbo(
-	block *commonpb.Block, mode protocol.VerifyMode) (*commonpb.Block, error) {
-
-	if v.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo && protocol.SYNC_VERIFY != mode {
-		newBlock := &commonpb.Block{
-			Header:         block.Header,
-			Dag:            block.Dag,
-			Txs:            make([]*commonpb.Transaction, len(block.Txs)),
-			AdditionalData: block.AdditionalData,
-		}
-
-		txIds := utils.GetTxIds(block.Txs)
-		txsMap := make(map[string]*commonpb.Transaction)
-		maxRetryTime := v.chainConf.ChainConfig().Core.ConsensusTurboConfig.RetryTime
-		retryInterval := v.chainConf.ChainConfig().Core.ConsensusTurboConfig.RetryInterval
-		for i := uint64(0); i < maxRetryTime; i++ {
-			txsMap, _ = v.txPool.GetTxsByTxIds(txIds)
-			if len(txsMap) == len(block.Txs) {
-				break
-			}
-			v.log.Debugf("txs map is not map with tx count,height[%d],map[%d],txcount[%d],retry[%d]",
-				block.Header.BlockHeight, len(txsMap), block.Header.TxCount, i+1)
-			if i+1 == maxRetryTime {
-				v.log.Debugf("get txs by branchId fail,height[%d],map[%d],txcount[%d]",
-					block.Header.BlockHeight, len(txsMap), block.Header.TxCount)
-				return nil, fmt.Errorf("block[%d] verify time out error", block.Header.BlockHeight)
-			}
-			time.Sleep(time.Millisecond * time.Duration(retryInterval))
-		}
-
-		for i, tx := range block.Txs {
-			newBlock.Txs[i] = txsMap[tx.Payload.TxId]
-			newBlock.Txs[i].Result = block.Txs[i].Result
-		}
-		return newBlock, nil
-	}
-
-	return block, nil
 }
 
 func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*commonpb.TxRWSet,

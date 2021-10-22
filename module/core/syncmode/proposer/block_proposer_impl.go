@@ -308,7 +308,7 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 	_, rwSetMap, _ := bp.proposalCache.GetProposedBlock(block)
 
 	newBlock := new(commonpb.Block)
-	if bp.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo {
+	if common.IfOpenConsensusMessageTurbo(bp.chainConf) {
 		newBlock.Header = block.Header
 		newBlock.Dag = block.Dag
 		newTxs := make([]*commonpb.Transaction, len(block.Txs))
@@ -325,6 +325,7 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 			}
 		}
 		newBlock.Txs = newTxs
+		bp.log.Debugf("turn on consensus message turbo, block[%d]", newBlock.Header.BlockHeight)
 	} else {
 		newBlock = block
 	}

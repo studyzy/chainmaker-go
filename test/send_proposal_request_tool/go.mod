@@ -6,7 +6,7 @@ require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211020133403-66958ba788b8
 	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211014131951-892d098049bc
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211021024710-9329804d1c21
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211020061817-1e64a279af4f
 	github.com/Rican7/retry v0.1.0

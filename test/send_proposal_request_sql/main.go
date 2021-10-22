@@ -5,6 +5,11 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+/*
+sql rust test/wasm/rust-sql-2.0.0.wasm 源码所在目录：chainmaker-contract-sdk-rust v2.0.0_dev src/contract_fact_sql.rs
+sql tinygo go-test/wasm/sql-2.0.0.wasm 源码所在目录：chainmaker-contract-sdk-tinygo develop demo/main_fact_sql.go
+
+*/
 package main
 
 import (
@@ -165,7 +170,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		fmt.Println("  【testInvokeSqlDelete】 pass")
 	}
 	//// 9) 跨合约调用
-	testCrossCall(sk3, client, CHAIN1)
+	txId = testCrossCall(sk3, client, CHAIN1)
 	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 10) 交易回退
@@ -211,7 +216,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	}
 
 	// 并发测试
-	for i := 500; i < 1000; i++ {
+	for i := 500; i < 600; i++ {
 		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 	}
 	testWaitTx(sk3, client, CHAIN1, txId)
