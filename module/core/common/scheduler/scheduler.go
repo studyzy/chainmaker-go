@@ -57,7 +57,6 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 	ts.log.Infof("schedule tx batch start, size %d", txBatchSize)
 	var goRoutinePool *ants.Pool
 	var err error
-	ts.log.Infof("schedule tx batch start, size %d", txBatchSize)
 
 	poolCapacity := ts.StoreHelper.GetPoolCapacity()
 	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
@@ -79,7 +78,7 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 					if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 						start = time.Now()
 					}
-					txSimContext, specialTxType, runVmSuccess := ts.simulateTx(tx, snapshot, block)
+					txSimContext, specialTxType, runVmSuccess := ts.executeTx(tx, snapshot, block)
 					tx.Result = txSimContext.GetTxResult()
 
 					// Apply failed means this tx's read set conflict with other txs' write set
@@ -138,7 +137,7 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 	}
 
 	timeCostB := time.Since(startTime)
-	ts.log.Infof("schedule tx batch end, success %d, time used %v, time used (dag include) %v ",
+	ts.log.Infof("schedule tx batch finished, success %d, time used %v, time used (dag include) %v ",
 		len(block.Dag.Vertexes), timeCostA, timeCostB)
 	block.Txs = snapshot.GetTxTable()
 	txRWSetTable := snapshot.GetTxRWSetTable()
@@ -211,7 +210,7 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 			case txIndex := <-runningTxC:
 				tx := txMapping[txIndex]
 				err := goRoutinePool.Submit(func() {
-					txSimContext, specialTxType, runVmSuccess := ts.simulateTx(tx, snapshot, block)
+					txSimContext, specialTxType, runVmSuccess := ts.executeTx(tx, snapshot, block)
 					// if apply failed means this tx's read set conflict with other txs' write set
 					applyResult, applySize := snapshot.ApplyTxSimContext(txSimContext, specialTxType,
 						runVmSuccess, true)
@@ -237,6 +236,7 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 			case doneTxIndex := <-doneTxC:
 				ts.shrinkDag(doneTxIndex, dagRemain)
 				txIndexBatch := ts.popNextTxBatchFromDag(dagRemain)
+				ts.log.Debugf("block [%d] schedule with dag, pop next tx index batch size:%d", len(txIndexBatch))
 				for _, tx := range txIndexBatch {
 					runningTxC <- tx
 				}
@@ -255,6 +255,7 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 	}()
 
 	txIndexBatch := ts.popNextTxBatchFromDag(dagRemain)
+	ts.log.Debugf("simulate with dag first batch size:%d, total batch size:%d", len(txIndexBatch), txBatchSize)
 	go func() {
 		for _, tx := range txIndexBatch {
 			runningTxC <- tx
@@ -264,7 +265,7 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 	<-ts.scheduleFinishC
 	snapshot.Seal()
 
-	ts.log.Infof("simulate with dag end, size %d, time used %+v", len(block.Txs), time.Since(startTime))
+	ts.log.Infof("simulate with dag finished, size %d, time used %+v", len(block.Txs), time.Since(startTime))
 
 	// Return the read and write set after the scheduled execution
 
@@ -279,10 +280,11 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 	return txRWSetMap, snapshot.GetTxResultMap(), nil
 }
 
-func (ts *TxScheduler) simulateTx(tx *commonpb.Transaction, snapshot protocol.Snapshot, block *commonpb.Block) (
+func (ts *TxScheduler) executeTx(tx *commonpb.Transaction, snapshot protocol.Snapshot, block *commonpb.Block) (
 	protocol.TxSimContext, protocol.ExecOrderTxType, bool) {
-	ts.log.Debugf("run vm with for tx id %s", tx.Payload.GetTxId())
+	ts.log.Debugf("run vm start for tx:%s", tx.Payload.GetTxId())
 	txSimContext := vm.NewTxSimContext(ts.VmManager, snapshot, tx, block.Header.BlockVersion)
+	ts.log.Debugf("new tx simulate context for tx:%s", tx.Payload.GetTxId())
 	runVmSuccess := true
 	var txResult *commonpb.Result
 	var err error
@@ -292,7 +294,7 @@ func (ts *TxScheduler) simulateTx(tx *commonpb.Transaction, snapshot protocol.Sn
 		ts.log.Errorf("failed to run vm for tx id:%s, tx result:%+v, error:%+v",
 			tx.Payload.GetTxId(), txResult, err)
 	}
-	ts.log.Debugf("run vm finished, tx:%s, runVmSuccess:%v", tx.Payload.TxId, runVmSuccess)
+	ts.log.Debugf("run vm finished for tx:%s, runVmSuccess:%v", tx.Payload.TxId, runVmSuccess)
 	txSimContext.SetTxResult(txResult)
 	return txSimContext, specialTxType, runVmSuccess
 }
@@ -315,7 +317,7 @@ func (ts *TxScheduler) simulateSpecialTxs(dag *commonpb.DAG, snapshot protocol.S
 			select {
 			case tx := <-runningTxC:
 				// simulate tx
-				txSimContext, specialTxType, runVmSuccess := ts.simulateTx(tx, snapshot, block)
+				txSimContext, specialTxType, runVmSuccess := ts.executeTx(tx, snapshot, block)
 				tx.Result = txSimContext.GetTxResult()
 				// apply tx
 				applyResult, applySize := snapshot.ApplyTxSimContext(txSimContext, specialTxType, runVmSuccess, true)
