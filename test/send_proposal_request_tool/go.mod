@@ -4,11 +4,11 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211011092036-d42992b75fd5
-	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211009072509-e7d0967e05e8
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210927062046-68813f263c0b
-	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211020133403-66958ba788b8
+	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211014131951-892d098049bc
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
+	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211020061817-1e64a279af4f
 	github.com/Rican7/retry v0.1.0
 	github.com/ethereum/go-ethereum v1.10.2
 	github.com/gogo/protobuf v1.3.2

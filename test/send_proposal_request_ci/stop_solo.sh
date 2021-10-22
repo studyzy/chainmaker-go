@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-pid=$(ps -ef | grep chainmaker | grep "local-tbft" | grep -v grep | awk '{print $2}')
+pid=$(ps -ef | grep chainmaker | grep "ci-solo" | grep -v grep | awk '{print $2}')
 for p in $pid; do
   kill $p
   echo "kill $p"

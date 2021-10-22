@@ -47,7 +47,6 @@ func updateBlockIntervalCMD() *cobra.Command {
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagBlockInterval)
 
 	return cmd

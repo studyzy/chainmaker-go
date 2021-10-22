@@ -85,7 +85,6 @@ func createUserContractCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagVersion)
 	cmd.MarkFlagRequired(flagByteCodePath)
 	cmd.MarkFlagRequired(flagRuntimeType)
-	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
 	return cmd
 }
@@ -180,7 +179,6 @@ func upgradeUserContractCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagVersion)
 	cmd.MarkFlagRequired(flagByteCodePath)
 	cmd.MarkFlagRequired(flagRuntimeType)
-	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
 	return cmd
 }
@@ -203,7 +201,6 @@ func freezeUserContractCMD() *cobra.Command {
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
 	cmd.MarkFlagRequired(flagContractName)
-	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
 	return cmd
 }
@@ -226,7 +223,6 @@ func unfreezeUserContractCMD() *cobra.Command {
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
 	cmd.MarkFlagRequired(flagContractName)
-	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
 	return cmd
 }
@@ -249,7 +245,6 @@ func revokeUserContractCMD() *cobra.Command {
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
 	cmd.MarkFlagRequired(flagContractName)
-	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
 	return cmd
 }
