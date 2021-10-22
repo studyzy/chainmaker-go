@@ -10,6 +10,7 @@ package rpcserver
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/blockchain"
@@ -234,6 +235,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		resp.TxId = tx.Payload.TxId
 		return resp
 	}
+
 	var bytecode []byte
 	if contract.RuntimeType != commonPb.RuntimeType_NATIVE {
 		bytecode, err = store.GetContractBytecode(tx.Payload.ContractName)
@@ -248,9 +250,10 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 	txResult, txStatusCode := vmMgr.RunContract(contract, tx.Payload.Method,
 		bytecode, s.kvPair2Map(tx.Payload.Parameters), ctx, 0, tx.Payload.TxType)
 	s.log.DebugDynamic(func() string {
-		return fmt.Sprintf("vmMgr.RunContract: txStatusCode:%d, resultCode:%d, contractName[%s], "+
+		contractJson, _ := json.Marshal(contract)
+		return fmt.Sprintf("vmMgr.RunContract: txStatusCode:%d, resultCode:%d, contractName[%s](%s), "+
 			"method[%s], txType[%s], message[%s],result len: %d",
-			txStatusCode, txResult.Code, tx.Payload.ContractName, tx.Payload.Method,
+			txStatusCode, txResult.Code, tx.Payload.ContractName, string(contractJson), tx.Payload.Method,
 			tx.Payload.TxType, txResult.Message, len(txResult.Result))
 	})
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {

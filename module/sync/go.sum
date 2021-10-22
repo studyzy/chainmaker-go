@@ -7,8 +7,9 @@ chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211014134424-9431ffcc5bbc/go.mod
 chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211014131951-892d098049bc/go.mod h1:b9ffhdSIm8e8uykKpSc7irKmN995drbPq/+Rm2diCvk=
 chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9 h1:ayqYamjuQLj9YIw5mbZm4YdK0Xe4knN+tDYNCK5zf08=
 chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9/go.mod h1:qVQdhfl5VPT79Z7a/7fsCpYOBUHYK57iQuigQbd58n0=
-chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d h1:YwcGWY1EbNA9QO8qLYcrnpvh1qgnrOalzJRpqnljO/s=
 chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211014120010-525e2ffaf04d/go.mod h1:gDZodc1Kp6snzGXugS/REqfCqNNizhniQmjeOKUVf64=
+chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211021024710-9329804d1c21 h1:X8XucPCbaokA+AtHQjZ67mdYJZfr5XC1VEFdXmWft6Y=
+chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211021024710-9329804d1c21/go.mod h1:gDZodc1Kp6snzGXugS/REqfCqNNizhniQmjeOKUVf64=
 chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236 h1:r9El5WunvnUSoyLCQkHjDQn+Ql82jfJGJfFd5gLXijg=
 chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236/go.mod h1:1evh6Hf5L3SGyeyOxmZtqZDm9HGnD2zApx+kpYFQKjA=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
