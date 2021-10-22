@@ -13,6 +13,4 @@ else
       kill $p
       echo "kill $p"
   done
-  ps -ef|grep chainmaker | grep "ci-sql-tbft"
 fi
-
