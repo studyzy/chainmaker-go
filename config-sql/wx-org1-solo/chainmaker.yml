@@ -53,7 +53,7 @@ txpool:
 
 rpc:
   provider: grpc
-  port: 12301
+  port: 12351
   tls:
     # TLS模式:
     #   disable - 不启用TLS
