@@ -365,6 +365,7 @@ func (v *VmWatcher) Callback(contractName string, _ []byte) error {
 		return nil
 	case syscontract.SystemContract_PUBKEY_MANAGE.String():
 		v.ns.localNet.ReVerifyPeers(v.ns.chainId)
+		return nil
 	default:
 		return nil
 	}
