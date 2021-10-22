@@ -5,6 +5,10 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+/*
+sql rust test/wasm/rust-func-verify-2.0.0.wasm 源码所在目录：chainmaker-contract-sdk-rust - v2.0.0_dev - src/contract_functional_verify.rs
+sql tinygo go-test/wasm/go-func-verify-2.0.0.wasm 源码所在目录：chainmaker-contract-sdk-tinygo - develop - demo/main_functional_verify.go
+*/
 package main
 
 import (
@@ -188,7 +192,7 @@ func initWasmerTest() {
 	printConfig("wasmer")
 }
 func initGasmTest() {
-	WasmPath = "../wasm/go-fact-2.0.0.wasm"
+	WasmPath = "../wasm/go-func-verify-2.0.0.wasm"
 	WasmUpgradePath = WasmPath
 	contractName = "contract201"
 	runtimeType = commonPb.RuntimeType_GASM
