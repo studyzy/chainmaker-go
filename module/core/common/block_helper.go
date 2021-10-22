@@ -800,7 +800,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	}
 	lastProposed, rwSetMap, conEventMap := chain.proposalCache.GetProposedBlock(block)
 	if lastProposed == nil {
-		if _, rwSetMap, conEventMap, err = chain.checkLastProposedBlock(block); err != nil {
+		if lastProposed, rwSetMap, conEventMap, err = chain.checkLastProposedBlock(block); err != nil {
 			return err
 		}
 	}
@@ -808,17 +808,17 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	checkLasts := utils.CurrentTimeMillisSeconds() - startTick
 
 	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent, err := chain.commonCommit.CommitBlock(
-		block, rwSetMap, conEventMap)
+		lastProposed, rwSetMap, conEventMap)
 	if err != nil {
 		chain.log.Errorf("block common commit failed: %s, blockHeight: (%d)",
-			err.Error(), block.Header.BlockHeight)
+			err.Error(), lastProposed.Header.BlockHeight)
 	}
 
 	// Remove txs from txpool. Remove will invoke proposeSignal from txpool if pool size > txcount
 	startPoolTick := utils.CurrentTimeMillisSeconds()
-	txRetry := chain.syncWithTxPool(block, height)
-	chain.log.Infof("remove txs[%d] and retry txs[%d] in add block", len(block.Txs), len(txRetry))
-	chain.txPool.RetryAndRemoveTxs(txRetry, block.Txs)
+	txRetry := chain.syncWithTxPool(lastProposed, height)
+	chain.log.Infof("remove txs[%d] and retry txs[%d] in add block", len(lastProposed.Txs), len(txRetry))
+	chain.txPool.RetryAndRemoveTxs(txRetry, lastProposed.Txs)
 	poolLasts := utils.CurrentTimeMillisSeconds() - startPoolTick
 
 	chain.proposalCache.ClearProposedBlockAt(height)
@@ -830,7 +830,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	chain.log.Infof(
 		"commit block [%d](count:%d,hash:%x), "+
 			"time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,pubConEvent:%d,other:%d,total:%d,interval:%d)",
-		height, block.Header.TxCount, block.Header.BlockHash,
+		height, lastProposed.Header.TxCount, lastProposed.Header.BlockHash,
 		checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, pubEvent, otherLasts, elapsed, interval)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		chain.metricBlockCommitTime.WithLabelValues(chain.chainId).Observe(float64(elapsed) / 1000)
@@ -892,7 +892,7 @@ func IfOpenConsensusMessageTurbo(chainConf protocol.ChainConf) bool {
 	return false
 }
 
-func ConsensusMessageTurbo(
+func RecoverBlock(
 	block *commonpb.Block,
 	mode protocol.VerifyMode,
 	chainConf protocol.ChainConf,
@@ -925,11 +925,13 @@ func ConsensusMessageTurbo(
 			time.Sleep(time.Millisecond * time.Duration(retryInterval))
 		}
 
-		for i, tx := range block.Txs {
-			newBlock.Txs[i] = txsMap[tx.Payload.TxId]
+		for i := range block.Txs {
+			newBlock.Txs[i] = txsMap[block.Txs[i].Payload.TxId]
 			newBlock.Txs[i].Result = block.Txs[i].Result
+			logger.Debugf("recover the block[%d], TxId[%s, %s]",
+				newBlock.Header.BlockHeight, newBlock.Txs[i].Payload.TxId, newBlock.Txs[i].Payload.ContractName)
 		}
-		logger.Debugf("recover the block[%d], Txs[%v]", newBlock.Header.BlockHeight, newBlock.Txs)
+
 		return newBlock, nil
 	}
 

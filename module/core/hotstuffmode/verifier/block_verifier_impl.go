@@ -167,7 +167,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	}
 
 	startPoolTick := utils.CurrentTimeMillisSeconds()
-	newBlock, err := common.ConsensusMessageTurbo(block, mode, v.chainConf, v.txPool, v.log)
+	newBlock, err := common.RecoverBlock(block, mode, v.chainConf, v.txPool, v.log)
 	if err != nil {
 		return err
 	}

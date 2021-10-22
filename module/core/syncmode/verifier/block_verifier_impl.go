@@ -172,7 +172,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	}
 
 	startPoolTick := utils.CurrentTimeMillisSeconds()
-	newBlock, err := common.ConsensusMessageTurbo(block, mode, v.chainConf, v.txPool, v.log)
+	newBlock, err := common.RecoverBlock(block, mode, v.chainConf, v.txPool, v.log)
 	if err != nil {
 		return err
 	}
@@ -218,8 +218,8 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(newBlock, isValid, txRWSetMap))
 	}
 	elapsed := utils.CurrentTimeMillisSeconds() - startTick
-	v.log.Infof("verify success [%d,%x](%v,pool: %d,consensusCheckUsed: %d, total: %d)", block.Header.BlockHeight,
-		block.Header.BlockHash, timeLasts, lastPool, consensusCheckUsed, elapsed)
+	v.log.Infof("verify success [%d,%x](%v,pool: %d,consensusCheckUsed: %d, total: %d)", newBlock.Header.BlockHeight,
+		newBlock.Header.BlockHash, timeLasts, lastPool, consensusCheckUsed, elapsed)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		v.metricBlockVerifyTime.WithLabelValues(v.chainId).Observe(float64(elapsed) / 1000)
 	}

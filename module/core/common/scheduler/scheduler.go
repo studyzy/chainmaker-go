@@ -228,8 +228,9 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 						runVmSuccess = false
 						txSimContext.SetTxResult(txResult)
 						ts.log.Errorf(
-							"failed to run vm for tx id:%s during simulate with dag, tx result:%+v, error:%+v",
+							"failed to run vm for tx id:%s during simulate with dag, contractName:%s, tx result:%+v, error:%+v",
 							tx.Payload.GetTxId(),
+							tx.Payload.ContractName,
 							txResult,
 							err,
 						)
