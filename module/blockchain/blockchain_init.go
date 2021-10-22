@@ -17,10 +17,6 @@ import (
 
 	componentVm "chainmaker.org/chainmaker-go/vm"
 
-	"chainmaker.org/chainmaker/pb-go/v2/common"
-
-	batch "chainmaker.org/chainmaker/txpool-batch/v2"
-
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/core"
@@ -35,6 +31,7 @@ import (
 	"chainmaker.org/chainmaker/common/v2/container"
 	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -565,19 +562,6 @@ func (bc *Blockchain) initCore() (err error) {
 		bc.snapshotManager = snapshotFactory.NewSnapshotEvidenceMgr(bc.store)
 	} else {
 		bc.snapshotManager = snapshotFactory.NewSnapshotManager(bc.store)
-	}
-
-	// turn off consensus turbo when txpool is single txpool
-	txPoolType := txpool.TypeDefault
-	value, ok := localconf.ChainMakerConfig.TxPoolConfig["pool_type"]
-	if ok {
-		txPoolType, _ = value.(string)
-		txPoolType = strings.ToUpper(txPoolType)
-	}
-
-	if bc.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo && txPoolType != batch.TxPoolType {
-		bc.log.Warnf("invalid consensus message setting, consensus message turbo turn off.")
-		bc.chainConf.ChainConfig().Core.ConsensusTurboConfig.ConsensusMessageTurbo = false
 	}
 
 	// init coreEngine module
