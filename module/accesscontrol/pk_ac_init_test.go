@@ -466,8 +466,17 @@ var testPermissionedPKChainConfig = &config.ChainConfig{
 }
 
 func TestGetNodeIdFromPK(t *testing.T) {
+	testPk := `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1MGJxND46zq8QFWoqtOA
+uVgoD3E1FJez8/hq0ks5vjzW8jbaHUQQNtc//ZnFkCLOBUkXaYKm/gDDnLxrDG3b
+k96hZCn+JHyJWTU3N2eim/2Ta2LR0CQG0pgPMagP0MnHmBKoNYPGpGm6Itldg3vm
+jexQ5rDhPeTb3dyowOAWM3K4fX5xVJArRV7d1IbHmTrImBaJ+5JIh5IOFBo6z8vN
+od00dAsPufI2ieKJpHIRZWSdUrM3VmScF+B5kZo5FU/dV/i15psrLgfedcgQBH70
+gFh3kIKkVF43OghVeK5nokm4c/2HCRn/zsGKXdLeFhpT3Gpntao8kJ8LJBbEuz0T
+8QIDAQAB
+-----END PUBLIC KEY-----`
 	var nodeId string
-	pk, err := asym.PublicKeyFromPEM([]byte(TestPK4))
+	pk, err := asym.PublicKeyFromPEM([]byte(testPk))
 	require.Nil(t, err)
 	nodeId, err = helper.CreateLibp2pPeerIdWithPublicKey(pk)
 	require.Nil(t, err)
