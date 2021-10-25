@@ -332,6 +332,7 @@ func (consensus *ConsensusRaftImpl) serve() {
 		case ready := <-consensus.node.Ready():
 			if exit := consensus.NodeReady(ready); exit {
 				consensus.logger.Debugf("exit consensus when process ready message")
+				close(consensus.closeC)
 				return
 			}
 		case block := <-consensus.proposedBlockC:
@@ -367,7 +368,6 @@ func (consensus *ConsensusRaftImpl) NodeReady(ready etcdraft.Ready) (exit bool) 
 		for len(consensus.walSaveC) != 0 {
 			time.Sleep(500 * time.Millisecond)
 		}
-		close(consensus.closeC)
 		consensus.maybeTriggerSnapshot(configChanged)
 		consensus.logger.Infof("[%x] is deleted from consensus nodes", consensus.Id)
 		return true
