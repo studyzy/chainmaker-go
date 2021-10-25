@@ -29,6 +29,7 @@ import (
 )
 
 const (
+	// TRUE true string
 	TRUE = "true"
 )
 
