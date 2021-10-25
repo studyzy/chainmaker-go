@@ -37,12 +37,12 @@ core:
 #共识配置
 consensus:
   # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,10-POW)
-  type: 0
+  type: 1
   # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
   nodes:
     - org_id: "wx-org1.chainmaker.org"
       node_id:
-        - "QmXVYiWKFyQoSSoD6xptx5gCEmQTusnJ9veepeSvkXLTUF"
+        - "QmZcFcJFYYoZ3FNNGL88QaszUZwFwuBdFqYh6yPzJURc3s"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11

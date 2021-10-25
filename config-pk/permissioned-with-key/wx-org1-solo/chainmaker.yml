@@ -33,7 +33,7 @@ net:
   provider: LibP2P
   listen_addr: /ip4/0.0.0.0/tcp/11351
   seeds:
-    - "/ip4/127.0.0.1/tcp/11351/p2p/QmXVYiWKFyQoSSoD6xptx5gCEmQTusnJ9veepeSvkXLTUF"
+    - "/ip4/127.0.0.1/tcp/11351/p2p/QmZcFcJFYYoZ3FNNGL88QaszUZwFwuBdFqYh6yPzJURc3s"
   tls:
     enabled: true
     priv_key_file: ../config-pk/permissioned-with-key/wx-org1-solo/public-key/node/consensus1/consensus1.key

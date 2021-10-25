@@ -1,0 +1,89 @@
+#
+# Copyright (C) BABEC. All rights reserved.
+# Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+chain_id: chain1                      # 链标识
+version: v1.0.0                       # 链版本
+sequence: 0                           # 配置版本
+auth_type: "public"                   # 认证类型 permissionedWithCert / permissionedWithKey / public
+
+crypto:
+  hash: SHA256
+
+# 合约支持类型的配置
+contract:
+  enable_sql_support: false
+
+# 交易、区块相关配置
+block:
+  tx_timestamp_verify: true # 是否需要开启交易时间戳校验
+  tx_timeout: 600  # 交易时间戳的过期时间(秒)
+  block_tx_capacity: 100  # 区块中最大交易数
+  block_size: 10  # 区块最大限制，单位MB
+  block_interval: 2000 # 出块间隔，单位:ms
+
+# core模块
+core:
+  tx_scheduler_timeout: 10 #  [0, 60] 交易调度器从交易池拿到交易后, 进行调度的时间
+  tx_scheduler_validate_timeout: 10 # [0, 60] 交易调度器从区块中拿到交易后, 进行验证的超时时间
+  consensus_turbo_config:
+    consensus_message_turbo: false # 是否开启共识报文压缩
+    retry_time: 500 # 根据交易ID列表从交易池获取交易的重试次数
+    retry_interval: 20 # 重试间隔，单位:ms
+
+#共识配置
+consensus:
+  # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,5-DPOS,10-POW)
+  type: 5
+  # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
+  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
+    - key: aa
+      value: chain01_ext11
+  dpos_config: # DPoS
+    #ERC20合约配置
+    - key: erc20.total
+      value: "10000000"
+    - key: erc20.owner
+      value: "6CeSsjU5M62Ee3Gx9umUX6nXJoaBkWYufQdTZqEJM5di"
+    - key: erc20.decimals
+      value: "18"
+    - key: erc20.account:DPOS_STAKE
+      value: "10000000"
+    #Stake合约配置
+    - key: stake.minSelfDelegation
+      value: "2500000"
+    - key: stake.epochValidatorNum
+      value: "4"
+    - key: stake.epochBlockNum
+      value: "10"
+    - key: stake.completionUnbondingEpochNum
+      value: "1"
+    - key: stake.candidate:6CeSsjU5M62Ee3Gx9umUX6nXJoaBkWYufQdTZqEJM5di
+      value: "2500000"
+    - key: stake.candidate:F5tJ4ca4vdbuyffpc1Szw3WHU3caGaTVAh52MRMS4qBt
+      value: "2500000"
+    - key: stake.candidate:FxfunVWGkKgYMjngxMtLkd4pUNYVNAHNAqiDqopg5zdw
+      value: "2500000"
+    - key: stake.candidate:DYt7DfcZnqKNpjgyJ6tU6GFixNfLMkkmnqdwB3NNiAP7
+      value: "2500000"
+
+    - key: stake.nodeID:6CeSsjU5M62Ee3Gx9umUX6nXJoaBkWYufQdTZqEJM5di
+      value: "QmZcFcJFYYoZ3FNNGL88QaszUZwFwuBdFqYh6yPzJURc3s"
+    - key: stake.nodeID:F5tJ4ca4vdbuyffpc1Szw3WHU3caGaTVAh52MRMS4qBt
+      value: "QmXwtuPemSgH5ypzoKvcLdCLbd9jZ25FbpNf7VPjHF3HMS"
+    - key: stake.nodeID:FxfunVWGkKgYMjngxMtLkd4pUNYVNAHNAqiDqopg5zdw
+      value: "QmRmQLHJoqAYGkuLFaNY6HLzwtTNxr45UJsYpSjdKvBQw2"
+    - key: stake.nodeID:DYt7DfcZnqKNpjgyJ6tU6GFixNfLMkkmnqdwB3NNiAP7
+      value: "QmURUHTGsuzzjgh1Xg6s92G1Q3gK91A6JEZGPfYNWwJMiT"
+
+# 超级管理员
+trust_roots:
+  - org_id: "public"
+    root:
+      - "../config-pk/public/admin/admin1/admin1.pem"
+      - "../config-pk/public/admin/admin2/admin2.pem"
+      - "../config-pk/public/admin/admin3/admin3.pem"
+      - "../config-pk/public/admin/admin4/admin4.pem"
