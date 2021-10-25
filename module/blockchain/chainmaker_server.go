@@ -261,7 +261,7 @@ func (server *ChainMakerServer) Stop() {
 			defer wg.Done()
 			chain.Stop()
 		}(chain)
-		return false
+		return true
 	})
 	wg.Wait()
 	log.Info("ChainMaker server is stopped!")
