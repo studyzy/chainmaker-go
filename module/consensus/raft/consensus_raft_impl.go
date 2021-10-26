@@ -416,6 +416,7 @@ func (consensus *ConsensusRaftImpl) ProposeBlock(block *common.Block) {
 	data, _ := json.Marshal(additionalData)
 	block.AdditionalData.ExtraData[protocol.RAFTAddtionalDataKey] = data
 	data = mustMarshal(block)
+	consensus.logger.Debugf("propose block height：%+v", block.Header.BlockHeight)
 	if err := consensus.node.Propose(context.TODO(), data); err != nil {
 		consensus.logger.Panicf("[%x] propose error: %v", consensus.Id, err)
 	}
