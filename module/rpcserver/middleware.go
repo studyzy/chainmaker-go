@@ -29,6 +29,7 @@ import (
 var log = logger.GetLogger(logger.MODULE_RPC)
 
 const (
+	//UNKNOWN unknown string
 	UNKNOWN = "unknown"
 )
 

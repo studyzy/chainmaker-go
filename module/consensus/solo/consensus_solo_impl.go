@@ -123,14 +123,6 @@ func (consensus *ConsensusSoloImpl) handleProposedBlock(message *msgbus.Message)
 	consensus.mtx.Lock()
 	defer consensus.mtx.Unlock()
 
-	// check verifyingBlock height
-	if consensus.verifyingBlock != nil &&
-		consensus.verifyingBlock.Header.BlockHeight != block.Header.BlockHeight {
-		clog.Errorf(`verifyingBlock height is not equal to proposed block.
-					verifing hegiht: %v, proposed height: %v`,
-			consensus.verifyingBlock.Header.BlockHeight, block.Header.BlockHeight)
-		return
-	}
 	consensus.verifyingBlock = block
 	consensus.msgbus.Publish(msgbus.VerifyBlock, block)
 

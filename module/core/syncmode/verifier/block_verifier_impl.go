@@ -131,9 +131,9 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	b, txRwSet, eventMap := v.proposalCache.GetProposedBlock(block)
 	// contractEventMap = eventMap
 
+	notSolo := consensuspb.ConsensusType_SOLO != v.chainConf.ChainConfig().Consensus.Type
 	if b != nil {
 		isSqlDb := v.chainConf.ChainConfig().Contract.EnableSqlSupport
-		notSolo := consensuspb.ConsensusType_SOLO != v.chainConf.ChainConfig().Consensus.Type
 		if notSolo || isSqlDb {
 			elapsed := utils.CurrentTimeMillisSeconds() - startTick
 			// the block has verified before
@@ -204,10 +204,12 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	}
 	consensusCheckUsed := utils.CurrentTimeMillisSeconds() - beginConsensCheck
 
-	// verify success, cache block and read write set
-	v.log.Debugf("set proposed block(%d,%x)", newBlock.Header.BlockHeight, newBlock.Header.BlockHash)
-	if err = v.proposalCache.SetProposedBlock(newBlock, txRWSetMap, contractEventMap, false); err != nil {
-		return err
+	if notSolo {
+		// verify success, cache block and read write set
+		v.log.Debugf("set proposed block(%d,%x)", newBlock.Header.BlockHeight, block.Header.BlockHash)
+		if err = v.proposalCache.SetProposedBlock(newBlock, txRWSetMap, contractEventMap, false); err != nil {
+			return err
+		}
 	}
 
 	// mark transactions in block as pending status in txpool

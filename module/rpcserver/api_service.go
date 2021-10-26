@@ -30,6 +30,7 @@ import (
 )
 
 const (
+	//SYSTEM_CHAIN the system chain name
 	SYSTEM_CHAIN = "system_chain"
 )
 
