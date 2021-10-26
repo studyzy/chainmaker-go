@@ -491,13 +491,13 @@ func NewVerifierBlock(conf *VerifierBlockConf) *VerifierBlock {
 	return verifyBlock
 }
 
-func (vb *VerifierBlock) FetchLastBlock(block *commonpb.Block,
-	lastBlock *commonpb.Block) (*commonpb.Block, error) { //nolint: staticcheck
+func (vb *VerifierBlock) FetchLastBlock(block *commonpb.Block) (*commonpb.Block, error) { //nolint: staticcheck
 	currentHeight, _ := vb.ledgerCache.CurrentHeight()
 	if currentHeight >= block.Header.BlockHeight {
 		return nil, commonErrors.ErrBlockHadBeenCommited
 	}
 
+	var lastBlock *commonpb.Block
 	if currentHeight+1 == block.Header.BlockHeight {
 		lastBlock = vb.ledgerCache.GetLastCommittedBlock() //nolint: staticcheck
 	} else {

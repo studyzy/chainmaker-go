@@ -171,6 +171,11 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		}
 	}
 
+	lastBlock, err := v.verifierBlock.FetchLastBlock(block)
+	if err != nil {
+		return err
+	}
+
 	startPoolTick := utils.CurrentTimeMillisSeconds()
 	newBlock, err := common.RecoverBlock(block, mode, v.chainConf, v.txPool, v.log)
 	if err != nil {
@@ -178,7 +183,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	}
 	lastPool := utils.CurrentTimeMillisSeconds() - startPoolTick
 
-	txRWSetMap, contractEventMap, timeLasts, err := v.validateBlock(newBlock)
+	txRWSetMap, contractEventMap, timeLasts, err := v.validateBlock(newBlock, lastBlock)
 	if err != nil {
 		v.log.Warnf("verify failed [%d](%x),preBlockHash:%x, %s",
 			newBlock.Header.BlockHeight, newBlock.Header.BlockHash, newBlock.Header.PreBlockHash, err.Error())
@@ -228,12 +233,11 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	return nil
 }
 
-func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (
+func (v *BlockVerifierImpl) validateBlock(block, lastBlock *commonpb.Block) (
 	map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, []int64, error) {
 	hashType := v.chainConf.ChainConfig().Crypto.Hash
 	timeLasts := make([]int64, 0)
 	var err error
-	var lastBlock *commonpb.Block
 	txCapacity := uint32(v.chainConf.ChainConfig().Block.BlockTxCapacity)
 	if block.Header.TxCount > txCapacity {
 		return nil, nil, timeLasts, fmt.Errorf("txcapacity expect <= %d, got %d)", txCapacity, block.Header.TxCount)
@@ -243,10 +247,6 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (
 		return nil, nil, timeLasts, err
 	}
 
-	lastBlock, err = v.verifierBlock.FetchLastBlock(block, lastBlock)
-	if err != nil {
-		return nil, nil, timeLasts, err
-	}
 	// proposed height == proposing height - 1
 	proposedHeight := lastBlock.Header.BlockHeight
 	// check if this block height is 1 bigger than last block height
