@@ -208,7 +208,15 @@ func (bp *BlockProposerImpl) shouldProposeByBFT(height uint64) bool {
 	}
 	currentHeight := committedBlock.Header.BlockHeight
 	// proposing height must higher than current height
-	return currentHeight+1 == height
+	if currentHeight+1 != height {
+		return false
+	}
+	if bp.proposalCache.IsProposedAt(height) {
+		// this node is proposer and has proposed at this round before
+		bp.log.Debugf("proposer has proposed at [%d] ", height)
+		return false
+	}
+	return true
 }
 
 // proposeBlock, to check if proposer can propose block right now
