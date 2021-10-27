@@ -1,11 +1,11 @@
 go 1.15
 
 require (
-	chainmaker.org/chainmaker/chainmaker-net-common v0.0.7-0.20211015122443-7b81b47a2129
-	chainmaker.org/chainmaker/chainmaker-net-libp2p v0.0.12-0.20211015123020-5c1a99a9086b
-	chainmaker.org/chainmaker/chainmaker-net-liquid v0.0.9-0.20211015122708-d98635e71016
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211025091405-b52d2356a39e
 	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9
+	chainmaker.org/chainmaker/net-common v0.0.7-0.20211027061022-edac82204207
+	chainmaker.org/chainmaker/net-libp2p v0.0.12-0.20211022065939-a67ee538e812
+	chainmaker.org/chainmaker/net-liquid v0.0.9-0.20211027111702-03077ba23a67
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211021024710-9329804d1c21
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
 	github.com/gogo/protobuf v1.3.2

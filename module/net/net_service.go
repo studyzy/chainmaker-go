@@ -11,9 +11,9 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker/chainmaker-net-common/common/priorityblocker"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	rootLog "chainmaker.org/chainmaker/logger/v2"
+	"chainmaker.org/chainmaker/net-common/common/priorityblocker"
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"

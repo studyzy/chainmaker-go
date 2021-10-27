@@ -31,6 +31,7 @@ import (
 var (
 	pubkeyFile string
 	orgId      string
+	keyOrgId   string
 	role       string
 )
 
@@ -51,6 +52,7 @@ const (
 
 	flagPubkeyFilePath = "pubkey-file-path"
 	flagOrgId          = "org-id"
+	flagKeyOrgId       = "key-org-id"
 	flagRole           = "role"
 )
 
@@ -93,6 +95,7 @@ func AddPKCmd() *cobra.Command {
 	flags := &pflag.FlagSet{}
 	flags.StringVar(&pubkeyFile, flagPubkeyFilePath, "", "specify pubkey filename")
 	flags.StringVar(&orgId, flagOrgId, "", "specify the orgId, such as wx-org1.chainmaker.com")
+	flags.StringVar(&keyOrgId, flagKeyOrgId, "", "specify the orgId for pubkey, such as wx-org1.chainmaker.com")
 	flags.StringVar(&role, flagRole, "", "specify the role, such as client")
 
 	addPKCmd.Flags().AddFlagSet(flags)
@@ -100,7 +103,7 @@ func AddPKCmd() *cobra.Command {
 	addPKCmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	addPKCmd.MarkFlagRequired(flagAdminOrgIds)
 	addPKCmd.MarkFlagRequired(flagPubkeyFilePath)
-	addPKCmd.MarkFlagRequired(flagOrgId)
+	addPKCmd.MarkFlagRequired(flagKeyOrgId)
 	addPKCmd.MarkFlagRequired(flagRole)
 
 	return addPKCmd
@@ -119,13 +122,14 @@ func DelPKCmd() *cobra.Command {
 	flags := &pflag.FlagSet{}
 	flags.StringVar(&pubkeyFile, flagPubkeyFilePath, "", "specify pubkey filename")
 	flags.StringVar(&orgId, flagOrgId, "", "specify the orgId, such as wx-org1.chainmaker.com")
+	flags.StringVar(&keyOrgId, flagKeyOrgId, "", "specify the orgId for pubkey, such as wx-org1.chainmaker.com")
 
 	delPKCmd.Flags().AddFlagSet(flags)
 
 	delPKCmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	delPKCmd.MarkFlagRequired(flagAdminOrgIds)
 	delPKCmd.MarkFlagRequired(flagPubkeyFilePath)
-	delPKCmd.MarkFlagRequired(flagOrgId)
+	delPKCmd.MarkFlagRequired(flagKeyOrgId)
 
 	return delPKCmd
 }
@@ -178,7 +182,7 @@ func cliAddPubKey() error {
 		return fmt.Errorf("check new blockchains failed, %s", err.Error())
 	}
 
-	payload, err := client.CreatePubkeyAddPayload(string(pubkeyData), orgId, role)
+	payload, err := client.CreatePubkeyAddPayload(string(pubkeyData), keyOrgId, role)
 	if err != nil {
 		return fmt.Errorf("create pubkey query payload failed, %s", err.Error())
 	}
@@ -238,7 +242,7 @@ func cliDelPubKey() error {
 		return fmt.Errorf("check new blockchains failed, %s", err.Error())
 	}
 
-	payload, err := client.CreatePubkeyDelPayload(string(pubkeyData), orgId)
+	payload, err := client.CreatePubkeyDelPayload(string(pubkeyData), keyOrgId)
 	if err != nil {
 		return fmt.Errorf("create pubkey del payload failed, %s", err.Error())
 	}

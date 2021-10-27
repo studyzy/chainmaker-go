@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-auth_type: "permissionedWithCert"   # permissionedWithCert / permissionedWithKey / public
+auth_type: "permissionedWithCert"   # permissionedWithCert/permissionedWithKey/public. same as bc.yml auth_type
 
 log:
   config_file: ../config/{org_path}/log.yml          # config file of logger configuration.
@@ -38,12 +38,13 @@ node:
 
 net:
   provider: LibP2P
+  # 用于节点间数据交互
   listen_addr: /ip4/0.0.0.0/tcp/{net_port}
   #  peer_stream_pool_size: 100
   #  max_peer_count_allow: 20
   #  peer_elimination_strategy: 3  # 1 Random, 2 FIFO, 3 LIFO
-  #  seeds ip格式为： "/ip4/127.0.0.1/tcp/11301/p2p/"+nodeid
-  #  seeds dns格式为："/dns/cm-node1.org/tcp/11301/p2p/"+nodeid
+  #  seeds ip  fmt is："/ip4/127.0.0.1/tcp/11301/p2p/"+nodeid
+  #  seeds dns fmt is："/dns/cm-node1.org/tcp/11301/p2p/"+nodeid
   seeds:
 
   tls:
@@ -74,6 +75,7 @@ txpool:
 
 rpc:
   provider: grpc
+  # 用于客户端提供链交互服务
   port: {rpc_port}
   # 检查链配置TrustRoots证书变化时间间隔，单位：s，最小值为10s
   check_chain_conf_trust_roots_change_interval: 60
@@ -123,38 +125,37 @@ consensus:
     ticker: 1
 
 storage:
+  # 存储路径，记录状态、缓存等
   store_path: ../data/{org_id}/ledgerData1
   # 最小的不允许归档的区块高度
   unarchive_block_height: 300000
-#  encryptor: sm4    # 数据落盘对称加密算法：sm4/aes
-#  encrypt_key: "1234567890123456" # 对称加密密钥：16 bytes key，如果开启PKCS11则为密钥KeyID
+  # encryptor: sm4    # 数据落盘对称加密算法：sm4/aes
+  # encrypt_key: "1234567890123456" # 对称加密密钥：16 bytes key，如果开启PKCS11则为密钥KeyID
   blockdb_config:
-    provider: leveldb
+    provider: leveldb # 数据库类型：leveldb/sql/badgerdb
     leveldb_config:
       store_path: ../data/{org_id}/block
   statedb_config:
-    provider: leveldb # leveldb/sql 二选一
+    provider: leveldb # 数据库类型：leveldb/sql/badgerdb
     leveldb_config: # leveldb config
       store_path: ../data/{org_id}/state
-  #    sqldb_config: # sql config，只有provider为sql的时候才需要配置和启用这个配置
-  #      sqldb_type: mysql           #具体的sql db类型，目前支持mysql，sqlite
-  #      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
+#    provider: sql # sql配置示例
+#    sqldb_config: # sql config，只有provider为sql的时候才需要配置和启用这个配置
+#      sqldb_type: mysql           #具体的sql db类型，目前支持mysql，sqlite
+#      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
   historydb_config:
-    provider: leveldb
+    provider: leveldb # 数据库类型：leveldb/sql/badgerdb
     leveldb_config:
       store_path: ../data/{org_id}/history
-#  historydb_config:
-#    provider: rocksdb
-#    rocksdb_config:
-#      write_buffer_size: 64
-#      db_write_buffer_size: 4
-#      block_cache_size: 128
-#      max_write_buffer_number: 10
-#      max_background_compactions: 4
-#      max_background_flushes: 2
-#      bloom_filter_bits: 10
+#  historydb_config:  # badgerdb配置示例
+#    provider: badgerdb
+#    badgerdb_config:
+#      store_path: ../data/wx-org1.chainmaker.org/history
+#      compression: 0
+#      value_threshold: 256
+#      write_batch_size: 1024
   resultdb_config:
-    provider: leveldb
+    provider: leveldb # 数据库类型：leveldb/sql/badgerdb
     leveldb_config:
       store_path: ../data/{org_id}/result
   disable_contract_eventdb: true  #是否禁止合约事件存储功能，默认为true，如果设置为false,需要配置mysql

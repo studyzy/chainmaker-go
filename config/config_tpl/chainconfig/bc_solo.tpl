@@ -91,5 +91,6 @@ resource_policies:
       role_list:
         - admin
 
+# 未开发的系统合约列表
 disabled_native_contract:
   - CONTRACT_NAME
