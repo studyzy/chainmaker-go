@@ -211,7 +211,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 
 	if notSolo {
 		// verify success, cache block and read write set
-		v.log.Debugf("set proposed block(%d,%x)", newBlock.Header.BlockHeight, block.Header.BlockHash)
+		v.log.Debugf("set proposed block(%d,%x)", newBlock.Header.BlockHeight, newBlock.Header.BlockHash)
 		if err = v.proposalCache.SetProposedBlock(newBlock, txRWSetMap, contractEventMap, false); err != nil {
 			return err
 		}

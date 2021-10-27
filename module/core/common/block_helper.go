@@ -287,7 +287,7 @@ func FinalizeBlock(
 		return err
 	}
 	logger.DebugDynamic(func() string {
-		return fmt.Sprintf("GetMerkleRoot(%s,%v) get %x", hashType, txHashes, block.Header.TxRoot)
+		return fmt.Sprintf("GetMerkleRoot(%s) get %x", hashType, block.Header.TxRoot)
 	})
 	block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
 	if err != nil {
@@ -803,10 +803,12 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 		if lastProposed, rwSetMap, conEventMap, err = chain.checkLastProposedBlock(block); err != nil {
 			return err
 		}
+	} else if IfOpenConsensusMessageTurbo(chain.chainConf) {
+		lastProposed.Header = block.Header
+		lastProposed.AdditionalData = block.AdditionalData
 	}
 
 	checkLasts := utils.CurrentTimeMillisSeconds() - startTick
-
 	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent, err := chain.commonCommit.CommitBlock(
 		lastProposed, rwSetMap, conEventMap)
 	if err != nil {
