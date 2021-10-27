@@ -590,10 +590,6 @@ func stakeDelegate() *cobra.Command {
 		Use:   "delegate",
 		Short: "delegate feature of the stake",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			var (
-				err error
-			)
-
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
 				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
@@ -602,8 +598,7 @@ func stakeDelegate() *cobra.Command {
 			defer client.Stop()
 			pairs := make(map[string]string)
 			if params != "" {
-				err := json.Unmarshal([]byte(params), &pairs)
-				if err != nil {
+				if err := json.Unmarshal([]byte(params), &pairs); err != nil {
 					return err
 				}
 			}
@@ -612,13 +607,16 @@ func stakeDelegate() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("delegate failed, %s", err.Error())
 			}
+			if resp.ContractResult == nil {
+				fmt.Printf("resp: %+v\n", resp)
+				return nil
+			}
 			info := &syscontract.Delegation{}
 			if err := proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
 				return fmt.Errorf("unmarshal delegate info failed, %v", err)
 			}
 			resp.ContractResult.Result = []byte(info.String())
 			fmt.Printf("resp: %+v\n", resp)
-
 			return nil
 		},
 	}
@@ -764,6 +762,10 @@ func stakeUnDelegate() *cobra.Command {
 			resp, err := unDelegate(client, address, amount, txId, DEFAULT_TIMEOUT, syncResult)
 			if err != nil {
 				return fmt.Errorf("undelegate failed, %s", err.Error())
+			}
+			if resp.ContractResult == nil {
+				fmt.Printf("resp: %+v\n", resp)
+				return nil
 			}
 			info := &syscontract.UnbondingDelegation{}
 			if err := proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
