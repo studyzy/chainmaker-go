@@ -59,7 +59,6 @@ chainmaker.org/chainmaker/utils/v2 v2.0.0-20211020061817-1e64a279af4f/go.mod h1:
 chainmaker.org/chainmaker/utils/v2 v2.0.0-20211025034502-a043f36c5d0d h1:d8DSTmlE5w+rB0sSpQTj+hq1wzmTXk00Yi7zyA2AhmI=
 chainmaker.org/chainmaker/utils/v2 v2.0.0-20211025034502-a043f36c5d0d/go.mod h1:zjDyAIfUBy7QIP96hW8Za0z56wL0O94tew82mKbrcLE=
 chainmaker.org/chainmaker/vm v0.0.0-20211021121120-0205ff67a1ff/go.mod h1:rta6E6qNgG003HIekZDqiHNWEmKPZo/qa8usqz8kmwk=
-chainmaker.org/chainmaker/vm v0.0.0-20211022085604-9ff0d4318eff/go.mod h1:Z57hfri7ltPczBSUsJdmrohOK/8wYlKsEM5iFMuVgqk=
 chainmaker.org/chainmaker/vm v0.0.0-20211027100658-2e4f68480067 h1:usi2o4q2/tqQvAja9IEAmHVHqRbHcyXFV9qvIEKTOks=
 chainmaker.org/chainmaker/vm v0.0.0-20211027100658-2e4f68480067/go.mod h1:HWD6LjIjq72rH4Ma/aU3r0BvRbS9AIPdqOWxMKG2eNk=
 chainmaker.org/chainmaker/vm-evm v0.0.0-20211015132845-e5b020e52194 h1:xv14I0pCYT0pyI0jReZgh7dqtPVygwaLWEh0kc/ZNwU=
@@ -67,8 +66,6 @@ chainmaker.org/chainmaker/vm-evm v0.0.0-20211015132845-e5b020e52194/go.mod h1:Yw
 chainmaker.org/chainmaker/vm-gasm v0.0.0-20211021124542-7d786f590cdb h1:t+j2pRuLSNEkr40r9BSQ1b3iW1s4TIR+Vqqbvlieh3Q=
 chainmaker.org/chainmaker/vm-gasm v0.0.0-20211021124542-7d786f590cdb/go.mod h1:mHq+E0T/GGZZ7+KWKJ9DooN+Q0kSJqJF48a7gKG7Fp0=
 chainmaker.org/chainmaker/vm-native v0.0.0-20211021114007-93fd8a298bb9/go.mod h1:VTuVseNEW2eg55oVJg97TZUL6uL3/x7o/TTDdAfjsMk=
-chainmaker.org/chainmaker/vm-native v0.0.0-20211022083838-dc47692c7060/go.mod h1:NKTj2ci0V1appJ64VebRbjZLDJHroHDV7BBtxQ3YFv4=
-chainmaker.org/chainmaker/vm-native v0.0.0-20211027080925-ef893a70fe9a/go.mod h1:NKTj2ci0V1appJ64VebRbjZLDJHroHDV7BBtxQ3YFv4=
 chainmaker.org/chainmaker/vm-native v0.0.0-20211027095439-0e9de1302fde h1:+4nSd2SK9HhRKdix+d7/G7ziJ6VZANCWpTYI2I33UZk=
 chainmaker.org/chainmaker/vm-native v0.0.0-20211027095439-0e9de1302fde/go.mod h1:NKTj2ci0V1appJ64VebRbjZLDJHroHDV7BBtxQ3YFv4=
 chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211021124527-56f0c0a96193 h1:sHw6VQapINjNieInaMA8bWPtP/MsjYY+TP4n1HmK2wM=
