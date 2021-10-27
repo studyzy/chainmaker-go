@@ -8,7 +8,6 @@ chainmaker.org/chainmaker/libp2p-pubsub v0.0.3 h1:NBfzwA3BvXfko6gt0ytw3qy0ZcrXmu
 chainmaker.org/chainmaker/libp2p-pubsub v0.0.3/go.mod h1:6kv8oBUEaVRQFVZ457T6Gf5VuNJlp9Z7fDWxUJl81m4=
 chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9 h1:ayqYamjuQLj9YIw5mbZm4YdK0Xe4knN+tDYNCK5zf08=
 chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9/go.mod h1:qVQdhfl5VPT79Z7a/7fsCpYOBUHYK57iQuigQbd58n0=
-chainmaker.org/chainmaker/net-common v0.0.7-0.20211022065334-835fd4b717b2 h1:tHDrbFMxbte7voDgWfKPQn7UZZnEB5Su+JPjNWUE/AE=
 chainmaker.org/chainmaker/net-common v0.0.7-0.20211022065334-835fd4b717b2/go.mod h1:7xFRQ/lBjvYb07UQoIsgHr2KWrun1kcdWPcgbHpCCYU=
 chainmaker.org/chainmaker/net-common v0.0.7-0.20211027061022-edac82204207 h1:MObTx2Oh4BEMY/evLhLCgFsBzsBtc5ZiwJ09mdr7DOc=
 chainmaker.org/chainmaker/net-common v0.0.7-0.20211027061022-edac82204207/go.mod h1:5WFEPlVywRiA5Jl5G9cT2MdM81jLWN2goJx9rmGS2oE=
@@ -766,6 +765,7 @@ github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94/go.mod h1:AZpEONHx3
 github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271/go.mod h1:AZpEONHx3DKn8O/DFsRAY58/XVQiIPMTMB1SddzLXVw=
 github.com/streadway/handy v0.0.0-20190108123426-d5acb3125c2a/go.mod h1:qNTQ5P5JnDBl6z3cMAg/SywNDC5ABu5ApDIw6lUbRmI=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/objx v0.1.1 h1:2vfRuCMp5sSVIDSqO8oNnWJq7mPa6KVP3iPIwFBuy8A=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
