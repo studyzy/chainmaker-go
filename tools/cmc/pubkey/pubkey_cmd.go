@@ -95,7 +95,7 @@ func AddPKCmd() *cobra.Command {
 	flags := &pflag.FlagSet{}
 	flags.StringVar(&pubkeyFile, flagPubkeyFilePath, "", "specify pubkey filename")
 	flags.StringVar(&orgId, flagOrgId, "", "specify the orgId, such as wx-org1.chainmaker.com")
-	flags.StringVar(&keyOrgId, flagKeyOrgId, "", "specify the orgId for key, such as wx-org1.chainmaker.com")
+	flags.StringVar(&keyOrgId, flagKeyOrgId, "", "specify the orgId for pubkey, such as wx-org1.chainmaker.com")
 	flags.StringVar(&role, flagRole, "", "specify the role, such as client")
 
 	addPKCmd.Flags().AddFlagSet(flags)
@@ -122,7 +122,7 @@ func DelPKCmd() *cobra.Command {
 	flags := &pflag.FlagSet{}
 	flags.StringVar(&pubkeyFile, flagPubkeyFilePath, "", "specify pubkey filename")
 	flags.StringVar(&orgId, flagOrgId, "", "specify the orgId, such as wx-org1.chainmaker.com")
-	flags.StringVar(&keyOrgId, flagKeyOrgId, "", "specify the orgId for key, such as wx-org1.chainmaker.com")
+	flags.StringVar(&keyOrgId, flagKeyOrgId, "", "specify the orgId for pubkey, such as wx-org1.chainmaker.com")
 
 	delPKCmd.Flags().AddFlagSet(flags)
 
