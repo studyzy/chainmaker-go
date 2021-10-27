@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker/common/v2/crypto/hash"
-	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/protocol/v2/test"
 	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +25,7 @@ import (
 // logLevel: Info  TxNum: 1000000; async:224 ; sync: 251
 func TestFinalizeBlock_Async(t *testing.T) {
 
-	log := logger.GetLogger("core")
+	log := &test.GoLogger{}
 	block := createBlock(10)
 	txs := make([]*commonpb.Transaction, 0)
 	txRWSetMap := make(map[string]*commonpb.TxRWSet)
