@@ -766,8 +766,7 @@ func (acs *accessControlService) newNodePkMember(member *pbac.Member,
 	memberCache := acs.getMemberFromCache(member)
 	if memberCache != nil {
 		if memberCache.GetRole() != protocol.RoleConsensusNode &&
-			memberCache.GetRole() != protocol.RoleCommonNode &&
-			memberCache.GetRole() != protocol.RoleLight {
+			memberCache.GetRole() != protocol.RoleCommonNode {
 			return nil, fmt.Errorf("get member from cache, the public key is not a node member")
 		}
 		return memberCache, nil

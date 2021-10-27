@@ -3,7 +3,7 @@ go 1.15
 require (
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211025091405-b52d2356a39e
 	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9
-	chainmaker.org/chainmaker/net-common v0.0.7-0.20211022065334-835fd4b717b2
+	chainmaker.org/chainmaker/net-common v0.0.7-0.20211027061022-edac82204207
 	chainmaker.org/chainmaker/net-libp2p v0.0.12-0.20211022065939-a67ee538e812
 	chainmaker.org/chainmaker/net-liquid v0.0.9-0.20211022070329-e5830ad58089
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211021024710-9329804d1c21

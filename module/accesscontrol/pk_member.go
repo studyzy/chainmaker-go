@@ -214,8 +214,7 @@ func newPkNodeMemberFromAcs(member *pbac.Member, consensusList *sync.Map,
 		return nil, fmt.Errorf("new public key node member failed: %s", err.Error())
 	}
 
-	if publickInfo.Role != string(protocol.RoleCommonNode) &&
-		publickInfo.Role != string(protocol.RoleLight) {
+	if publickInfo.Role != string(protocol.RoleCommonNode) {
 
 		return nil, fmt.Errorf("new public key node member failed: the public key is not a node member")
 	}

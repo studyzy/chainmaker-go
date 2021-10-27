@@ -42,6 +42,7 @@ import (
 )
 
 const (
+	//PREFIX_dpos_stake_nodeId the nodeId prefix in the dpos config in the chainconf
 	PREFIX_dpos_stake_nodeId string = "stake.nodeID"
 )
 
