@@ -677,6 +677,16 @@ func (consensus *ConsensusTBFTImpl) procPrevote(msg *tbftpb.TBFTMsg) {
 		prevote.Voter, prevote.Height, prevote.Round, prevote.Hash,
 	)
 
+	if consensus.Height != prevote.Height ||
+		consensus.Round > prevote.Round ||
+		(consensus.Round == prevote.Round && consensus.Step > tbftpb.Step_PREVOTE) {
+		errMsg := fmt.Sprintf("[%s](%d/%d/%s) receive invalid vote %s(%d/%d/%s)",
+			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
+			prevote.Voter, prevote.Height, prevote.Round, prevote.Type)
+		consensus.logger.Debugf(errMsg)
+		return
+	}
+
 	if prevote.Voter != consensus.Id {
 		err := consensus.verifyVote(prevote)
 		if err != nil {
@@ -686,16 +696,6 @@ func (consensus *ConsensusTBFTImpl) procPrevote(msg *tbftpb.TBFTMsg) {
 			)
 			return
 		}
-	}
-
-	if consensus.Height != prevote.Height ||
-		consensus.Round > prevote.Round ||
-		(consensus.Round == prevote.Round && consensus.Step > tbftpb.Step_PREVOTE) {
-		errMsg := fmt.Sprintf("[%s](%d/%d/%s) receive invalid vote %s(%d/%d/%s)",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
-			prevote.Voter, prevote.Height, prevote.Round, prevote.Type)
-		consensus.logger.Debugf(errMsg)
-		return
 	}
 
 	vote := NewVoteFromProto(prevote)
@@ -718,6 +718,16 @@ func (consensus *ConsensusTBFTImpl) procPrecommit(msg *tbftpb.TBFTMsg) {
 		precommit.Voter, precommit.Height, precommit.Round,
 	)
 
+	if consensus.Height != precommit.Height ||
+		consensus.Round > precommit.Round ||
+		(consensus.Round == precommit.Round && consensus.Step > tbftpb.Step_PRECOMMIT) {
+		consensus.logger.Debugf("[%s](%d/%d/%s) receive invalid precommit %s(%d/%d)",
+			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
+			precommit.Voter, precommit.Height, precommit.Round,
+		)
+		return
+	}
+
 	if precommit.Voter != consensus.Id {
 		err := consensus.verifyVote(precommit)
 		if err != nil {
@@ -727,16 +737,6 @@ func (consensus *ConsensusTBFTImpl) procPrecommit(msg *tbftpb.TBFTMsg) {
 			)
 			return
 		}
-	}
-
-	if consensus.Height != precommit.Height ||
-		consensus.Round > precommit.Round ||
-		(consensus.Round == precommit.Round && consensus.Step > tbftpb.Step_PRECOMMIT) {
-		consensus.logger.Debugf("[%s](%d/%d/%s) receive invalid precommit %s(%d/%d)",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
-			precommit.Voter, precommit.Height, precommit.Round,
-		)
-		return
 	}
 
 	vote := NewVoteFromProto(precommit)
