@@ -242,10 +242,6 @@ func (v *BlockVerifierImpl) validateBlock(block, lastBlock *commonpb.Block) (map
 		return nil, nil, timeLasts, err
 	}
 
-	lastBlock, err = v.verifierBlock.FetchLastBlock(block)
-	if err != nil {
-		return nil, nil, timeLasts, err
-	}
 	// proposed height == proposing height - 1
 	proposedHeight := lastBlock.Header.BlockHeight
 	// check if this block height is 1 bigger than last block height

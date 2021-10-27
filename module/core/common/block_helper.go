@@ -585,7 +585,7 @@ func (vb *VerifierBlock) ValidateBlock(
 			vb.txPool.RetryAndRemoveTxs(nil, errTxs)
 		}
 		return nil, nil, timeLasts, fmt.Errorf("verify failed [%d](%x), %s ",
-			block.Header.BlockHeight, block.Header.PreBlockHash, err)
+			block.Header.BlockHeight, block.Header.BlockHash, err)
 	}
 	//if protocol.CONSENSUS_VERIFY == mode && len(newAddTx) > 0 {
 	//	v.txPool.AddTrustedTx(newAddTx)
@@ -830,9 +830,9 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	interval := curTime - chain.blockInterval
 	chain.blockInterval = curTime
 	chain.log.Infof(
-		"commit block [%d](count:%d,hash:%x), "+
+		"commit block [%d](count:%d,hash:%x)"+
 			"time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,pubConEvent:%d,other:%d,total:%d,interval:%d)",
-		height, lastProposed.Header.TxCount, lastProposed.Header.BlockHash,
+		height, lastProposed.Header.TxCount, lastProposed.Header.BlockHash, lastProposed.Txs[0].Payload.TxId,
 		checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, pubEvent, otherLasts, elapsed, interval)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		chain.metricBlockCommitTime.WithLabelValues(chain.chainId).Observe(float64(elapsed) / 1000)
