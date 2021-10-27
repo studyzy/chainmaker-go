@@ -5,7 +5,7 @@ require (
 	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9
 	chainmaker.org/chainmaker/net-common v0.0.7-0.20211027061022-edac82204207
 	chainmaker.org/chainmaker/net-libp2p v0.0.12-0.20211022065939-a67ee538e812
-	chainmaker.org/chainmaker/net-liquid v0.0.9-0.20211022070329-e5830ad58089
+	chainmaker.org/chainmaker/net-liquid v0.0.9-0.20211027111702-03077ba23a67
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211021024710-9329804d1c21
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
 	github.com/gogo/protobuf v1.3.2

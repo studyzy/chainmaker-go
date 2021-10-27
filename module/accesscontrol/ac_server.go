@@ -218,7 +218,7 @@ type memberCached struct {
 	certChain []*bcx509.Certificate
 }
 
-func initAccessControlService(hashType, localOrgId, authType string, chainConf *config.ChainConfig,
+func initAccessControlService(hashType, authType string,
 	store protocol.BlockchainStore, log protocol.Logger) *accessControlService {
 	acService := &accessControlService{
 		orgNum:                0,
@@ -231,7 +231,6 @@ func initAccessControlService(hashType, localOrgId, authType string, chainConf *
 		hashType:              hashType,
 		authType:              authType,
 	}
-	acService.initResourcePolicy(chainConf.ResourcePolicies, localOrgId)
 	return acService
 }
 

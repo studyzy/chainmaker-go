@@ -23,7 +23,8 @@ import (
 
 func TestInitAccessControlService(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	acServices := initAccessControlService(testHashType, testOrg1, protocol.Identity, testChainConfig, nil, logger)
+	acServices := initAccessControlService(testHashType, protocol.Identity, nil, logger)
+	acServices.initResourcePolicy(testChainConfig.ResourcePolicies, testOrg1)
 	require.NotNil(t, acServices)
 }
 
@@ -33,7 +34,8 @@ func TestValidateResourcePolicy(t *testing.T) {
 	defer cleanFunc()
 
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	acServices := initAccessControlService(testHashType, testOrg1, protocol.Identity, testChainConfig, nil, logger)
+	acServices := initAccessControlService(testHashType, protocol.Identity, nil, logger)
+	acServices.initResourcePolicy(testChainConfig.ResourcePolicies, testOrg1)
 	require.NotNil(t, acServices)
 
 	resourcePolicy := &config.ResourcePolicy{
@@ -57,7 +59,8 @@ func TestCertMemberInfo(t *testing.T) {
 	defer cleanFunc()
 
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	acServices := initAccessControlService(testHashType, testOrg1, protocol.Identity, testChainConfig, nil, logger)
+	acServices := initAccessControlService(testHashType, protocol.Identity, nil, logger)
+	acServices.initResourcePolicy(testChainConfig.ResourcePolicies, testOrg1)
 	require.NotNil(t, acServices)
 
 	pbMember := &pbac.Member{
@@ -104,7 +107,8 @@ func TestVerifyPrincipalPolicy(t *testing.T) {
 	defer cleanFunc()
 	hashType := testHashType
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	acServices := initAccessControlService(testHashType, testOrg1, protocol.Identity, testChainConfig, nil, logger)
+	acServices := initAccessControlService(testHashType, protocol.Identity, nil, logger)
+	acServices.initResourcePolicy(testChainConfig.ResourcePolicies, testOrg1)
 	require.NotNil(t, acServices)
 
 	var orgMemberMap = make(map[string]*orgMember, len(orgMemberInfoMap))
