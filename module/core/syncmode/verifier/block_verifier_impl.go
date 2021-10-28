@@ -113,6 +113,9 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	startTick := utils.CurrentTimeMillisSeconds()
 	if err = utils.IsEmptyBlock(block); err != nil {
 		v.log.Error(err)
+		v.log.Debugf("empty block. height:%+v, hash:%+v, chainId:%+v, preHash:%+v, signature:%+v",
+			block.Header.BlockHeight, block.Header.BlockHash,
+			block.Header.ChainId, block.Header.PreBlockHash, block.Header.Signature)
 		return err
 	}
 
