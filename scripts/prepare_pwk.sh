@@ -158,7 +158,6 @@ function generate_config() {
     node_count=$(ls -l $BUILD_CRYPTO_CONFIG_PATH|grep "^d"| wc -l)
     echo "config node total $node_count"
     for ((i = 1; i < $node_count + 1; i = i + 1)); do
-#    for ((i = 1; i < $NODE_CNT + 1; i = i + 1)); do
         echo "begin generate node$i config..."
         mkdir -p ${BUILD_PATH}/config/node$i
         mkdir -p ${BUILD_PATH}/config/node$i/chainconfig
