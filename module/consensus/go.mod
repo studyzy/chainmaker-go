@@ -12,7 +12,7 @@ require (
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
 	chainmaker.org/chainmaker/raftwal/v2 v2.0.3
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211027124954-09b710bd9ce8
-	chainmaker.org/chainmaker/vm-native v0.0.0-20211027120103-3b4f11ba02ba
+	chainmaker.org/chainmaker/vm-native v0.0.0-20211028093728-9ddf83f94cc3
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
