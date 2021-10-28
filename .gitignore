@@ -12,7 +12,6 @@ module/store/store
 release
 bin
 *.log.*
-/config/
 /config-sql/
 **/crypto-config/
 /testdata
