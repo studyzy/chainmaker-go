@@ -240,12 +240,12 @@ function generate_config() {
                 c=$(($c+1))
                 xsed "s%{org${c}_id}%$file%g" node$i/chainconfig/bc$j.yml
 
-#                peerId=`cat $BUILD_CRYPTO_CONFIG_PATH/$file/node/consensus1/consensus1.nodeid`
-#                xsed "s%{org${c}_peerid}%$peerId%g" node$i/chainconfig/bc$j.yml
-#
-#                if  [ $j -eq 1 ]; then
-#                    xsed "s%{org${c}_peerid}%$peerId%g" node$i/chainmaker.yml
-#                fi
+                peerId=`cat $BUILD_CRYPTO_CONFIG_PATH/$file/node/consensus1/consensus1.nodeid`
+                xsed "s%{org${c}_peerid}%$peerId%g" node$i/chainconfig/bc$j.yml
+
+                if  [ $j -eq 1 ]; then
+                    xsed "s%{org${c}_peerid}%$peerId%g" node$i/chainmaker.yml
+                fi
 
                 #cp admin
                 mkdir -p $BUILD_CONFIG_PATH/node$i/keys/admin/$file
