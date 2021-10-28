@@ -23,7 +23,7 @@ blockchain:
 node:
   # 节点类型：full
   type:              full
-  #org_id:            {org_id}
+  org_id:            {org_id}
   priv_key_file:     ../config/{org_path}/keys/{node_pk_path}.key
   #cert_file:         ../config/{org_path}/certs/{node_cert_path}.crt
   signer_cache_size: 1000
