@@ -171,7 +171,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		}
 	}
 
-	// avoid to recover the commited block.
+	// avoid to recover the committed block.
 	lastBlock, err := v.verifierBlock.FetchLastBlock(block)
 	if err != nil {
 		return err
