@@ -803,10 +803,8 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 		if lastProposed, rwSetMap, conEventMap, err = chain.checkLastProposedBlock(block); err != nil {
 			return err
 		}
-	} else if IfOpenConsensusMessageTurbo(chain.chainConf) &&
-		chain.proposalCache.IsProposedAt(lastProposed.Header.BlockHeight) {
+	} else if IfOpenConsensusMessageTurbo(chain.chainConf) {
 		// recover the block for proposer when enable the conensus message turbo function.
-
 		lastProposed.Header = block.Header
 		lastProposed.AdditionalData = block.AdditionalData
 	}
