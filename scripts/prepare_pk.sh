@@ -152,9 +152,6 @@ function generate_config() {
     mkdir -p ${BUILD_PATH}/config
     cd ${BUILD_PATH}/config
 
-    #cp admin & user & node keys
-    #cp -rf $BUILD_CRYPTO_CONFIG_PATH/* $BUILD_CONFIG_PATH/
-
     node_count=$(ls -l $BUILD_CRYPTO_CONFIG_PATH|grep "^d"| wc -l)
     echo "config node total $node_count"
     for ((i = 1; i < $node_count + 1; i = i + 1)); do
@@ -197,7 +194,6 @@ function generate_config() {
 
         for ((j = 1; j < $CHAIN_CNT + 1; j = j + 1)); do
             xsed "s%#\(.*\)- chainId: chain${j}%\1- chainId: chain${j}%g" node$i/chainmaker.yml
-#           xsed "s%#\(.*\)genesis: ../config/{org_path$j}/chainconfig/bc${j}.yml%\1genesis: ../config/{org_path$j}/chainconfig/bc${j}.yml%g" node$i/chainmaker.yml
             xsed "s%#\(.*\)genesis: ../config/{org_path}/chainconfig/bc${j}.yml%\1genesis: ../config/{org_path}/chainconfig/bc${j}.yml%g" node$i/chainmaker.yml
 
             if  [ $NODE_CNT -eq 4 ] || [ $NODE_CNT -eq 7 ]; then
