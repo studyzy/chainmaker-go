@@ -239,4 +239,4 @@ resource_policies:
 
 # 未开发的系统合约列表
 disabled_native_contract:
-  - CONTRACT_NAME
+  # - CONTRACT_NAME  # 通过指定系统合约名字来禁用系统合约
