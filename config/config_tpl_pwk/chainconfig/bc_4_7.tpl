@@ -67,7 +67,7 @@ consensus:
 #    - org_id: "{org6_id}"
 #      node_id:
 #        - "{org6_peerid}"
-#   - org_id: "{org7_id}"
+#    - org_id: "{org7_id}"
 #      node_id:
 #        - "{org7_peerid}"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
