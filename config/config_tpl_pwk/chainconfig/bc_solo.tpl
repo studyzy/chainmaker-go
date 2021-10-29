@@ -6,7 +6,7 @@
 #
 
 chain_id: {chain_id}                # 链标识
-version: v2.0.0                     # 链版本
+version: v2.1.0                     # 链版本
 sequence: 0                         # 配置版本
 auth_type: "permissionedWithKey"    # 认证类型
 
@@ -60,7 +60,7 @@ consensus:
 trust_roots:
   - org_id: "{org1_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org1_id}/admin.pem"
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:

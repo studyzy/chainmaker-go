@@ -6,7 +6,7 @@
 #
 
 chain_id: {chain_id}                # 链标识
-version: v2.0.0                     # 链版本
+version: v2.1.0                     # 链版本
 sequence: 0                         # 配置版本
 auth_type: "permissionedWithKey"    # 认证类型
 
@@ -67,7 +67,7 @@ consensus:
 #    - org_id: "{org6_id}"
 #      node_id:
 #        - "{org6_peerid}"
-#   - org_id: "{org7_id}"
+#    - org_id: "{org7_id}"
 #      node_id:
 #        - "{org7_peerid}"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
@@ -78,25 +78,25 @@ consensus:
 trust_roots:
   - org_id: "{org1_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org1_id}/admin.pem"
   - org_id: "{org2_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org2_id}/admin.pem"
   - org_id: "{org3_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org3_id}/admin.pem"
   - org_id: "{org4_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org4_id}/admin.pem"
 #  - org_id: "{org5_id}"
 #    root:
-#      - "../config/{org_path}/keys/admin/admin.pem"
+#      - "../config/{org_path}/keys/admin/{org5_id}/admin.pem"
 #  - org_id: "{org6_id}"
 #    root:
-#      - "../config/{org_path}/keys/admin/admin.pem"
+#      - "../config/{org_path}/keys/admin/{org6_id}/admin.pem"
 #  - org_id: "{org7_id}"
 #    root:
-#      - "../config/{org_path}/keys/admin/admin.pem"
+#      - "../config/{org_path}/keys/admin/{org7_id}/admin.pem"
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:

@@ -6,7 +6,7 @@
 #
 
 chain_id: {chain_id}                # 链标识
-version: v2.0.0                     # 链版本
+version: v2.1.0                     # 链版本
 sequence: 0                         # 配置版本
 auth_type: "permissionedWithKey"    # 认证类型
 
@@ -79,24 +79,15 @@ consensus:
     - org_id: "{org10_id}"
       node_id:
         - "{org10_peerid}"
-    - org_id: "{org11_id}"
-      node_id:
-        - "{org11_peerid}"
-    - org_id: "{org12_id}"
-      node_id:
-        - "{org12_peerid}"
-    - org_id: "{org13_id}"
-      node_id:
-        - "{org13_peerid}"
-    - org_id: "{org14_id}"
-      node_id:
-        - "{org14_peerid}"
-    - org_id: "{org15_id}"
-      node_id:
-        - "{org15_peerid}"
-    - org_id: "{org16_id}"
-      node_id:
-        - "{org16_peerid}"
+#    - org_id: "{org11_id}"
+#      node_id:
+#        - "{org11_peerid}"
+#    - org_id: "{org12_id}"
+#      node_id:
+#        - "{org12_peerid}"
+#    - org_id: "{org13_id}"
+#      node_id:
+#        - "{org13_peerid}"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11
@@ -105,43 +96,43 @@ consensus:
 trust_roots:
   - org_id: "{org1_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org1_id}admin.pem"
   - org_id: "{org2_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org2_id}/admin.pem"
   - org_id: "{org3_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org3_id}/admin.pem"
   - org_id: "{org4_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org4_id}/admin.pem"
   - org_id: "{org5_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org5_id}/admin.pem"
   - org_id: "{org6_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org6_id}/admin.pem"
   - org_id: "{org7_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org7_id}/admin.pem"
   - org_id: "{org8_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org8_id}/admin.pem"
   - org_id: "{org9_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org9_id}/admin.pem"
   - org_id: "{org10_id}"
     root:
-      - "../config/{org_path}/keys/admin/admin.pem"
-  - org_id: "{org11_id}"
-    root:
-      - "../config/{org_path}/keys/admin/admin.pem"
-  - org_id: "{org12_id}"
-    root:
-      - "../config/{org_path}/keys/admin/admin.pem"
-  - org_id: "{org13_id}"
-    root:
-      - "../config/{org_path}/keys/admin/admin.pem"
+      - "../config/{org_path}/keys/admin/{org10_id}/admin.pem"
+#  - org_id: "{org11_id}"
+#    root:
+#      - "../config/{org_path}/keys/admin/{org11_id}/admin.pem"
+#  - org_id: "{org12_id}"
+#    root:
+#      - "../config/{org_path}/keys/admin/{org12_id}/admin.pem"
+#  - org_id: "{org13_id}"
+#    root:
+#      - "../config/{org_path}/keys/admin/{org13_id}/admin.pem"
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:
