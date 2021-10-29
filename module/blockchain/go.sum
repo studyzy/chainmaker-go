@@ -49,8 +49,8 @@ chainmaker.org/chainmaker/utils/v2 v2.0.0-20211027124954-09b710bd9ce8/go.mod h1:
 chainmaker.org/chainmaker/vm v0.0.0-20211028094551-9b2cca96d10d h1:3uaX8awZiLYoK7PLjDu1yEGt9trmkXLqObqY0bd82lc=
 chainmaker.org/chainmaker/vm v0.0.0-20211028094551-9b2cca96d10d/go.mod h1:jOsVP8PNe7BC26yT3A+PHunz7BbFxM7Q4xOs83Vn1a4=
 chainmaker.org/chainmaker/vm-native v0.0.0-20211028093728-9ddf83f94cc3/go.mod h1:NKTj2ci0V1appJ64VebRbjZLDJHroHDV7BBtxQ3YFv4=
-chainmaker.org/chainmaker/vm-native v0.0.0-20211029063929-2b82d0fa8bb8 h1:tCuCILRSxJcvc4BGBE6LINusx5O7lA7kphAEOVJkLp0=
-chainmaker.org/chainmaker/vm-native v0.0.0-20211029063929-2b82d0fa8bb8/go.mod h1:NKTj2ci0V1appJ64VebRbjZLDJHroHDV7BBtxQ3YFv4=
+chainmaker.org/chainmaker/vm-native v0.0.0-20211029075817-046b5f1bbc31 h1:yn3mR3heTyC+Kxxzc7yHteqLh9U6q6BBNcRMtWdn3PI=
+chainmaker.org/chainmaker/vm-native v0.0.0-20211029075817-046b5f1bbc31/go.mod h1:NKTj2ci0V1appJ64VebRbjZLDJHroHDV7BBtxQ3YFv4=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.31.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
