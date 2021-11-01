@@ -51,6 +51,8 @@ var (
 	snapDir                 = "snap"
 	snapshotCatchUpEntriesN = uint64(5)
 	defaultSnapCount        = uint64(10)
+	isStarted               sync.Map
+	instances               sync.Map
 )
 
 // mustMarshal marshals protobuf message to byte slice or panic
@@ -125,6 +127,13 @@ type ConsensusRaftImplConfig struct {
 func New(config ConsensusRaftImplConfig) (*ConsensusRaftImpl, error) {
 	consensus := &ConsensusRaftImpl{}
 	lg := logger.GetLoggerByChain(logger.MODULE_CONSENSUS, config.ChainID)
+	if started, ok := isStarted.Load(consensus.Id); ok && started.(bool) {
+		if ins, ok := instances.Load(consensus.Id); ok && ins.(*ConsensusRaftImpl) != nil {
+			lg.Infof("ConsensusRaftImpl[%x] is already exist, need to do nothing", consensus.Id)
+			return ins.(*ConsensusRaftImpl), nil
+		}
+		isStarted.Delete(consensus.Id)
+	}
 	consensus.logger = lg
 	consensus.chainID = config.ChainID
 	consensus.singer = config.Singer
@@ -153,11 +162,16 @@ func New(config ConsensusRaftImplConfig) (*ConsensusRaftImpl, error) {
 	consensus.blockCommitter = config.BlockCommitter
 
 	consensus.logger.Infof("New ConsensusRaftImpl[%x]", consensus.Id)
+	instances.Store(consensus.Id, consensus)
 	return consensus, nil
 }
 
 // Start starts the raft instance
 func (consensus *ConsensusRaftImpl) Start() error {
+	if started, ok := isStarted.Load(consensus.Id); ok && started.(bool) {
+		consensus.logger.Infof("ConsensusRaftImpl[%x] is already started, need to do nothing", consensus.Id)
+		return nil
+	}
 	consensus.logger.Infof("ConsensusRaftImpl[%x] starting", consensus.Id)
 	if !fileutil.Exist(consensus.snapdir) {
 		if err := os.Mkdir(consensus.snapdir, 0750); err != nil {
@@ -204,6 +218,7 @@ func (consensus *ConsensusRaftImpl) Start() error {
 	consensus.msgbus.Register(msgbus.ProposedBlock, consensus)
 	consensus.msgbus.Register(msgbus.RecvConsensusMsg, consensus)
 	_ = chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_RAFT, consensus)
+	isStarted.Store(consensus.Id, true)
 
 	return nil
 }
@@ -326,6 +341,8 @@ func (consensus *ConsensusRaftImpl) serve() {
 		consensus.node.Stop()
 		consensus.msgbus.UnRegister(msgbus.ProposedBlock, consensus)
 		consensus.msgbus.UnRegister(msgbus.RecvConsensusMsg, consensus)
+		isStarted.Delete(consensus.Id)
+		instances.Delete(consensus.Id)
 	}()
 
 	for {
