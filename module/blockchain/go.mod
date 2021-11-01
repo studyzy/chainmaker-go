@@ -13,12 +13,12 @@ require (
 	chainmaker.org/chainmaker-go/txpool v0.0.0
 	chainmaker.org/chainmaker-go/vm v0.0.0
 	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211025081513-28594b541181
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211025091405-b52d2356a39e
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211101030932-bf3bcb20eb52
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211014134424-9431ffcc5bbc
 	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211021024710-9329804d1c21
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
-	chainmaker.org/chainmaker/store/v2 v2.0.1-0.20211027072818-556aa7111997
+	chainmaker.org/chainmaker/store/v2 v2.0.1-0.20211101060552-ab2318ad9c6e
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211027124954-09b710bd9ce8
 	chainmaker.org/chainmaker/vm v0.0.0-20211028094551-9b2cca96d10d
 	github.com/fatih/color v1.13.0 // indirect
