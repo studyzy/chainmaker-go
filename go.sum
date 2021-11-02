@@ -68,6 +68,8 @@ chainmaker.org/chainmaker/vm-native v0.0.0-20211029075817-046b5f1bbc31 h1:yn3mR3
 chainmaker.org/chainmaker/vm-native v0.0.0-20211029075817-046b5f1bbc31/go.mod h1:NKTj2ci0V1appJ64VebRbjZLDJHroHDV7BBtxQ3YFv4=
 chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211027121945-2bcc86d42165 h1:zYRQWlowv3wMjmdCj+Ng1f8XTwyxiS5CyfCeCZSPUas=
 chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211027121945-2bcc86d42165/go.mod h1:5acr/qWQ5IFmdJEJz9kY9Rq99dPHjCiaY/HounzNdyI=
+chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211102025640-44ec33122e8c h1:PrBdXE+6BwW/b1zMNJBA0st3SA2zoQsJu6HxrY9kZWo=
+chainmaker.org/chainmaker/vm-wasmer v0.0.0-20211102025640-44ec33122e8c/go.mod h1:5acr/qWQ5IFmdJEJz9kY9Rq99dPHjCiaY/HounzNdyI=
 chainmaker.org/chainmaker/vm-wxvm v0.0.0-20211015133128-53c7b2ac262f h1:SGbWAxDC+TM7JydqUbkFcoi90wDHQXenBp5JOkkFys4=
 chainmaker.org/chainmaker/vm-wxvm v0.0.0-20211015133128-53c7b2ac262f/go.mod h1:3E6oHDbFXKYA2UU1YfL6VAewxwd6V7TaWF5SRrr8hiM=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
