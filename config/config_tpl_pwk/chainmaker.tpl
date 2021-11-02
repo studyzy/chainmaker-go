@@ -12,13 +12,13 @@ log:
 
 blockchain:
 #  - chainId: chain1
-#    genesis: ../config/{org_path}/chainconfig/bc1.yml
+#    genesis: ../config/{org_path1}/chainconfig/bc1.yml
 #  - chainId: chain2
-#    genesis: ../config/{org_path}/chainconfig/bc2.yml
+#    genesis: ../config/{org_path2}/chainconfig/bc2.yml
 #  - chainId: chain3
-#    genesis: ../config/{org_path}/chainconfig/bc3.yml
+#    genesis: ../config/{org_path3}/chainconfig/bc3.yml
 #  - chainId: chain4
-#    genesis: ../config/{org_path}/chainconfig/bc4.yml
+#    genesis: ../config/{org_path4}/chainconfig/bc4.yml
 
 node:
   # 节点类型：full

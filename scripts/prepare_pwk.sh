@@ -197,7 +197,7 @@ function generate_config() {
 
         for ((j = 1; j < $CHAIN_CNT + 1; j = j + 1)); do
             xsed "s%#\(.*\)- chainId: chain${j}%\1- chainId: chain${j}%g" node$i/chainmaker.yml
-            xsed "s%#\(.*\)genesis: ../config/{org_path}/chainconfig/bc${j}.yml%\1genesis: ../config/{org_path}/chainconfig/bc${j}.yml%g" node$i/chainmaker.yml
+            xsed "s%#\(.*\)genesis: ../config/{org_path${j}}/chainconfig/bc${j}.yml%\1genesis: ../config/{org_path${j}}/chainconfig/bc${j}.yml%g" node$i/chainmaker.yml
 
             if  [ $NODE_CNT -eq 1 ]; then
                 if [ $CONSENSUS_TYPE -eq 0 ]; then
