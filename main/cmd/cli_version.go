@@ -7,9 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package cmd
 
 import (
-	"chainmaker.org/chainmaker-go/blockchain"
 	"fmt"
 
+	"chainmaker.org/chainmaker-go/blockchain"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/spf13/cobra"
 )
