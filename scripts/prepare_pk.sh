@@ -121,6 +121,7 @@ function generate_keys() {
 function generate_config() {
     LOG_LEVEL="INFO"
     CONSENSUS_TYPE=5
+    HASH_TYPE="SHA256"
     MONITOR_PORT=14321
     PPROF_PORT=24321
     TRUSTED_PORT=13301
@@ -142,6 +143,16 @@ function generate_config() {
         echo "unknown log level [" $tmp "], so use default"
       fi
     fi
+
+    read -p "input hash type (SHA256(default)|SM3): " tmp
+    if  [ ! -z "$tmp" ] ;then
+      if  [ $tmp == "SHA256" ] || [ $tmp == "SM3" ] ;then
+          HASH_TYPE=$tmp
+      else
+        echo "unknown hash type [" $tmp "], so use default"
+      fi
+    fi
+
 
     cd "${BUILD_PATH}"
     if [ -d config ]; then
@@ -208,6 +219,7 @@ function generate_config() {
             fi
 
             xsed "s%{chain_id}%chain$j%g" node$i/chainconfig/bc$j.yml
+            xsed "s%{hash_type}%$HASH_TYPE%g" node$i/chainconfig/bc$j.yml
 
             if  [ $NODE_CNT -eq 7 ] || [ $NODE_CNT -eq 13 ] || [ $NODE_CNT -eq 16 ]; then
                 # dpos cancel kv annotation
