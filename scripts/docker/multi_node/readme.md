@@ -18,7 +18,7 @@ RPC_PORT=$2
 NODE_COUNT=$3
 CONFIG_DIR=$4
 SERVER_COUNT=$5
-IMAGE="chainmakerofficial/chainmaker:v2.1.0" # change this
+IMAGE="chainmakerofficial/chainmaker:v2.1.0_alpha" # change this
 ```
 
 step2. prepare 
