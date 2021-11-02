@@ -15,7 +15,7 @@ GIT_COMMIT = $(shell git log --pretty=format:'%h' -n 1)
 AARCH64="aarch64"
 CPU=$(shell uname -m)
 
-LOCALCONF_HOME=chainmaker.org/chainmaker/localconf/v2
+LOCALCONF_HOME=chainmaker.org/chainmaker-go/blockchain
 GOLDFLAGS += -X "${LOCALCONF_HOME}.CurrentVersion=${VERSION}"
 GOLDFLAGS += -X "${LOCALCONF_HOME}.BuildDateTime=${DATETIME}"
 GOLDFLAGS += -X "${LOCALCONF_HOME}.GitBranch=${GIT_BRANCH}"
