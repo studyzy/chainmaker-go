@@ -14,6 +14,7 @@ import (
 )
 
 func init() {
+	RegisterACProvider("", NilCertACProvider)
 	RegisterACProvider(protocol.PermissionedWithCert, NilCertACProvider)
 	RegisterACProvider(protocol.Identity, NilCertACProvider)
 	RegisterACProvider(protocol.PermissionedWithKey, NilPermissionedPkACProvider)
