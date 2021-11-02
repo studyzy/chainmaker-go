@@ -414,7 +414,7 @@ var testAdmin4PKInfo = &testPKInfo{
 // }
 
 const (
-	testPermissionedKeyAuthType = "permissionedWithKey"
+	testPermissionedKeyAuthType = "permissionedwithkey"
 )
 
 var testPermissionedPKChainConfig = &config.ChainConfig{
