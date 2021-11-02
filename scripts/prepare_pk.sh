@@ -27,7 +27,7 @@ CRYPTOGEN_TOOL_CONF=${CRYPTOGEN_TOOL_PATH}/config/pk_config_template.yml
 
 function show_help() {
     echo "Usage:  "
-    echo "  prepare_pk.sh node_cnt(1/4/7/10/13/16) chain_cnt(1-4) p2p_port(default:11301) rpc_port(default:12301)"
+    echo "  prepare_pk.sh node_cnt(4/7/10/13/16) chain_cnt(1-4) p2p_port(default:11301) rpc_port(default:12301)"
     echo "    eg1: prepare_pk.sh 4 1"
     echo "    eg2: prepare_pk.sh 4 1 11301 12301"
 }
@@ -194,7 +194,7 @@ function generate_config() {
 
         for ((j = 1; j < $CHAIN_CNT + 1; j = j + 1)); do
             xsed "s%#\(.*\)- chainId: chain${j}%\1- chainId: chain${j}%g" node$i/chainmaker.yml
-            xsed "s%#\(.*\)genesis: ../config/{org_path}/chainconfig/bc${j}.yml%\1genesis: ../config/{org_path}/chainconfig/bc${j}.yml%g" node$i/chainmaker.yml
+            xsed "s%#\(.*\)genesis: ../config/{org_path${j}}/chainconfig/bc${j}.yml%\1genesis: ../config/{org_path${j}}/chainconfig/bc${j}.yml%g" node$i/chainmaker.yml
 
             if  [ $NODE_CNT -eq 4 ] || [ $NODE_CNT -eq 7 ]; then
                 cp $CONFIG_TPL_PATH/chainconfig/bc_4_7.tpl node$i/chainconfig/bc$j.yml
@@ -247,6 +247,7 @@ function generate_config() {
                     xsed "s%{net_pk_path}%$file%g" node$i/chainmaker.yml
                     xsed "s%{org_id}%$file%g" node$i/chainmaker.yml
                     xsed "s%{org_path}%$file%g" node$i/chainmaker.yml
+                    xsed "s%{org_path$j}%$file%g" node$i/chainmaker.yml
 
                     cp -rf $BUILD_CRYPTO_CONFIG_PATH/$file/* $BUILD_CONFIG_PATH/node$i/
                 fi

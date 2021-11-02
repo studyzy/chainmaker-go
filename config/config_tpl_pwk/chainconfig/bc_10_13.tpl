@@ -96,7 +96,7 @@ consensus:
 trust_roots:
   - org_id: "{org1_id}"
     root:
-      - "../config/{org_path}/keys/admin/{org1_id}admin.pem"
+      - "../config/{org_path}/keys/admin/{org1_id}/admin.pem"
   - org_id: "{org2_id}"
     root:
       - "../config/{org_path}/keys/admin/{org2_id}/admin.pem"
