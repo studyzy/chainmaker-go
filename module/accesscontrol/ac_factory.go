@@ -33,10 +33,13 @@ func (af *AcFactory) NewACProvider(chainConf protocol.ChainConf, localOrgId stri
 	chainConf.ChainConfig().AuthType = strings.ToLower(chainConf.ChainConfig().AuthType)
 
 	var emptyAuthType = ""
+	if chainConf.ChainConfig().AuthType == emptyAuthType {
+		chainConf.ChainConfig().AuthType = protocol.PermissionedWithCert
+	}
 
 	// authType 和 consensusType 是否匹配
 	switch chainConf.ChainConfig().AuthType {
-	case protocol.PermissionedWithCert, protocol.Identity, emptyAuthType:
+	case protocol.PermissionedWithCert, protocol.Identity:
 		if chainConf.ChainConfig().Consensus.Type == consensus.ConsensusType_DPOS {
 			return nil,
 				fmt.Errorf("new ac provider failed, the consensus type does not match the authentication type")
