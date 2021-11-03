@@ -98,7 +98,7 @@ type ConsensusRaftImpl struct {
 	snapshotIndex uint64
 	appliedIndex  uint64
 	proposedIndex uint64
-	idToNodeId    map[uint64]string
+	idToNodeId    sync.Map
 
 	proposedBlockC chan *common.Block
 	verifyResultC  chan *consensus.VerifyResult
@@ -151,7 +151,6 @@ func New(config ConsensusRaftImplConfig) (*ConsensusRaftImpl, error) {
 	consensus.asyncWalSave = localconf.ChainMakerConfig.ConsensusConfig.RaftConfig.AsyncWalSave
 	consensus.waldir = path.Join(localconf.ChainMakerConfig.GetStorePath(), consensus.chainID, walDir)
 	consensus.snapdir = path.Join(localconf.ChainMakerConfig.GetStorePath(), consensus.chainID, snapDir)
-	consensus.idToNodeId = make(map[uint64]string)
 
 	consensus.proposedBlockC = make(chan *common.Block, DefaultChanCap)
 	consensus.verifyResultC = make(chan *consensuspb.VerifyResult, DefaultChanCap)
@@ -183,7 +182,11 @@ func (consensus *ConsensusRaftImpl) Start() error {
 	walExist := wal.Exist(consensus.waldir)
 	consensus.wal = consensus.replayWAL()
 
-	consensus.peers, consensus.idToNodeId = consensus.getPeersFromChainConf()
+	var idToNodes map[uint64]string
+	consensus.peers, idToNodes = consensus.getPeersFromChainConf()
+	for id, node := range idToNodes {
+		consensus.idToNodeId.Store(id, node)
+	}
 	c := &etcdraft.Config{
 		ID:              consensus.Id,
 		ElectionTick:    10,
@@ -540,7 +543,7 @@ func (consensus *ConsensusRaftImpl) publishEntries(ents []raftpb.Entry) (ok bool
 			var idToNodes map[uint64]string
 			consensus.peers, idToNodes = consensus.getPeersFromChainConf()
 			for id, node := range idToNodes {
-				consensus.idToNodeId[id] = node
+				consensus.idToNodeId.Store(id, node)
 			}
 			switch cc.Type {
 			// todo. may be check the delete node logic
@@ -647,10 +650,15 @@ func (consensus *ConsensusRaftImpl) sendMessages(msgs []raftpb.Message) {
 			return fmt.Sprintf("[%x] send message %v", consensus.Id, describeMessage(m))
 		})
 
-		netId, ok := consensus.idToNodeId[m.To]
+		value, ok := consensus.idToNodeId.Load(m.To)
 		if !ok {
 			consensus.logger.Errorf("send message to %v without net connection", m.To)
 		} else {
+			netId, ok := value.(string)
+			if !ok {
+				consensus.logger.Errorf("wrong type in idToNodeId")
+				continue
+			}
 			data, err := m.Marshal()
 			if err != nil {
 				consensus.logger.Errorf("marshal message error: %v", err)
@@ -809,7 +817,7 @@ func (consensus *ConsensusRaftImpl) processConfigChange() bool {
 		}
 		consensus.peers = peers
 		for id, node := range idToNodes {
-			consensus.idToNodeId[id] = node
+			consensus.idToNodeId.Store(id, node)
 		}
 	}
 	return len(removed) != 0 || len(added) != 0
