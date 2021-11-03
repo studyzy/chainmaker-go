@@ -182,10 +182,10 @@ function generate_config() {
         else
             ver=$(sw_vers | grep ProductVersion | cut -d':' -f2 | tr -d ' ')
             version=${ver:1:2}
-            if [ $version == 11 ]; then
+            if [ $version -ge 11 ]; then
                 for ((k = $NODE_CNT; k > 0; k = k - 1)); do
                 xsed  "/  seeds:/a\\
-        - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT+$k-1))/p2p/{org${k}_peerid}\"\\
+    - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT+$k-1))/p2p/{org${k}_peerid}\"\\
 " node$i/chainmaker.yml
                 done
             else
@@ -196,9 +196,6 @@ function generate_config() {
                 done
             fi
         fi
-
-
-
 
         for ((j = 1; j < $CHAIN_CNT + 1; j = j + 1)); do
             xsed "s%#\(.*\)- chainId: chain${j}%\1- chainId: chain${j}%g" node$i/chainmaker.yml
