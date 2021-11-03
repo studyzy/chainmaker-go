@@ -11,7 +11,7 @@ sequence: 0                         # 配置版本
 auth_type: "public"                 # 认证类型  permissionedWithCert / permissionedWithKey / public
 
 crypto:
-  hash: SHA256
+  hash: {hash_type}
 
 # 合约支持类型的配置
 contract:

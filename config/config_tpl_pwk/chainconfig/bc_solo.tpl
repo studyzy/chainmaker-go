@@ -11,7 +11,7 @@ sequence: 0                         # 配置版本
 auth_type: "permissionedWithKey"    # 认证类型
 
 crypto:
-  hash: SHA256
+  hash: {hash_type}
 
 # 合约支持类型的配置
 contract:
@@ -52,7 +52,7 @@ consensus:
     - org_id: "{org1_id}"
       node_id:
         - "{org1_peerid}"
-   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
+  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11
 
