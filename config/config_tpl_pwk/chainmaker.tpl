@@ -5,7 +5,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-auth_type: "permissionedWithKey"   # permissionedWithCert / permissionedWithKey / public
+# * 表示链启动后不可更改
+
+# 认证类型
+auth_type: "permissionedWithKey"   # [*] permissionedWithCert/permissionedWithKey/public. same as bc.yml auth_type
 
 log:
   config_file: ../config/{org_path}/log.yml          # config file of logger configuration.
@@ -24,7 +27,7 @@ node:
   # 节点类型：full
   type:              full
   org_id:            {org_id}
-  priv_key_file:     ../config/{org_path}/keys/{node_pk_path}.key
+  priv_key_file:     ../config/{org_path}/keys/{node_pk_path}.key # [*]
   #cert_file:         ../config/{org_path}/certs/{node_cert_path}.crt
   signer_cache_size: 1000
   cert_cache_size:   1000
@@ -34,9 +37,10 @@ node:
     label: HSM                                          # label for the slot to be used
     password: 11111111                                  # password to logon the HSM
     session_cache_size: 10                              # size of HSM session cache, default to 10
-    hash: "SHA256"                                      # hash algorithm used to compute SKI
+    hash: "SHA256"                                      # [*] SHA256/SM3 hash algorithm used to compute SKI
 
 net:
+  # [*] LibP2P/liquid 若改需所有节点同时修改
   provider: LibP2P
   listen_addr: /ip4/0.0.0.0/tcp/{net_port}
   #  peer_stream_pool_size: 100
@@ -73,7 +77,7 @@ txpool:
 #  batch_create_timeout: 200 # 创建批次超时时间，单位毫秒
 
 rpc:
-  provider: grpc
+  provider: grpc # [*] unique
   port: {rpc_port}
   # 检查链配置TrustRoots证书变化时间间隔，单位：s，最小值为10s
   check_chain_conf_trust_roots_change_interval: 60
@@ -106,10 +110,12 @@ rpc:
     addresses:
       #- "127.0.0.1"
 
+# 集成普罗米修斯
 monitor:
-  enabled: true
+  enabled: false
   port: {monitor_port}
 
+# 硬件资源监控
 pprof:
   enabled: false
   port: {pprof_port}
@@ -122,6 +128,9 @@ consensus:
     # 1 time.Duration 表示1 * time.Second
     ticker: 1
 
+# 存储配置
+# provider、sqldb_type不可修改
+# store_path、dsn修改时需将原数据复制到对应目录
 storage:
   store_path: ../data/{org_id}/ledgerData1
   # 最小的不允许归档的区块高度
@@ -163,7 +172,6 @@ storage:
     sqldb_config:
       sqldb_type: mysql           #contract event db 只支持mysql
       dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
-core:
-  evidence: false
+
 scheduler:
   rwset_log: false #whether log the txRWSet map in the debug mode

@@ -5,7 +5,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-auth_type: "permissionedWithCert"      # permissionedWithCert / permissionedWithKey / public
+# * 表示链启动后不可更改
+
+# 认证类型
+auth_type: "permissionedWithCert"   # [*] permissionedWithCert/permissionedWithKey/public. same as bc.yml auth_type
 
 log:
   config_file: ../config/wx-org1/log.yml          # config file of logger configuration.
@@ -28,10 +31,24 @@ node:
   cert_file:         ../config/wx-org1/certs/node/consensus1/consensus1.sign.crt
   signer_cache_size: 1000
   cert_cache_size:   1000
+  pkcs11:
+    enabled: false
+    library: /usr/local/lib64/pkcs11/libupkcs11.so      # path to the so file of pkcs11 interface
+    label: HSM                                          # label for the slot to be used
+    password: 11111111                                  # password to logon the HSM
+    session_cache_size: 10                              # size of HSM session cache, default to 10
+    hash: "SHA256"                                      # [*] SHA256/SM3 hash algorithm used to compute SKI
 
 net:
+  # [*] LibP2P/liquid 若改需所有节点同时修改
   provider: LibP2P
+  # 用于节点间数据交互
   listen_addr: /ip4/0.0.0.0/tcp/11301
+  #  peer_stream_pool_size: 100
+  #  max_peer_count_allow: 20
+  #  peer_elimination_strategy: 3  # 1 Random, 2 FIFO, 3 LIFO
+  #  seeds ip  fmt is："/ip4/127.0.0.1/tcp/11301/p2p/"+nodeid
+  #  seeds dns fmt is："/dns/cm-node1.org/tcp/11301/p2p/"+nodeid
   seeds:
     - "/ip4/127.0.0.1/tcp/11301/p2p/QmcQHCuAXaFkbcsPUj7e37hXXfZ9DdN7bozseo5oX4qiC4"
     - "/ip4/127.0.0.1/tcp/11302/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
@@ -44,15 +61,48 @@ net:
     enabled: true
     priv_key_file: ../config/wx-org1/certs/node/consensus1/consensus1.tls.key
     cert_file:     ../config/wx-org1/certs/node/consensus1/consensus1.tls.crt
+#  blacklist:
+#    addresses:
+#      - "127.0.0.1:11305"
+#      - "192.168.1.8"
+#    node_ids:
+#      - "QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
+#      - "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
+#  custom_chain_trust_roots:
+#    - chain_id: "chain1"
+#      trust_roots:
+#        - org_id: "wx-org1.chainmaker.org"
+#          root: "../config/wx-org1.chainmaker.org/certs/ca/wx-org1.chainmaker.org/ca.crt"
 
 txpool:
   max_txpool_size: 5120 # 普通交易池上限
   max_config_txpool_size: 10 # config交易池的上限
   full_notify_again_time: 30 # 交易池溢出后，再次通知的时间间隔(秒)
+#  pool_type: "batch"  # single/batch：single实时进入交易池，batch批量进入交易池
+#  batch_max_size: 30000 # 批次最大大小
+#  batch_create_timeout: 200 # 创建批次超时时间，单位毫秒
 
 rpc:
-  provider: grpc
+  provider: grpc # [*] unique
+  # 用于客户端提供链交互服务
   port: 12301
+  # 检查链配置TrustRoots证书变化时间间隔，单位：s，最小值为10s
+  check_chain_conf_trust_roots_change_interval: 60
+  ratelimit:
+    enabled: false
+    # 限速类型：0-全局限速；1-基于来源IP限速
+    type: 0
+    # 每秒补充令牌数，取值：-1-不受限；0-默认值（10000）
+    token_per_second: -1
+    # 令牌桶大小，取值：-1-不受限；0-默认值（10000）
+    token_bucket_size: -1
+  subscriber:
+    # 历史消息订阅流控，实时消息订阅不会进行流控
+    ratelimit:
+      # 每秒补充令牌数，取值：-1-不受限；0-默认值（1000）
+      token_per_second: 100
+      # 令牌桶大小，取值：-1-不受限；0-默认值（1000）
+      token_bucket_size: 100
   tls:
     # TLS模式:
     #   disable - 不启用TLS
@@ -63,6 +113,9 @@ rpc:
     mode:           twoway
     priv_key_file:  ../config/wx-org1/certs/node/consensus1/consensus1.tls.key
     cert_file:      ../config/wx-org1/certs/node/consensus1/consensus1.tls.crt
+  blacklist:
+    addresses:
+    #- "127.0.0.1"
 
 monitor:
   enabled: false
@@ -72,6 +125,17 @@ pprof:
   enabled: false
   port: 24321
 
+consensus:
+  raft:
+    snap_count: 10
+    # 是否异步Wal文件保存，true异步保存，false同步保存
+    async_wal_save: true
+    # 1 time.Duration 表示1 * time.Second
+    ticker: 1
+
+# 存储配置
+# provider、sqldb_type启动后不可修改
+# store_path、dsn启动后修改时需将原数据复制到对应目录
 storage:
   store_path: ../data/org1/ledgerData1
   blockdb_config:

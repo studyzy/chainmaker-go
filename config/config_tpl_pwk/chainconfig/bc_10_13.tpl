@@ -6,9 +6,9 @@
 #
 
 chain_id: {chain_id}                # 链标识
-version: v2.1.0_alpha                     # 链版本
+version: v2.1.0_alpha               # 链版本
 sequence: 0                         # 配置版本
-auth_type: "permissionedWithKey"    # 认证类型
+auth_type: "permissionedWithKey"    # 认证类型permissionedWithCert/permissionedWithKey/public. same as chainmaker.yml auth_type
 
 crypto:
   hash: {hash_type}

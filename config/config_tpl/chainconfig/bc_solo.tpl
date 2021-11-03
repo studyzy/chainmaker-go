@@ -8,7 +8,7 @@
 chain_id: {chain_id}                # 链标识
 version: {version}                  # 链版本
 sequence: 0                         # 配置版本
-auth_type: "permissionedWithCert"   # 认证类型
+auth_type: "permissionedWithCert"   # permissionedWithCert/permissionedWithKey/public. same as chainmaker.yml auth_type
 
 crypto:
   hash: SHA256
@@ -62,9 +62,9 @@ trust_roots:
     root:
       - "../config/{org_path}/certs/ca/{org1_id}/ca.crt"
 
-# 证书库
+# 第三方证书库兼容
 #trust_members:
-#  - member_info: ""
+#  - member_info: "" # path
 #    org_id: ""
 #    role: "consensus"
 #    node_id:  ""

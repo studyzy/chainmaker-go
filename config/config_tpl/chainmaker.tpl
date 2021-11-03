@@ -5,7 +5,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-auth_type: "permissionedWithCert"   # permissionedWithCert/permissionedWithKey/public. same as bc.yml auth_type
+# * 表示链启动后不可更改
+
+# 认证类型
+auth_type: "permissionedWithCert"   # [*] permissionedWithCert/permissionedWithKey/public. same as bc.yml auth_type
 
 log:
   config_file: ../config/{org_path}/log.yml          # config file of logger configuration.
@@ -24,8 +27,8 @@ node:
   # 节点类型：full
   type:              full
   org_id:            {org_id}
-  priv_key_file:     ../config/{org_path}/certs/{node_cert_path}.key
-  cert_file:         ../config/{org_path}/certs/{node_cert_path}.crt
+  priv_key_file:     ../config/{org_path}/certs/{node_cert_path}.key # [*]
+  cert_file:         ../config/{org_path}/certs/{node_cert_path}.crt # [*]
   signer_cache_size: 1000
   cert_cache_size:   1000
   pkcs11:
@@ -34,9 +37,10 @@ node:
     label: HSM                                          # label for the slot to be used
     password: 11111111                                  # password to logon the HSM
     session_cache_size: 10                              # size of HSM session cache, default to 10
-    hash: "SHA256"                                      # hash algorithm used to compute SKI
+    hash: "SHA256"                                      # [*] SHA256/SM3 hash algorithm used to compute SKI
 
 net:
+  # [*] LibP2P/liquid 若改需所有节点同时修改
   provider: LibP2P
   # 用于节点间数据交互
   listen_addr: /ip4/0.0.0.0/tcp/{net_port}
@@ -74,7 +78,7 @@ txpool:
 #  batch_create_timeout: 200 # 创建批次超时时间，单位毫秒
 
 rpc:
-  provider: grpc
+  provider: grpc # [*] unique
   # 用于客户端提供链交互服务
   port: {rpc_port}
   # 检查链配置TrustRoots证书变化时间间隔，单位：s，最小值为10s
@@ -108,10 +112,12 @@ rpc:
     addresses:
       #- "127.0.0.1"
 
+# 集成普罗米修斯
 monitor:
-  enabled: true
+  enabled: false
   port: {monitor_port}
 
+# 硬件资源监控
 pprof:
   enabled: false
   port: {pprof_port}
@@ -124,12 +130,17 @@ consensus:
     # 1 time.Duration 表示1 * time.Second
     ticker: 1
 
+# 存储配置
+# provider、sqldb_type启动后不可修改
+# store_path、dsn启动后修改时需将原数据复制到对应目录
 storage:
   # 存储路径，记录状态、缓存等
   store_path: ../data/{org_id}/ledgerData1
+  # mysql数据库名称前缀
+  # db_prefix: org1_
   # 最小的不允许归档的区块高度
   unarchive_block_height: 300000
-  # encryptor: sm4    # 数据落盘对称加密算法：sm4/aes
+  # encryptor: sm4    # 数据落盘对称加密算法：sm4/aes # [*]
   # encrypt_key: "1234567890123456" # 对称加密密钥：16 bytes key，如果开启PKCS11则为密钥KeyID
   blockdb_config:
     provider: leveldb # 数据库类型：leveldb/sql/badgerdb
@@ -164,7 +175,6 @@ storage:
     sqldb_config:
       sqldb_type: mysql           #contract event db 只支持mysql
       dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
-core:
-  evidence: false
+
 scheduler:
   rwset_log: false #whether log the txRWSet map in the debug mode
