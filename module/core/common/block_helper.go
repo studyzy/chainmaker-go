@@ -836,7 +836,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	chain.log.Infof(
 		"commit block [%d](count:%d,hash:%x)"+
 			"time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,pubConEvent:%d,other:%d,total:%d,interval:%d)",
-		height, lastProposed.Header.TxCount, lastProposed.Header.BlockHash, lastProposed.Txs[0].Payload.TxId,
+		height, lastProposed.Header.TxCount, lastProposed.Header.BlockHash,
 		checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, pubEvent, otherLasts, elapsed, interval)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		chain.metricBlockCommitTime.WithLabelValues(chain.chainId).Observe(float64(elapsed) / 1000)
