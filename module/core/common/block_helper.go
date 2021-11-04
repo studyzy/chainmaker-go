@@ -810,7 +810,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	}
 
 	checkLasts := utils.CurrentTimeMillisSeconds() - startTick
-	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent, err := chain.commonCommit.CommitBlock(
+	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent, blockInfo, err := chain.commonCommit.CommitBlock(
 		lastProposed, rwSetMap, conEventMap)
 	if err != nil {
 		chain.log.Errorf("block common commit failed: %s, blockHeight: (%d)",
@@ -826,6 +826,9 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 
 	chain.proposalCache.ClearProposedBlockAt(height)
 
+	// synchronize new block height to consensus and sync module
+	chain.msgBus.PublishSafe(msgbus.BlockInfo, blockInfo)
+
 	curTime := utils.CurrentTimeMillisSeconds()
 	elapsed := curTime - startTick
 	interval := curTime - chain.blockInterval
@@ -833,7 +836,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	chain.log.Infof(
 		"commit block [%d](count:%d,hash:%x)"+
 			"time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,pubConEvent:%d,other:%d,total:%d,interval:%d)",
-		height, lastProposed.Header.TxCount, lastProposed.Header.BlockHash, lastProposed.Txs[0].Payload.TxId,
+		height, lastProposed.Header.TxCount, lastProposed.Header.BlockHash,
 		checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, pubEvent, otherLasts, elapsed, interval)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		chain.metricBlockCommitTime.WithLabelValues(chain.chainId).Observe(float64(elapsed) / 1000)
