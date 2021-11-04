@@ -810,7 +810,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	}
 
 	checkLasts := utils.CurrentTimeMillisSeconds() - startTick
-	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent, err := chain.commonCommit.CommitBlock(
+	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent, blockInfo, err := chain.commonCommit.CommitBlock(
 		lastProposed, rwSetMap, conEventMap)
 	if err != nil {
 		chain.log.Errorf("block common commit failed: %s, blockHeight: (%d)",
@@ -823,6 +823,9 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	chain.log.Infof("remove txs[%d] and retry txs[%d] in add block", len(lastProposed.Txs), len(txRetry))
 	chain.txPool.RetryAndRemoveTxs(txRetry, lastProposed.Txs)
 	poolLasts := utils.CurrentTimeMillisSeconds() - startPoolTick
+
+	// synchronize new block height to consensus and sync module
+	chain.msgBus.PublishSafe(msgbus.BlockInfo, blockInfo)
 
 	chain.proposalCache.ClearProposedBlockAt(height)
 

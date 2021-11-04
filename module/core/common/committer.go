@@ -68,7 +68,7 @@ func (cb *CommitBlock) CommitBlock(
 	block *commonpb.Block,
 	rwSetMap map[string]*commonpb.TxRWSet,
 	conEventMap map[string][]*commonpb.ContractEvent) (
-	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent int64, err error) {
+	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent int64, blockInfo *commonpb.BlockInfo, err error) {
 	// record block
 	rwSet := RearrangeRWSet(block, rwSetMap)
 	// record contract event
@@ -88,14 +88,14 @@ func (cb *CommitBlock) CommitBlock(
 		err = fmt.Errorf("notify snapshot error [%d](hash:%x)",
 			block.Header.BlockHeight, block.Header.BlockHash)
 		cb.log.Error(err)
-		return 0, 0, 0, 0, 0, err
+		return 0, 0, 0, 0, 0, nil, err
 	}
 	snapshotLasts = utils.CurrentTimeMillisSeconds() - startSnapshotTick
 
 	// notify chainConf to update config when config block committed
 	startConfTick := utils.CurrentTimeMillisSeconds()
 	if err = NotifyChainConf(block, cb.chainConf); err != nil {
-		return 0, 0, 0, 0, 0, err
+		return 0, 0, 0, 0, 0, nil, err
 	}
 
 	cb.ledgerCache.SetLastCommittedBlock(block)
@@ -127,14 +127,13 @@ func (cb *CommitBlock) CommitBlock(
 		pubEvent = utils.CurrentTimeMillisSeconds() - startPublishContractEventTick
 	}
 	startOtherTick := utils.CurrentTimeMillisSeconds()
-	bi := &commonpb.BlockInfo{
+	blockInfo = &commonpb.BlockInfo{
 		Block:     block,
 		RwsetList: rwSet,
 	}
-	// synchronize new block height to consensus and sync module
-	cb.msgBus.PublishSafe(msgbus.BlockInfo, bi)
-	if err = cb.MonitorCommit(bi); err != nil {
-		return 0, 0, 0, 0, 0, err
+
+	if err = cb.MonitorCommit(blockInfo); err != nil {
+		return 0, 0, 0, 0, 0, nil, err
 	}
 	otherLasts = utils.CurrentTimeMillisSeconds() - startOtherTick
 
