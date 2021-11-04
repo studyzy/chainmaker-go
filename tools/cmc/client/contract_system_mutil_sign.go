@@ -182,10 +182,8 @@ func multiSignVote() error {
 		if len(adminKeys) != len(adminCrts) {
 			return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 		}
-		if len(adminKeys) > 1 {
-			adminKey = adminKeys[0]
-			adminCrt = adminCrts[0]
-		}
+		adminKey = adminKeys[0]
+		adminCrt = adminCrts[0]
 	} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
 		adminKeys = strings.Split(adminKeyFilePaths, ",")
 		adminOrgs = strings.Split(adminOrgIds, ",")
@@ -195,10 +193,8 @@ func multiSignVote() error {
 		if len(adminKeys) != len(adminOrgs) {
 			return fmt.Errorf(ADMIN_ORGID_KEY_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminOrgs))
 		}
-		if len(adminKeys) > 1 {
-			adminKey = adminKeys[0]
-			adminOrg = adminOrgs[0]
-		}
+		adminKey = adminKeys[0]
+		adminOrg = adminOrgs[0]
 	}
 
 	result, err := client.GetTxByTxId(txId)
