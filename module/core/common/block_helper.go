@@ -824,10 +824,10 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	chain.txPool.RetryAndRemoveTxs(txRetry, lastProposed.Txs)
 	poolLasts := utils.CurrentTimeMillisSeconds() - startPoolTick
 
+	chain.proposalCache.ClearProposedBlockAt(height)
+
 	// synchronize new block height to consensus and sync module
 	chain.msgBus.PublishSafe(msgbus.BlockInfo, blockInfo)
-
-	chain.proposalCache.ClearProposedBlockAt(height)
 
 	curTime := utils.CurrentTimeMillisSeconds()
 	elapsed := curTime - startTick
