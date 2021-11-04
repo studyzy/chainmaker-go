@@ -7,7 +7,10 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
 	"github.com/spf13/cobra"
 )
@@ -68,12 +71,10 @@ func multiSignVoteCMD() *cobra.Command {
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagConcurrency, flagTotalCountPerGoroutine, flagSdkConfPath, flagOrgId, flagChainId, flagTxId,
 		flagTimeout, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagEnableCertHash,
-		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagSyncResult,
+		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagSyncResult, flagAdminOrgIds,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
-	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTxId)
 
 	return cmd
@@ -154,10 +155,15 @@ func multiSignReq() error {
 
 func multiSignVote() error {
 	var (
-		adminKey string
-		adminCrt string
-		err      error
-		payload  *common.Payload
+		adminKey  string
+		adminCrt  string
+		adminOrg  string
+		adminKeys []string
+		adminCrts []string
+		adminOrgs []string
+		err       error
+		payload   *common.Payload
+		endorser  *common.EndorsementEntry
 	)
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
@@ -166,17 +172,29 @@ func multiSignVote() error {
 		return err
 	}
 	defer client.Stop()
-	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return errAdminOrgIdKeyCertIsEmpty
-	}
-	if len(adminKeys) != len(adminCrts) {
-		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
-	}
-	if len(adminKeys) > 1 {
+
+	if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+		adminCrts = strings.Split(adminCrtFilePaths, ",")
+		if len(adminKeys) == 0 || len(adminCrts) == 0 {
+			return errAdminOrgIdKeyCertIsEmpty
+		}
+		if len(adminKeys) != len(adminCrts) {
+			return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
+		}
 		adminKey = adminKeys[0]
 		adminCrt = adminCrts[0]
+	} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+		adminOrgs = strings.Split(adminOrgIds, ",")
+		if len(adminKeys) == 0 || len(adminOrgs) == 0 {
+			return errAdminOrgIdKeyCertIsEmpty
+		}
+		if len(adminKeys) != len(adminOrgs) {
+			return fmt.Errorf(ADMIN_ORGID_KEY_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminOrgs))
+		}
+		adminKey = adminKeys[0]
+		adminOrg = adminOrgs[0]
 	}
 
 	result, err := client.GetTxByTxId(txId)
@@ -184,10 +202,19 @@ func multiSignVote() error {
 		return fmt.Errorf("get tx by txid failed, %s", err.Error())
 	}
 	payload = result.Transaction.Payload
-	endorser, err := sdkutils.MakeEndorserWithPath(adminKey, adminCrt, payload)
-	if err != nil {
-		return fmt.Errorf("multi sign vote failed, %s", err.Error())
+	if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
+		endorser, err = sdkutils.MakeEndorserWithPath(adminKey, adminCrt, payload)
+		if err != nil {
+			return fmt.Errorf("multi sign vote failed, %s", err.Error())
+		}
+	} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
+		endorser, err = sdkutils.MakePkEndorserWithPath(adminKey, crypto.HashAlgoMap[client.GetHashType()],
+			adminOrg, payload)
+		if err != nil {
+			return fmt.Errorf("multi sign vote failed, %s", err.Error())
+		}
 	}
+
 	resp, err := client.MultiSignContractVote(payload, endorser)
 	if err != nil {
 		return fmt.Errorf("multi sign vote failed, %s", err.Error())
