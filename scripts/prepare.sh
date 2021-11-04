@@ -302,22 +302,22 @@ function generate_config() {
           for ((k = 1; k < $CHAIN_CNT + 1; k = k + 1)); do
             for file in `ls -tr $BUILD_CRYPTO_CONFIG_PATH`
             do
-                org_id_tmp=" - org_id: \"${file}\""
-                org_root="   root:"
-                org_root_tmp="     - \"../config/wx-org${i}.chainmaker.org/certs/ca/${file}/ca.crt\""
+                org_id_tmp="\ - org_id: \"${file}\""
+                org_root="\ \ \ root:"
+                org_root_tmp="\ \ \ \ \ - \"../config/wx-org${i}.chainmaker.org/certs/ca/${file}/ca.crt\""
                 if [ "${system}" = "Linux" ]; then
                   xsed "${BC_YML_TRUST_ROOT_LINE}i\ ${org_root_tmp}" node$i/chainconfig/bc$k.yml
                   xsed "${BC_YML_TRUST_ROOT_LINE}i\ ${org_root}" node$i/chainconfig/bc$k.yml
                   xsed "${BC_YML_TRUST_ROOT_LINE}i\ ${org_id_tmp}"   node$i/chainconfig/bc$k.yml
                 else
                   xsed "${BC_YML_TRUST_ROOT_LINE}i\\
- ${org_root_tmp}\\
+\ ${org_root_tmp}\\
 " node$i/chainconfig/bc$k.yml
                   xsed "${BC_YML_TRUST_ROOT_LINE}i\\
- ${org_root}\\
+\ ${org_root}\\
 "  node$i/chainconfig/bc$k.yml
                   xsed "${BC_YML_TRUST_ROOT_LINE}i\\
- ${org_id_tmp}\\
+\ ${org_id_tmp}\\
 "    node$i/chainconfig/bc$k.yml
                 fi
             done
