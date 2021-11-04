@@ -100,15 +100,18 @@ func (s *RPCServer) Start() error {
 
 	s.isShutdown = false
 
-	if s.curChainConfTrustRootsHash == "" {
-		s.curChainConfTrustRootsHash, err = s.getCurChainConfTrustRootsHash()
-		if err != nil {
-			return err
+	// check chainconf trust roots change if TLS is twoway or oneway
+	if localconf.ChainMakerConfig.RpcConfig.TLSConfig.Mode != TLS_MODE_DISABLE {
+		if s.curChainConfTrustRootsHash == "" {
+			s.curChainConfTrustRootsHash, err = s.getCurChainConfTrustRootsHash()
+			if err != nil {
+				return err
+			}
+
+			s.tryReloadChainConfTrustRootsChange()
+
+			s.log.Debugf("[START] current chain config trust roots hash: %s", s.curChainConfTrustRootsHash)
 		}
-
-		s.tryReloadChainConfTrustRootsChange()
-
-		s.log.Debugf("[START] current chain config trust roots hash: %s", s.curChainConfTrustRootsHash)
 	}
 
 	if err = s.RegisterHandler(); err != nil {
