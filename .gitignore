@@ -31,3 +31,4 @@ vendor
 cover.out
 test/send_proposal_request_ci/data/
 test/send_proposal_request_ci/chainmaker
+/tools/chainmaker-cryptogen/

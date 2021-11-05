@@ -25,8 +25,10 @@ CRYPTOGEN_TOOL_BIN=${CRYPTOGEN_TOOL_PATH}/bin/chainmaker-cryptogen
 CRYPTOGEN_TOOL_CONF=${CRYPTOGEN_TOOL_PATH}/config/pwk_config_template.yml
 #CRYPTOGEN_TOOL_PKCS11_KEYS=${CRYPTOGEN_TOOL_PATH}/config/pkcs11_keys.yml
 
-BC_YML_TRUST_ROOT_LINE=79
-BC_YML_TRUST_ROOT_LINE_END=99
+VERSION=v2.1.0_alpha
+
+BC_YML_TRUST_ROOT_LINE=128
+BC_YML_TRUST_ROOT_LINE_END=148
 
 function show_help() {
     echo "Usage:  "
@@ -230,7 +232,7 @@ function generate_config() {
 
             xsed "s%{chain_id}%chain$j%g" node$i/chainconfig/bc$j.yml
             xsed "s%{hash_type}%$HASH_TYPE%g" node$i/chainconfig/bc$j.yml
-            xsed "s%{org_top_path}%$file%g" node$i/chainconfig/bc$j.yml
+            xsed "s%{version}%$VERSION%g" node$i/chainconfig/bc$j.yml
 
             if  [ $NODE_CNT -eq 7 ] || [ $NODE_CNT -eq 13 ] || [ $NODE_CNT -eq 16 ]; then
                 xsed "s%#\(.*\)- org_id:%\1- org_id:%g" node$i/chainconfig/bc$j.yml
