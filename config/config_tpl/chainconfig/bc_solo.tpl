@@ -124,7 +124,7 @@ trust_roots:
 # - member_info: ""
 #   org_id: ""
 #   role: "consensus"
-#   node_id:  ""
+##   node_id:  ""
 
 # Resource policies settings
 resource_policies:

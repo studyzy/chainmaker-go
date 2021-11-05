@@ -9,7 +9,6 @@
 node_count=$1
 chain_count=$2
 alreadyBuild=$3
-
 if [ ! -d "../../tools/chainmaker-cryptogen" ]; then
   echo "not found chainmaker-go/tools/chainmaker-cryptogen"
   echo "  you can use "
@@ -18,7 +17,6 @@ if [ ! -d "../../tools/chainmaker-cryptogen" ]; then
   echo "              cd chainmaker-cryptogen && make"
   exit 0
 fi
-
 CURRENT_PATH=$(pwd)
 SCRIPT_PATH=$(dirname "${CURRENT_PATH}")
 PROJECT_PATH=$(dirname "${SCRIPT_PATH}")
@@ -36,7 +34,7 @@ function start_chainmaker() {
   cd $SCRIPT_PATH
   ./cluster_quick_stop.sh clean
   echo -e "\n\n【generate】 certs and config..."
-  echo -e "\nINFO\n\n\n" | ./prepare.sh $node_count $chain_count
+  echo -e "\nINFO\n\n\n" | ./prepare_pk.sh $node_count $chain_count
   echo -e "\n\n【build】 release..."
   ./build_release.sh
   echo -e "\n\n【start】 chainmaker..."
@@ -69,7 +67,7 @@ function prepare_cmc() {
   pwd
   rm -rf testdata
   mkdir testdata
-  cp $PROJECT_PATH/tools/cmc/testdata/sdk_config.yml testdata/
+  cp $PROJECT_PATH/tools/cmc/testdata/sdk_config_pk.yml testdata/
   cp -r $PROJECT_PATH/build/crypto-config/ testdata/
 }
 
@@ -83,16 +81,13 @@ function cmc_test() {
   echo "【cmc】 send tx..."
   cd $PROJECT_PATH/bin
   pwd
-
   ## create contract
   ./cmc client contract user create \
     --contract-name=fact \
     --runtime-type=WASMER \
     --byte-code-path=../test/wasm/rust-fact-2.0.0.wasm \
     --version=1.0 \
-    --sdk-conf-path=./testdata/sdk_config.yml \
-    --admin-key-file-paths=./testdata/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.tls.key,./testdata/crypto-config/wx-org2.chainmaker.org/user/admin1/admin1.tls.key,./testdata/crypto-config/wx-org3.chainmaker.org/user/admin1/admin1.tls.key,./testdata/crypto-config/wx-org4.chainmaker.org/user/admin1/admin1.tls.key \
-    --admin-crt-file-paths=./testdata/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.tls.crt,./testdata/crypto-config/wx-org2.chainmaker.org/user/admin1/admin1.tls.crt,./testdata/crypto-config/wx-org3.chainmaker.org/user/admin1/admin1.tls.crt,./testdata/crypto-config/wx-org4.chainmaker.org/user/admin1/admin1.tls.crt \
+    --sdk-conf-path=./testdata/sdk_config_pk.yml \
     --sync-result=true \
     --params="{}"
 
@@ -100,7 +95,7 @@ function cmc_test() {
   ./cmc client contract user invoke \
     --contract-name=fact \
     --method=save \
-    --sdk-conf-path=./testdata/sdk_config.yml \
+    --sdk-conf-path=./testdata/sdk_config_pk.yml \
     --params="{\"file_name\":\"name007\",\"file_hash\":\"ab3456df5799b87c77e7f88\",\"time\":\"6543234\"}" \
     --sync-result=true
 
@@ -108,7 +103,7 @@ function cmc_test() {
   ./cmc client contract user get \
     --contract-name=fact \
     --method=find_by_file_hash \
-    --sdk-conf-path=./testdata/sdk_config.yml \
+    --sdk-conf-path=./testdata/sdk_config_pk.yml \
     --params="{\"file_hash\":\"ab3456df5799b87c77e7f88\"}"
 }
 

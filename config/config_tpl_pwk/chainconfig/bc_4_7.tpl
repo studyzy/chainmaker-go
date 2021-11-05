@@ -147,14 +147,6 @@ trust_roots:
 #    root:
 #      - "../config/{org_path}/keys/admin/{org7_id}/admin.pem"
 
-# Trust members are members that do not need to be verified against trust roots.
-# trust_members:
-# Each trust member should specify: member info file path, org id, role, and tls node id if any.
-# - member_info: ""
-#   org_id: ""
-#   role: "consensus"
-#   node_id:  ""
-
 # Resource policies settings
 resource_policies:
   - resource_name: CHAIN_CONFIG-NODE_ID_UPDATE
