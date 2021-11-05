@@ -154,52 +154,52 @@ trust_roots:
   # org id and root file path list.
   - org_id: "{org1_id}"
     root:
-      - "./certs/ca/{org1_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org1_id}/ca.crt"
   - org_id: "{org2_id}"
     root: 
-      - "./certs/ca/{org2_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org2_id}/ca.crt"
   - org_id: "{org3_id}"
     root:
-      - "./certs/ca/{org3_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org3_id}/ca.crt"
   - org_id: "{org4_id}"
     root:
-      - "./certs/ca/{org4_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org4_id}/ca.crt"
   - org_id: "{org5_id}"
     root:
-      - "./certs/ca/{org5_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org5_id}/ca.crt"
   - org_id: "{org6_id}"
     root:
-      - "./certs/ca/{org6_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org6_id}/ca.crt"
   - org_id: "{org7_id}"
     root:
-      - "./certs/ca/{org7_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org7_id}/ca.crt"
   - org_id: "{org8_id}"
     root:
-      - "./certs/ca/{org8_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org8_id}/ca.crt"
   - org_id: "{org9_id}"
     root:
-      - "./certs/ca/{org9_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org9_id}/ca.crt"
   - org_id: "{org10_id}"
     root:
-      - "./certs/ca/{org10_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org10_id}/ca.crt"
   - org_id: "{org11_id}"
     root:
-      - "./certs/ca/{org11_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org11_id}/ca.crt"
   - org_id: "{org12_id}"
     root:
-      - "./certs/ca/{org12_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org12_id}/ca.crt"
   - org_id: "{org13_id}"
     root:
-      - "./certs/ca/{org13_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org13_id}/ca.crt"
   - org_id: "{org14_id}"
     root:
-      - "./certs/ca/{org14_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org14_id}/ca.crt"
   - org_id: "{org15_id}"
     root:
-      - "./certs/ca/{org15_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org15_id}/ca.crt"
   - org_id: "{org16_id}"
     root:
-      - "./certs/ca/{org16_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org16_id}/ca.crt"
 
 # Trust members are members that do not need to be verified against trust roots.
 # trust_members:
