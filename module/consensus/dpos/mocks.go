@@ -16,7 +16,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/protocol/v2/mock"
-	native "chainmaker.org/chainmaker/vm-native/dposmgr"
+	native "chainmaker.org/chainmaker/vm-native/v2/dposmgr"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"

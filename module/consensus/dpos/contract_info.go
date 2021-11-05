@@ -16,7 +16,7 @@ import (
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	dpospb "chainmaker.org/chainmaker/pb-go/v2/consensus/dpos"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
-	"chainmaker.org/chainmaker/vm-native/dposmgr"
+	"chainmaker.org/chainmaker/vm-native/v2/dposmgr"
 	"github.com/gogo/protobuf/proto"
 	goproto "github.com/gogo/protobuf/proto"
 	"github.com/syndtr/goleveldb/leveldb/util"

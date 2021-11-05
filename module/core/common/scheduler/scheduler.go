@@ -7,8 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
-	"chainmaker.org/chainmaker/vm"
-	//	"encoding/hex"
 	"errors"
 	"fmt"
 	"regexp"
@@ -19,6 +17,7 @@ import (
 	"chainmaker.org/chainmaker/localconf/v2"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/vm/v2"
 	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	//	acpb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
