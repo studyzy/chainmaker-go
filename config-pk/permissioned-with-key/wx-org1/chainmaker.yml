@@ -13,7 +13,7 @@
 # permissionedWithCert: permissioned blockchain, using x.509 certificate to identify members.
 # permissionedWithKey: permissioned blockchain, using public key to identify members.
 # public: public blockchain, using public key to identify members.
-auth_type: "permissionedWithCert" # [*]
+auth_type: "permissionedWithKey" # [*]
 
 # Logger settings
 log:
