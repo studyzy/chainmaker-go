@@ -10,6 +10,7 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
+	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"
 )
 
@@ -191,22 +192,17 @@ func queryContractAccess() error {
 		return err
 	}
 	defer client.Stop()
-	var payload *common.Payload
-	payload, err = client.CreateGetDisabledNativeContractListPayload()
+
+	disabledNativeContractList, err := client.GetDisabledNativeContractList()
 	if err != nil {
-		return fmt.Errorf("create GetDisabledNativeContractListPayload error,%s", err.Error())
-	}
-	resp, err := client.SendContractManageRequest(payload, nil, timeout, syncResult)
-	if err != nil {
-		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
-	}
-	err = util.CheckProposalRequestResp(resp, false)
-	if err != nil {
-		return fmt.Errorf(CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT, err.Error())
+		return fmt.Errorf("get disabled native contract list failed, %s", err)
 	}
 
-	fmt.Printf("query contract access resp: %+v\n", resp)
+	output, err := prettyjson.Marshal(disabledNativeContractList)
+	if err != nil {
+		return err
+	}
 
+	fmt.Println(string(output))
 	return nil
-
 }

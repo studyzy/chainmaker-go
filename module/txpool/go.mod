@@ -3,9 +3,9 @@ module chainmaker.org/chainmaker-go/txpool
 go 1.15
 
 require (
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211101030932-bf3bcb20eb52
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
-	chainmaker.org/chainmaker/txpool-single/v2 v2.0.0-20211018131403-7eb37f80a128
+	chainmaker.org/chainmaker/common/v2 v2.1.0
+	chainmaker.org/chainmaker/protocol/v2 v2.1.0
+	chainmaker.org/chainmaker/txpool-single/v2 v2.1.0
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect

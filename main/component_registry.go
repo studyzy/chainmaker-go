@@ -6,10 +6,10 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 	batch "chainmaker.org/chainmaker/txpool-batch/v2"
 	single "chainmaker.org/chainmaker/txpool-single/v2"
-	evm "chainmaker.org/chainmaker/vm-evm"
-	gasm "chainmaker.org/chainmaker/vm-gasm"
-	wasmer "chainmaker.org/chainmaker/vm-wasmer"
-	wxvm "chainmaker.org/chainmaker/vm-wxvm"
+	evm "chainmaker.org/chainmaker/vm-evm/v2"
+	gasm "chainmaker.org/chainmaker/vm-gasm/v2"
+	wasmer "chainmaker.org/chainmaker/vm-wasmer/v2"
+	wxvm "chainmaker.org/chainmaker/vm-wxvm/v2"
 )
 
 func init() {

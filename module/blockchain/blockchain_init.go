@@ -37,7 +37,7 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/store/v2/conf"
 	"chainmaker.org/chainmaker/utils/v2"
-	"chainmaker.org/chainmaker/vm"
+	"chainmaker.org/chainmaker/vm/v2"
 	"github.com/mitchellh/mapstructure"
 )
 

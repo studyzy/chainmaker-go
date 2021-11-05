@@ -11,7 +11,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"chainmaker.org/chainmaker/vm-native/dposmgr"
+	"chainmaker.org/chainmaker/vm-native/v2/dposmgr"
 
 	"chainmaker.org/chainmaker/logger/v2"
 
