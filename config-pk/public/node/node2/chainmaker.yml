@@ -21,12 +21,9 @@ blockchain:
 #    genesis: ../config-sql/wx-org1/chainconfig/bc4.yml
 
 node:
-  # 节点类型：full
-  type:              full
   org_id:            wx-org2.chainmaker.org
   priv_key_file:     ../config-pk/public/node/node2/node2.key
   cert_file:         ../config-sql/wx-org1/certs/node/consensus1/consensus1.sign.crt
-  signer_cache_size: 1000
   cert_cache_size:   1000
 
 net:
