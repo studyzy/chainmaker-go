@@ -1,8 +1,10 @@
-
- Copyright (C) BABEC. All rights reserved.
- Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
-
- SPDX-License-Identifier: Apache-2.0
+#!/usr/bin/env bash
+#
+# Copyright (C) BABEC. All rights reserved.
+# Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 
 set -x
 BRANCH=v2.1.0
