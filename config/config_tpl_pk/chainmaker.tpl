@@ -35,7 +35,11 @@ blockchain:
 # Blockchain node settings
 node:
   # Private key file path
-  priv_key_file:     ../config/{org_path}/certs/{node_cert_path}.key  # [*]
+  priv_key_file: ../config/{org_path}/{node_pk_path}.key  # [*]
+
+  # Certificate cache size, used to speedup member identity verification.
+  # By default the cache size is 1000.
+  cert_cache_size:   1000
 
   # PKCS#11 crypto settings
   pkcs11:
@@ -92,10 +96,7 @@ net:
     enabled: true
 
     # TLS private key file path.
-    priv_key_file: ../config/{org_path}/certs/{net_pk_path}.key
-
-    # TLS Certificate file path.
-    cert_file: ../config/{org_path}/certs/{net_cert_path}.crt
+    priv_key_file: ../config/{org_path}/{net_pk_path}.key # [*]
 
   # The blacklisted peers in p2p network.
   # blacklist:
@@ -164,17 +165,10 @@ rpc:
     ratelimit:
       token_per_second: 100
       token_bucket_size: 100
-
   # RPC TLS settings
   tls:
     # TLS mode, can be disable, oneway, twoway.
-    mode:           twoway
-
-    # RPC TLS private key file path
-    priv_key_file:  ../config/{org_path}/certs/{rpc_cert_path}.key
-
-    # RPC TLS public key file path
-    cert_file:      ../config/{org_path}/certs/{rpc_cert_path}.crt
+    mode: disable
 
   # RPC blacklisted ip addresses
   blacklist:

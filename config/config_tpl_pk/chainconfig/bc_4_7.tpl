@@ -5,41 +5,82 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-chain_id: {chain_id}                # 链标识
-version: v2.1.0_alpha               # 链版本
-sequence: 0                         # 配置版本
-auth_type: "public"                 # 认证类型permissionedWithCert/permissionedWithKey/public. same as chainmaker.yml auth_type
+# This file is used to generate genesis block.
+# The content should be consistent across all nodes in this chain.
 
+# chain id
+chain_id: {chain_id}
+
+# chain maker version
+version: {version}
+
+# chain config sequence
+sequence: 0
+
+# The blockchain auth type, shoudle be consistent with auth type in node config (e.g., chainmaker.yml)
+# The auth type can be permissionedWithCert, permissionedWithKey, public.
+# By default it is permissionedWithCert.
+# permissionedWithCert: permissioned blockchain, using x.509 certificate to identify members.
+# permissionedWithKey: permissioned blockchain, using public key to identify members.
+# public: public blockchain, using public key to identify members.
+auth_type: "public"
+
+# Crypto settings
 crypto:
+  # Hash algorithm, can be SHA256, SHA3_256 and SM3
   hash: {hash_type}
 
-# 合约支持类型的配置
+# User contract related settings
 contract:
-  enable_sql_support: false # 合约是否支持sql，此处若为true，则chainmaker.yml中则需配置storage.statedb_config.provider=sql，否则无法启动
+  # If the sql support contract is enabled or not.
+  # If it is true, storage.statedb_config.provider in chainmaker.yml should be sql.
+  enable_sql_support: false
 
-# 交易、区块相关配置
+# Block proposing related settings
 block:
-  tx_timestamp_verify: true # 是否需要开启交易时间戳校验
-  tx_timeout: 600  # 交易时间戳的过期时间(秒)
-  block_tx_capacity: 100  # 区块中最大交易数
-  block_size: 10  # 区块最大限制，单位MB
-  block_interval: 2000 # 出块间隔，单位:ms
+  # Verify the transaction timestamp or not
+  tx_timestamp_verify: true
 
-# core模块
+  # Transaction timeout, in second.
+  # if abs(now - tx_timestamp) > tx_timeout, the transaction is invalid.
+  tx_timeout: 600
+
+  # Max transaction count in a block.
+  block_tx_capacity: 100
+
+  # Max block size, in MB
+  block_size: 10
+
+  # The interval of block proposing attempts
+  block_interval: 2000
+
+# Core settings
 core:
-  tx_scheduler_timeout: 10 #  [0, 60] 交易调度器从交易池拿到交易后, 进行调度的时间
-  tx_scheduler_validate_timeout: 10 # [0, 60] 交易调度器从区块中拿到交易后, 进行验证的超时时间
-#  consensus_turbo_config:
-#    consensus_message_turbo: true # 是否开启共识报文压缩
-#    retry_time: 500 # 根据交易ID列表从交易池获取交易的重试次数
-#    retry_interval: 20 # 重试间隔，单位:ms
+  # Max scheduling time of a block, in second.
+  # [0, 60]
+  tx_scheduler_timeout: 10
 
-#共识配置
+  # Max validating time of a block, in second.
+  # [0, 60]
+  tx_scheduler_validate_timeout: 10
+
+  # Consensus message compression related settings
+  # consensus_turbo_config:
+    # If consensus message compression is enabled or not.
+    # consensus_message_turbo: true
+
+    # Max retry count of fetching transaction in txpool by txid.
+    # retry_time: 500
+
+    # Retry interval of fetching transaction in txpool by txid, in ms.
+    # retry_interval: 20
+
+# Consensus settings
 consensus:
-  # 共识类型(5-DPOS)
+  # Consensus type 5-DPOS
   type: {consensus_type}
   dpos_config: # DPoS
-    #ERC20合约配置
+    # ERC20 contract config
     - key: erc20.total
       value: "{erc20_total}"
     - key: erc20.owner
@@ -48,7 +89,7 @@ consensus:
       value: "18"
     - key: erc20.account:DPOS_STAKE
       value: "{erc20_total}"
-    #Stake合约配置
+    # Stake contract config
     - key: stake.minSelfDelegation
       value: "2500000"
     - key: stake.epochValidatorNum
@@ -85,11 +126,13 @@ consensus:
 #      value: "{org6_peerid}"
 #    - key: stake.nodeID:{org7_peeraddr}
 #      value: "{org7_peerid}"
-  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
-    - key: aa
-      value: chain01_ext11
+  # We can specify other consensus config here in key-value format.
+  ext_config:
+    # - key: aa
+    #   value: chain01_ext11
 
-# 信任组织和根证书
+# Trust roots is used to specify the organizations' root certificates in permessionedWithCert mode.
+# When in permessionedWithKey mode or public mode, it represents the admin users.
 trust_roots:
   - org_id: "public"
     root:
