@@ -120,54 +120,6 @@ consensus:
   ext_config:
     # - key: aa
     #   value: chain01_ext11
-  # DPoS settings
-  dpos_config:
-    # ERC20 contract config
-    - key: erc20.total
-      value: "{erc20_total}"
-    - key: erc20.owner
-      value: "{org1_peeraddr}"
-    - key: erc20.decimals
-      value: "18"
-    - key: erc20.account:DPOS_STAKE
-      value: "{erc20_total}"
-    # Stake contract config
-    - key: stake.minSelfDelegation
-      value: "2500000"
-    - key: stake.epochValidatorNum
-      value: "{epochValidatorNum}"
-    - key: stake.epochBlockNum
-      value: "10"
-    - key: stake.completionUnbondingEpochNum
-      value: "1"
-    - key: stake.candidate:{org1_peeraddr}
-      value: "2500000"
-    - key: stake.candidate:{org2_peeraddr}
-      value: "2500000"
-    - key: stake.candidate:{org3_peeraddr}
-      value: "2500000"
-    - key: stake.candidate:{org4_peeraddr}
-      value: "2500000"
-#    - key: stake.candidate:{org5_peeraddr}
-#      value: "2500000"
-#    - key: stake.candidate:{org6_peeraddr}
-#      value: "2500000"
-#    - key: stake.candidate:{org7_peeraddr}
-#      value: "2500000"
-    - key: stake.nodeID:{org1_peeraddr}
-      value: "{org1_peerid}"
-    - key: stake.nodeID:{org2_peeraddr}
-      value: "{org2_peerid}"
-    - key: stake.nodeID:{org3_peeraddr}
-      value: "{org3_peerid}"
-    - key: stake.nodeID:{org4_peeraddr}
-      value: "{org4_peerid}"
-#    - key: stake.nodeID:{org5_peeraddr}
-#      value: "{org5_peerid}"
-#    - key: stake.nodeID:{org6_peeraddr}
-#      value: "{org6_peerid}"
-#    - key: stake.nodeID:{org7_peeraddr}
-#      value: "{org7_peerid}"
 
 # Trust roots is used to specify the organizations' root certificates in permessionedWithCert mode.
 # When in permessionedWithKey mode or public mode, it represents the admin users.

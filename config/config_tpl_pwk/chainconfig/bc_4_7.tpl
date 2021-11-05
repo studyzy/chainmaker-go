@@ -23,7 +23,7 @@ sequence: 0
 # permissionedWithCert: permissioned blockchain, using x.509 certificate to identify members.
 # permissionedWithKey: permissioned blockchain, using public key to identify members.
 # public: public blockchain, using public key to identify members.
-auth_type: "permissionedWithCert"
+auth_type: "permissionedWithKey"
 
 # Crypto settings
 crypto:

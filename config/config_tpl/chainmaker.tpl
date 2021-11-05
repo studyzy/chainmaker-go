@@ -5,9 +5,9 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-# [*] represents the item cannot be modified after startup
+# [*] the represented items could not be modified after startup
 
-# The blockchain auth type, shoudle be consistent with auth type in each chain config (e.g., bc1.yml)
+# "auth_type" should be consistent among the whole chain configuration files(e.g., bc1.yml and chainmaker.yml)
 # The auth type can be permissionedWithCert, permissionedWithKey, public.
 # By default it is permissionedWithCert.
 # permissionedWithCert: permissioned blockchain, using x.509 certificate to identify members.
@@ -17,12 +17,12 @@ auth_type: "permissionedWithCert" # [*]
 
 # Logger settings
 log:
-  # Logger configuration file path
+  # Logger configuration file path.
   config_file: ../config/{org_path}/log.yml
 
-# Chains the node currently knows
+# Chains the node currently joined in
 blockchain:
-  # chain id and its genesis block file path
+  # chain id and its genesis block file path.
 #  - chainId: chain1
 #    genesis: ../config/{org_path1}/chainconfig/bc1.yml
 #  - chainId: chain2
@@ -34,7 +34,7 @@ blockchain:
 
 # Blockchain node settings
 node:
-  # Organization id the node belongs to.
+  # Organization id is the node belongs to.
   # When the auth type is public, org id is ignored.
   org_id:            {org_id}  # [*]
 
@@ -44,7 +44,7 @@ node:
   # Certificate file path
   cert_file:         ../config/{org_path}/certs/{node_cert_path}.crt  # [*]
 
-  # Certificate cache size, used to speedup member identity verification.
+  # Certificate cache size, used to speed up member identity verification.
   # By default the cache size is 1000.
   cert_cache_size:   1000
 
@@ -53,7 +53,7 @@ node:
     # Enable it or not
     enabled: false  # [*]
 
-    # Path to the so file of pkcs11 interface
+    # Path for the pkcs11 interface file(.so)
     library: /usr/local/lib64/pkcs11/libupkcs11.so
 
     # Label for the slot to be used
@@ -62,10 +62,10 @@ node:
     # HSM Password
     password: 11111111
 
-    # Size of HSM session cache, default to 10
+    # Size for HSM session cache, default value is 10.
     session_cache_size: 10
 
-    # Hash algorithm used to compute SKI.
+    # Hash algorithm is used to calculate SKI.
     # It can be SHA256 or SM3.
     hash: "SHA256"  # [*]
 
@@ -73,7 +73,7 @@ node:
 net:
   # Network provider, can be libp2p or liquid.
   # libp2p: using libp2p components to build the p2p module.
-  # liquid: a new p2p module we build from 0 to 1.
+  # liquid: a new p2p network module. We build it from 0 to 1.
   # This item must be consistent across the blockchain network.
   provider: LibP2P
 
@@ -87,11 +87,11 @@ net:
   # Max number of peers the node can connect.
   # max_peer_count_allow: 20
 
-  # The strategy for eliminating node when the count of connecting peers reach the max value.
+  # The strategy for eliminating node when the amount of connected peers reaches the max value
   # It could be: 1 Random, 2 FIFO, 3 LIFO. The default strategy is LIFO.
   # peer_elimination_strategy: 3
 
-  # The seeds peer list used to join in the network when starting.
+  # The seeds list used to setup network among all the peer seed when system starting.
   # The connection supervisor will try to dial seed peer whenever the connection is broken.
   # Example ip format: "/ip4/127.0.0.1/tcp/11301/p2p/"+nodeid
   # Example dns format："/dns/cm-node1.org/tcp/11301/p2p/"+nodeid
@@ -108,7 +108,7 @@ net:
     # TLS Certificate file path.
     cert_file: ../config/{org_path}/certs/{net_cert_path}.crt
 
-  # The blacklisted peers in p2p network.
+  # The blacklist is automatically block the listed seed to connect.
   # blacklist:
       # The addresses in blacklist.
       # The address format can be ip or ip+port.
@@ -134,7 +134,7 @@ txpool:
   # Max config transaction count in config txpool.
   max_config_txpool_size: 10
 
-  # Interval of creating a transaction batch, only for batch txpool, in ms.
+  # Interval of creating a transaction batch, only for batch txpool, in millisecond.
   # batch_create_timeout: 200
 
 # RPC service setting
@@ -148,13 +148,13 @@ rpc:
   # Interval of checking trust root changes, in seconds.
   # If changed, the rpc server's root certificate pool will also change.
   # Only valid if tls is enabled.
-  # The minium value is 10s.
+  # The minium value is 10.
   check_chain_conf_trust_roots_change_interval: 60
 
   # Rate limit related settings
   # Here we use token bucket to limit rate.
   ratelimit:
-    # If rate limit is enabled.
+    # Ratelimit switch. Default is false.
     enabled: false
 
     # Rate limit type
@@ -193,7 +193,7 @@ rpc:
 
 # Monitor related settings
 monitor:
-  # If monitor service is enabled or not
+  # Monitor service switch, default is false.
   enabled: false
 
   # Monitor service port
@@ -210,11 +210,11 @@ pprof:
 # Consensus related settings
 consensus:
   raft:
-    # We should take a snapshot after how many blocks.
+    # Take a snapshot based on the set the number of blocks.
     # If raft nodes change, a snapshot is taken immediately.
     snap_count: 10
 
-    # Saving wal asynchronously or not.
+    # Saving wal asynchronously switch. Default is true.
     async_wal_save: true
 
     # Min time unit in rate election and heartbeat.
@@ -226,16 +226,16 @@ scheduler:
   rwset_log: false
 
 # Storage config settings
-# Contains blockDb、stateDb、historyDb、resultDb、contractEventDb
+# Contains blockDb, stateDb, historyDb, resultDb, contractEventDb
 #
-# blockDb: block transaction data,                          support leveldb、mysql、badgerdb
-# stateDb: world state data,                                support leveldb、mysql、badgerdb
-# historyDb: world state change history of transactions,    support leveldb、mysql、badgerdb
-# resultDb: transaction execution results data,             support leveldb、mysql、badgerdb
-# contractEventDb: contract emit event data, support        support mysql
+# blockDb: block transaction data,                          support leveldb, mysql, badgerdb
+# stateDb: world state data,                                support leveldb, mysql, badgerdb
+# historyDb: world state change history of transactions,    support leveldb, mysql, badgerdb
+# resultDb: transaction execution results data,             support leveldb, mysql, badgerdb
+# contractEventDb: contract emit event data,                support mysql
 #
-# provider、sqldb_type cannot be changed after startup
-# store_path、dsn the content cannot be changed after startup
+# provider, sqldb_type cannot be changed after startup.
+# store_path, dsn the content cannot be changed after startup.
 storage:
   # Default store path
   store_path: ../data/{org_id}/ledgerData1 # [*]
@@ -255,27 +255,27 @@ storage:
 
   # Block db config
   blockdb_config:
-    # Databases type support leveldb、sql、badgerdb
+    # Databases type support leveldb, sql, badgerdb
     provider: leveldb # [*]
-    # Provider used leveldb must be set leveldb_config
+    # If provider is leveldb, leveldb_config should not be null.
     leveldb_config:
       # LevelDb store path
       store_path: ../data/{org_id}/block
 
     # Example for sql provider
-    # Databases type support leveldb、sql、badgerdb
+    # Databases type support leveldb, sql, badgerdb
     # provider: sql # [*]
-    # Provider used sql must be set sqldb_config
+    # If provider is sql, sqldb_config should not be null.
     # sqldb_config:
-      # Sql db type, can be mysql、sqlite. sqlite only for test
+      # Sql db type, can be mysql, sqlite. sqlite only for test
       # sqldb_type: mysql # # [*]
       # Mysql connection info, the database name is not required. such as:  root:admin@tcp(127.0.0.1:3306)/
       # dsn: root:password@tcp(127.0.0.1:3306)/
 
     # Example for badgerdb provider
-    # Databases type support leveldb、sql、badgerdb
+    # Databases type support leveldb, sql, badgerdb
     # provider: badgerdb
-    # Provider used badgerdb must be set badgerdb_config
+    # If provider is badgerdb, badgerdb_config should not be null.
     # badgerdb_config:
       # BadgerDb store path
       # store_path: ../data/wx-org1.chainmaker.org/history
@@ -304,7 +304,7 @@ storage:
     leveldb_config:
       store_path: ../data/{org_id}/result
 
-  # Disable db config, If it is set to false, MySQL needs to be contract_eventdb_config
+  # Disable contract event database or not. If it is false, contract_eventdb_config must be mysql
   disable_contract_eventdb: true
   # Contract event db config
   contract_eventdb_config:
