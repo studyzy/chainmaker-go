@@ -91,14 +91,15 @@ func newCertACProvider(chainConfig *config.ChainConfig, localOrgId string,
 		return nil, err
 	}
 
-	chainConfig.AuthType = strings.ToLower(chainConfig.AuthType)
-	certACProvider.acService = initAccessControlService(chainConfig.GetCrypto().Hash, localOrgId,
-		chainConfig.AuthType, chainConfig, store, log)
+	certACProvider.acService = initAccessControlService(chainConfig.GetCrypto().Hash,
+		chainConfig.AuthType, store, log)
 
 	err = certACProvider.initTrustRoots(chainConfig.TrustRoots, localOrgId)
 	if err != nil {
 		return nil, err
 	}
+
+	certACProvider.acService.initResourcePolicy(chainConfig.ResourcePolicies, localOrgId)
 
 	certACProvider.opts.KeyUsages = make([]x509.ExtKeyUsage, 1)
 	certACProvider.opts.KeyUsages[0] = x509.ExtKeyUsageAny

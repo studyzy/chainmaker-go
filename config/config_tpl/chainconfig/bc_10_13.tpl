@@ -6,7 +6,7 @@
 #
 
 chain_id: {chain_id}                # 链标识
-version: v2.0.0                     # 链版本
+version: {version}                  # 链版本
 sequence: 0                         # 配置版本
 auth_type: "permissionedWithCert"   # 认证类型
 
@@ -239,4 +239,4 @@ resource_policies:
 
 # 未开发的系统合约列表
 disabled_native_contract:
-  - CONTRACT_NAME
+  # - CONTRACT_NAME  # 通过指定系统合约名字来禁用系统合约

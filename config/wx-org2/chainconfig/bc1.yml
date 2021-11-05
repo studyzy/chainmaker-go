@@ -110,4 +110,4 @@ resource_policies:
       role_list:
         - admin
 disabled_native_contract:
-  - CONTRACT_NAME
+# - CONTRACT_NAME  # 通过指定系统合约名字来禁用系统合约

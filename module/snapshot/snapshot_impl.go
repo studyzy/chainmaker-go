@@ -50,6 +50,10 @@ type SnapshotImpl struct {
 	txResultMap  map[string]*commonPb.Result
 	readTable    map[string]*sv
 	writeTable   map[string]*sv
+
+	txRoot    []byte
+	dagHash   []byte
+	rwSetHash []byte
 }
 
 func (s *SnapshotImpl) GetPreSnapshot() protocol.Snapshot {

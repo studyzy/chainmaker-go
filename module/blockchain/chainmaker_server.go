@@ -373,5 +373,5 @@ func (server *ChainMakerServer) GetAllAC() ([]protocol.AccessControlProvider, er
 
 // Version of chainmaker.
 func (server *ChainMakerServer) Version() string {
-	return fmt.Sprintf("%d", protocol.DefaultBlockVersion)
+	return CurrentVersion
 }

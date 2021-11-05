@@ -38,8 +38,8 @@ function clean() {
     for file in `ls $RELEASE_PATH`
     do
         if [ -d $file ]; then
-            echo "CLEAN ==> " $RELEASE_PATH/$file/data
-            cd $file && rm -rf data && cd - > /dev/null
+            echo "CLEAN data and log ==> " $RELEASE_PATH/$file/data $RELEASE_PATH/$file/log
+            cd $file && rm -rf data && rm -rf log/* && cd - > /dev/null
         fi
     done
 }
