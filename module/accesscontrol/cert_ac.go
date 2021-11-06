@@ -1008,7 +1008,6 @@ func (cp *certACProvider) initTrustRootsForUpdatingChainConfig(chainConfig *conf
 		}
 	}
 	cp.localOrg, _ = localOrg.(*organization)
-	cp.acService.trustMembers = chainConfig.TrustMembers
 	return nil
 }
 
