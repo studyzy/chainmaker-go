@@ -1,3 +1,5 @@
+module chainmaker.org/chainmaker-go/core
+
 go 1.15
 
 require (
@@ -21,6 +23,4 @@ require (
 	honnef.co/go/tools v0.1.3 // indirect
 )
 
-replace github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
-
-module chainmaker.org/chainmaker-go/module/net
+replace github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v1.0.0

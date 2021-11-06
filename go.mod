@@ -14,7 +14,7 @@ require (
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
 	chainmaker.org/chainmaker/protocol/v2 v2.1.0
-	chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20211103123028-f363e95014b1
+	chainmaker.org/chainmaker/sdk-go/v2 v2.1.0
 	chainmaker.org/chainmaker/txpool-batch/v2 v2.1.0
 	chainmaker.org/chainmaker/txpool-single/v2 v2.1.0
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
@@ -47,6 +47,6 @@ replace (
 	chainmaker.org/chainmaker-go/sync => ./module/sync
 	chainmaker.org/chainmaker-go/txpool => ./module/txpool
 	chainmaker.org/chainmaker-go/vm => ./module/vm
-	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
+	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v1.0.0
 	google.golang.org/grpc v1.40.0 => google.golang.org/grpc v1.26.0
 )
