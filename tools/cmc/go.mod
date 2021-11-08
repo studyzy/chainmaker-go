@@ -6,7 +6,7 @@ require (
 	chainmaker.org/chainmaker/common/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
 	chainmaker.org/chainmaker/protocol/v2 v2.1.0
-	chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20211103123028-f363e95014b1
+	chainmaker.org/chainmaker/sdk-go/v2 v2.1.0
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/ethereum/go-ethereum v1.10.4
 	github.com/gogo/protobuf v1.3.2

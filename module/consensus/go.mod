@@ -10,7 +10,7 @@ require (
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
 	chainmaker.org/chainmaker/protocol/v2 v2.1.0
-	chainmaker.org/chainmaker/raftwal/v2 v2.0.3
+	chainmaker.org/chainmaker/raftwal/v2 v2.1.0
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
 	chainmaker.org/chainmaker/vm-native/v2 v2.1.0
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
@@ -35,5 +35,5 @@ require (
 
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
-	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
+	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v1.0.0
 )

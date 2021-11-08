@@ -31,6 +31,6 @@ replace (
 	chainmaker.org/chainmaker-go/sync => ../sync
 	chainmaker.org/chainmaker-go/txpool => ../txpool
 	chainmaker.org/chainmaker-go/vm => ../vm
-	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
+	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v1.0.0
 	google.golang.org/grpc v1.40.0 => google.golang.org/grpc v1.26.0
 )

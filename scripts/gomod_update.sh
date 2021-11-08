@@ -118,7 +118,7 @@ go mod tidy
 
 cd ../../tools/cmc
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
-go get chainmaker.org/chainmaker/sdk-go/v2@v2.1.0_alpha
+go get chainmaker.org/chainmaker/sdk-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go mod tidy
@@ -133,7 +133,7 @@ go get chainmaker.org/chainmaker/localconf/v2@${BRANCH}
 go get chainmaker.org/chainmaker/txpool-batch/v2@${BRANCH}
 go get chainmaker.org/chainmaker/txpool-single/v2@${BRANCH}
 go get chainmaker.org/chainmaker/logger/v2@${BRANCH}
-go get chainmaker.org/chainmaker/sdk-go/v2@v2.1.0_alpha
+go get chainmaker.org/chainmaker/sdk-go/v2@${BRANCH}
 go mod tidy
 
 cd ./main
