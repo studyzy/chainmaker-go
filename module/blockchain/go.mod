@@ -22,11 +22,18 @@ require (
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
 	chainmaker.org/chainmaker/vm/v2 v2.1.0
 	github.com/fatih/color v1.13.0 // indirect
+	github.com/fsnotify/fsnotify v1.5.1 // indirect
+	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20210113012101-fb4e108d2519 // indirect
+	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mitchellh/mapstructure v1.4.2
-	github.com/spf13/cobra v1.2.1 // indirect
-	github.com/spf13/viper v1.9.0 // indirect
+	github.com/pelletier/go-toml v1.9.4 // indirect
+	github.com/spf13/afero v1.5.1 // indirect
+	github.com/spf13/cast v1.4.1 // indirect
+	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	go.opencensus.io v0.23.0 // indirect
+	gopkg.in/ini.v1 v1.63.2 // indirect
 )
 
 replace (
