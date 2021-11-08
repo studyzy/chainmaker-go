@@ -317,7 +317,7 @@ func cliQueryPubKey() error {
 	}
 	info := &accesscontrol.PKInfo{}
 	if err = proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
-		return fmt.Errorf("Unmarshal error: %v", err)
+		return fmt.Errorf("unmarshal error: %v", err)
 	}
 	fmt.Printf("org_id = %s, role = %s \n", info.OrgId, info.Role)
 
