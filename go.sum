@@ -40,11 +40,11 @@ chainmaker.org/chainmaker/utils/v2 v2.1.0 h1:qMxtgn5PfS4rMoZyVZJqwVSW3zdVmRJPEvl
 chainmaker.org/chainmaker/utils/v2 v2.1.0/go.mod h1:GppORTQ5PexKKU/vX+PQrnjCvl1uiBZ6rEbb2S0tPOU=
 chainmaker.org/chainmaker/vm-evm/v2 v2.1.0 h1:Iz/WVj5+43yR1UMuPApJkWolNI0A8SmxFr+L9QnOUWo=
 chainmaker.org/chainmaker/vm-evm/v2 v2.1.0/go.mod h1:PRyQUJtKUV4ZhwQD0md7ZLMswyPBBTf8kvJ4rTVPCdg=
-chainmaker.org/chainmaker/vm-gasm/v2 v2.1.0 h1:A7FfeQFeGoufnKQ6ZnosvVcejFO71Es8SxsOYJ+04YM=
+chainmaker.org/chainmaker/vm-gasm/v2 v2.1.0 h1:vwVor8UUdIQiz84TXUnRqsqGLLUp1Ptr3Sv6s7AzM5A=
 chainmaker.org/chainmaker/vm-gasm/v2 v2.1.0/go.mod h1:EvkWlDgyUjYm+VFf3JnnGcGhYHFKiKZgI/bcxFASFw0=
 chainmaker.org/chainmaker/vm-native/v2 v2.1.0 h1:r599Bvh0Y+C4LwAI3VBU3l2B61ujjDLeIf4BOqRfFks=
 chainmaker.org/chainmaker/vm-native/v2 v2.1.0/go.mod h1:/pBoCPqKr1DjoJDK6bnxSl9Pt+Jfb4A1wzhfwDQPeMY=
-chainmaker.org/chainmaker/vm-wasmer/v2 v2.1.0 h1:EGBMRAG4ICFRk/V/REXPWPzV87O7tPuCgSVw4Y3HqKU=
+chainmaker.org/chainmaker/vm-wasmer/v2 v2.1.0 h1:91WKWTcO/WiO6ibjTqRhFLpsPviW1/f4bvyF2B8QYSU=
 chainmaker.org/chainmaker/vm-wasmer/v2 v2.1.0/go.mod h1:sIvAjEGWp3+etA2W85MTlS9S/2CCKEM+XUwUYqLy/HM=
 chainmaker.org/chainmaker/vm-wxvm/v2 v2.1.0 h1:Uvvej3CnKcBF455YZ1keIfYPA7Ns3lwsiKDvbd65NUs=
 chainmaker.org/chainmaker/vm-wxvm/v2 v2.1.0/go.mod h1:RueuH2tdns3gLKXEwFA8MPLHt6n6FQUnk/C7tqBCsXo=
