@@ -84,11 +84,11 @@ func removeTrustMemberCMD() *cobra.Command {
 }
 
 func configTrustMember(op int) error {
-	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 {
+	if adminKeyFilePaths == "" || adminCrtFilePaths == "" {
 		return errAdminOrgIdKeyCertIsEmpty
 	}
+	adminKeys := strings.Split(adminKeyFilePaths, ",")
+	adminCrts := strings.Split(adminCrtFilePaths, ",")
 	if len(adminKeys) != len(adminCrts) {
 		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 	}

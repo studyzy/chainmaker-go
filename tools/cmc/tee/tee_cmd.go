@@ -80,11 +80,11 @@ func createClientWithConfig() (*sdk.ChainClient, error) {
 }
 
 func createMultiSignAdmins(adminKeyFilePaths string, adminCrtFilePaths string) ([]string, []string, error) {
-	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 {
+	if adminKeyFilePaths == "" || adminCrtFilePaths == "" {
 		return nil, nil, errors.New("no admin users given for sign payload")
 	}
+	adminKeys := strings.Split(adminKeyFilePaths, ",")
+	adminCrts := strings.Split(adminCrtFilePaths, ",")
 	if len(adminKeys) != len(adminCrts) {
 		return nil, nil, fmt.Errorf("admin keys num(%v) is not equals certs num(%v)", len(adminKeys), len(adminCrts))
 	}
@@ -93,11 +93,11 @@ func createMultiSignAdmins(adminKeyFilePaths string, adminCrtFilePaths string) (
 }
 
 func createMultiSignAdminsForPK(adminKeyFilePaths string, adminOrgIds string) ([]string, []string, error) {
-	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	adminOrgs := strings.Split(adminOrgIds, ",")
-	if len(adminKeys) == 0 || len(adminOrgs) == 0 {
+	if adminKeyFilePaths == "" || adminOrgIds == "" {
 		return nil, nil, errors.New("no admin users given for sign payload")
 	}
+	adminKeys := strings.Split(adminKeyFilePaths, ",")
+	adminOrgs := strings.Split(adminOrgIds, ",")
 	if len(adminKeys) != len(adminOrgs) {
 		return nil, nil, fmt.Errorf("admin keys num(%v) is not equals org-id num(%v)", len(adminKeys), len(adminOrgs))
 	}
