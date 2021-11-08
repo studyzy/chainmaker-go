@@ -10,7 +10,7 @@ require (
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
 	chainmaker.org/chainmaker/protocol/v2 v2.1.0
-	chainmaker.org/chainmaker/raftwal/v2 v2.0.3
+	chainmaker.org/chainmaker/raftwal/v2 v2.1.0
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
 	chainmaker.org/chainmaker/vm-native/v2 v2.1.0
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
