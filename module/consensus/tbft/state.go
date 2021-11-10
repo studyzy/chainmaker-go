@@ -22,13 +22,15 @@ type ConsensusState struct {
 	Round  int32
 	Step   tbftpb.Step
 
-	Proposal           *Proposal // proposal
-	VerifingProposal   *Proposal // verifing proposal
-	LockedRound        int32
-	LockedProposal     *Proposal // locked proposal
-	ValidRound         int32
-	ValidProposal      *Proposal // valid proposal
-	heightRoundVoteSet *heightRoundVoteSet
+	Proposal                  *Proposal // proposal
+	VerifingProposal          *Proposal // verifing proposal
+	LockedRound               int32
+	LockedProposal            *Proposal // locked proposal
+	ValidRound                int32
+	ValidProposal             *Proposal // valid proposal
+	heightRoundVoteSet        *heightRoundVoteSet
+	TriggeredTimeoutPrecommit bool
+	TriggeredTimeoutPrevote   bool
 }
 
 // NewConsensusState creates a new ConsensusState instance
