@@ -13,15 +13,17 @@ require (
 	chainmaker.org/chainmaker/localconf/v2 v2.1.0
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
-	chainmaker.org/chainmaker/protocol/v2 v2.1.0
+	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211110022918-9516552c201a
 	chainmaker.org/chainmaker/sdk-go/v2 v2.1.0
 	chainmaker.org/chainmaker/txpool-batch/v2 v2.1.0
 	chainmaker.org/chainmaker/txpool-single/v2 v2.1.0
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
-	chainmaker.org/chainmaker/vm-evm/v2 v2.1.0
-	chainmaker.org/chainmaker/vm-gasm/v2 v2.1.0
-	chainmaker.org/chainmaker/vm-wasmer/v2 v2.1.0
-	chainmaker.org/chainmaker/vm-wxvm/v2 v2.1.0
+	chainmaker.org/chainmaker/vm-docker-go v0.0.0-20211109023105-59e73fc1b1ad // indirect
+	chainmaker.org/chainmaker/vm-docker-go/v2 v2.0.0-00010101000000-000000000000
+	chainmaker.org/chainmaker/vm-evm/v2 v2.1.1-0.20211110030153-2a0edf2033ba
+	chainmaker.org/chainmaker/vm-gasm/v2 v2.1.1-0.20211110065310-2d75623da32e
+	chainmaker.org/chainmaker/vm-wasmer/v2 v2.1.1-0.20211110071539-93d561baa388
+	chainmaker.org/chainmaker/vm-wxvm/v2 v2.1.1-0.20211110033111-b009bdb5d103
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
 	github.com/ethereum/go-ethereum v1.10.4
@@ -47,6 +49,7 @@ replace (
 	chainmaker.org/chainmaker-go/sync => ./module/sync
 	chainmaker.org/chainmaker-go/txpool => ./module/txpool
 	chainmaker.org/chainmaker-go/vm => ./module/vm
+	chainmaker.org/chainmaker/vm-docker-go/v2 => ../vm-docker-go
 	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v1.0.0
 	google.golang.org/grpc v1.40.0 => google.golang.org/grpc v1.26.0
 )

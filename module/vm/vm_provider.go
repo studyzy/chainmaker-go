@@ -14,7 +14,7 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 
-type Provider func(chainId string) (protocol.VmInstancesManager, error)
+type Provider func(chainId string, config map[string]interface{}) (protocol.VmInstancesManager, error)
 
 var vmProviders = make(map[string]Provider)
 
