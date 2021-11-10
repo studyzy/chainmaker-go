@@ -167,10 +167,13 @@ func freezeOrUnfreezeCert(which int) error {
 }
 
 func revokeCert() error {
-	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return errAdminOrgIdKeyCertIsEmpty
+	var adminKeys, adminCrts []string
+
+	if adminKeyFilePaths != "" {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+	}
+	if adminCrtFilePaths != "" {
+		adminCrts = strings.Split(adminCrtFilePaths, ",")
 	}
 	if len(adminKeys) != len(adminCrts) {
 		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
