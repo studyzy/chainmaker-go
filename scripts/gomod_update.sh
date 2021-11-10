@@ -134,6 +134,7 @@ go get chainmaker.org/chainmaker/vm-evm/v2@${ALPHA}
 go get chainmaker.org/chainmaker/vm-gasm/v2@${ALPHA}
 go get chainmaker.org/chainmaker/vm-wasmer/v2@${ALPHA}
 go get chainmaker.org/chainmaker/vm-wxvm/v2@${ALPHA}
+go get chainmaker.org/chainmaker/vm-docker-go@${ALPHA}
 go mod tidy
 
 cd ./main

@@ -13,7 +13,7 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 	batch "chainmaker.org/chainmaker/txpool-batch/v2"
 	single "chainmaker.org/chainmaker/txpool-single/v2"
-	dockergo "chainmaker.org/chainmaker/vm-docker-go/v2"
+	dockergo "chainmaker.org/chainmaker/vm-docker-go"
 	evm "chainmaker.org/chainmaker/vm-evm/v2"
 	gasm "chainmaker.org/chainmaker/vm-gasm/v2"
 	wasmer "chainmaker.org/chainmaker/vm-wasmer/v2"

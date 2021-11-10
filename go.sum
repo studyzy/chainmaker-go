@@ -40,8 +40,8 @@ chainmaker.org/chainmaker/txpool-single/v2 v2.1.0 h1:hctHTyjnmAjlQpdSoRz0yNY8v1a
 chainmaker.org/chainmaker/txpool-single/v2 v2.1.0/go.mod h1:TJJn/NLxi9Te34VFB5sh/zuYncxAabD9DbhMtzkKaxg=
 chainmaker.org/chainmaker/utils/v2 v2.1.0 h1:qMxtgn5PfS4rMoZyVZJqwVSW3zdVmRJPEvllsHIn/Mg=
 chainmaker.org/chainmaker/utils/v2 v2.1.0/go.mod h1:GppORTQ5PexKKU/vX+PQrnjCvl1uiBZ6rEbb2S0tPOU=
-chainmaker.org/chainmaker/vm-docker-go v0.0.0-20211109023105-59e73fc1b1ad h1:/wTZa8XAP6ajl1tQ1guHLt/TxduVcBfPZaVk89REDTI=
-chainmaker.org/chainmaker/vm-docker-go v0.0.0-20211109023105-59e73fc1b1ad/go.mod h1:3xxBYflbYonaS7T+XCkLSoWI6QrTQfZfDA5ssZa09a8=
+chainmaker.org/chainmaker/vm-docker-go v0.0.0-20211110081421-00aa679a326f h1:loxNWqjAMJfABcAGG7EGInx8qUrcdp1S3J5huhD7siQ=
+chainmaker.org/chainmaker/vm-docker-go v0.0.0-20211110081421-00aa679a326f/go.mod h1:JZopJZqw+0Xe0jkgZYjAm1f5jiSDqFKgkGYZU3+D9Z0=
 chainmaker.org/chainmaker/vm-evm/v2 v2.1.1-0.20211110030153-2a0edf2033ba h1:o9j8XItvBjQRoRd5PxQarG6ZH/rv4brLrNGXzSc289Y=
 chainmaker.org/chainmaker/vm-evm/v2 v2.1.1-0.20211110030153-2a0edf2033ba/go.mod h1:si3rq9cjGMiPj0ylx0bk3Ym5r0T/9XB+iErdnLz7WvU=
 chainmaker.org/chainmaker/vm-gasm/v2 v2.1.1-0.20211110065310-2d75623da32e h1:VBXgGgKDyqUYyRm1OmJVJ2oMbjcmPgIejBq+qFz6IFE=
