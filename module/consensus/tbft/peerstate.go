@@ -93,9 +93,34 @@ func (pcs *PeerStateService) updateWithProto(pcsProto *tbftpb.GossipState) {
 	pcs.VerifingProposal = pcsProto.VerifingProposal
 	validatorSet := pcs.tbftImpl.getValidatorSet()
 	pcs.RoundVoteSet = newRoundVoteSetFromProto(pcs.logger, pcsProto.RoundVoteSet, validatorSet)
+	if pcs.Height == pcs.tbftImpl.Height && pcs.Round == pcs.tbftImpl.Round &&
+		pcs.RoundVoteSet != nil {
+		pcs.logger.Debugf("[%s] updateVoteWithProto: [%d/%d]", pcs.Id, pcs.Height, pcs.Round)
+		pcs.updateVoteWithProto(pcs.RoundVoteSet)
+	}
 	pcs.logger.Debugf("[%s] RoundVoteSet: %s", pcs.Id, pcs.RoundVoteSet)
 }
 
+func (pcs *PeerStateService) updateVoteWithProto(voteSet *roundVoteSet) {
+
+	for _, voter := range pcs.tbftImpl.getValidatorSet().Validators {
+		pcs.logger.Debugf("%s updateVoteWithProto : %v,%v", voter, voteSet.Prevotes, voteSet.Precommits)
+		// prevote Vote
+		vote := voteSet.Prevotes.Votes[voter]
+		if vote != nil && pcs.tbftImpl.Step < tbftpb.Step_PRECOMMIT {
+			pcs.logger.Debugf("updateVoteWithProto prevote : %s", voter)
+			tbftMsg := createPrevoteMsg(vote)
+			pcs.tbftImpl.internalMsgC <- tbftMsg
+		}
+		// precommit Vote
+		vote = voteSet.Precommits.Votes[voter]
+		if vote != nil && pcs.tbftImpl.Step < tbftpb.Step_COMMIT {
+			pcs.logger.Debugf("updateVoteWithProto precommit : %s", voter)
+			tbftMsg := createPrevoteMsg(vote)
+			pcs.tbftImpl.internalMsgC <- tbftMsg
+		}
+	}
+}
 func (pcs *PeerStateService) start() {
 	go pcs.procStateChange()
 }
@@ -209,22 +234,9 @@ func (pcs *PeerStateService) sendPrevoteOfRound(round int32) {
 			fmt.Fprintf(&builder, "]")
 			pcs.logger.Debugf(builder.String())
 
-			// The vote of local node is sent first
 			if _, pOk := pcs.RoundVoteSet.Prevotes.Votes[pcs.tbftImpl.Id]; !pOk {
 				pcs.sendPrevote(vote)
 				return
-			}
-			// Send a vote from another node
-			for _, vote = range prevoteVs.Votes {
-				if vote == nil {
-					continue
-				}
-				if _, pOk := pcs.RoundVoteSet.Prevotes.Votes[vote.Voter]; !pOk {
-					pcs.logger.Debugf("this is a fake node ,send prevote vote, %s", vote.Voter)
-					pcs.sendPrevote(vote)
-					// Only one
-					return
-				}
 			}
 		}
 	}
@@ -245,22 +257,9 @@ func (pcs *PeerStateService) sendPrecommitOfRound(round int32) {
 			fmt.Fprintf(&builder, "]")
 			pcs.logger.Debugf(builder.String())
 
-			// The vote of local node is sent first
 			if _, pOk := pcs.RoundVoteSet.Precommits.Votes[pcs.tbftImpl.Id]; !pOk {
 				pcs.sendPrecommit(vote)
 				return
-			}
-			// Send a vote from another node
-			for _, vote = range precommitVs.Votes {
-				if vote == nil {
-					continue
-				}
-				if _, pOk := pcs.RoundVoteSet.Precommits.Votes[vote.Voter]; !pOk {
-					pcs.logger.Debugf("this is a fake node ,send precommit vote, %s", vote.Voter)
-					pcs.sendPrecommit(vote)
-					// Only one
-					return
-				}
 			}
 		}
 	}
@@ -349,22 +348,9 @@ func (pcs *PeerStateService) sendPrevoteInState(state *ConsensusState) {
 	if prevoteVs != nil {
 		vote, ok := prevoteVs.Votes[pcs.tbftImpl.Id]
 		if ok && pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Prevotes != nil {
-			// The vote of local node is sent first
 			if _, pOk := pcs.RoundVoteSet.Prevotes.Votes[pcs.tbftImpl.Id]; !pOk {
 				pcs.sendPrevote(vote)
 				return
-			}
-			// Send a vote from another node
-			for _, vote = range prevoteVs.Votes {
-				if vote == nil {
-					continue
-				}
-				if _, pOk := pcs.RoundVoteSet.Prevotes.Votes[vote.Voter]; !pOk {
-					pcs.logger.Debugf("this is a fake node ,send prevote vote, %s", vote.Voter)
-					pcs.sendPrevote(vote)
-					// Only one
-					return
-				}
 			}
 		}
 	}
@@ -375,23 +361,10 @@ func (pcs *PeerStateService) sendPrecommitInState(state *ConsensusState) {
 	precommitVs := state.heightRoundVoteSet.precommits(pcs.Round)
 	if precommitVs != nil {
 		vote, ok := precommitVs.Votes[pcs.tbftImpl.Id]
-		// The vote of local node is sent first
 		if ok && pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Precommits != nil {
 			if _, pOk := pcs.RoundVoteSet.Precommits.Votes[pcs.tbftImpl.Id]; !pOk {
 				pcs.sendPrecommit(vote)
 				return
-			}
-			// Send a vote from another node
-			for _, vote = range precommitVs.Votes {
-				if vote == nil {
-					continue
-				}
-				if _, pOk := pcs.RoundVoteSet.Precommits.Votes[vote.Voter]; !pOk {
-					pcs.logger.Debugf("this is a fake node ,send precommit vote, %s", vote.Voter)
-					pcs.sendPrecommit(vote)
-					// Only one
-					return
-				}
 			}
 		}
 	}

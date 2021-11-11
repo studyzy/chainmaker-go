@@ -886,7 +886,8 @@ func (consensus *ConsensusTBFTImpl) addPrevoteVote(vote *Vote) {
 		} else if consensus.Round == vote.Round && voteSet.hasTwoThirdsNoMajority() && !consensus.TriggeredTimeoutPrevote {
 			consensus.logger.Infof("[%s](%d/%d/%s) addVote %v with hasTwoThirdsAny, PrevoteTimeout is igniting",
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
-			consensus.AddTimeout(consensus.PrevoteTimeout(consensus.Round), consensus.Height, consensus.Round, tbftpb.Step_PRECOMMIT)
+			consensus.AddTimeout(consensus.PrevoteTimeout(consensus.Round), consensus.Height,
+				consensus.Round, tbftpb.Step_PRECOMMIT)
 			consensus.TriggeredTimeoutPrevote = true
 		}
 		return
@@ -929,7 +930,8 @@ func (consensus *ConsensusTBFTImpl) addPrecommitVote(vote *Vote) {
 		} else if consensus.Round == vote.Round && voteSet.hasTwoThirdsNoMajority() && !consensus.TriggeredTimeoutPrecommit {
 			consensus.logger.Infof("[%s](%d/%d/%s) addVote %v with hasTwoThirdsNoMajority, PrecommitTimeout is igniting",
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
-			consensus.AddTimeout(consensus.PrecommitTimeout(consensus.Round), consensus.Height, consensus.Round, tbftpb.Step_COMMIT)
+			consensus.AddTimeout(consensus.PrecommitTimeout(consensus.Round), consensus.Height,
+				consensus.Round, tbftpb.Step_COMMIT)
 			consensus.TriggeredTimeoutPrecommit = true
 		}
 		return
