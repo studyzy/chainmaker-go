@@ -24,7 +24,7 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/store/v2/archive"
 	"chainmaker.org/chainmaker/utils/v2"
-	native "chainmaker.org/chainmaker/vm-native"
+	native "chainmaker.org/chainmaker/vm-native/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/time/rate"
 )

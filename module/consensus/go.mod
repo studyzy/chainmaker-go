@@ -4,15 +4,15 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
-	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211025081513-28594b541181
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211101030932-bf3bcb20eb52
-	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211101111610-0d268248b5c8
-	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211021024710-9329804d1c21
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
-	chainmaker.org/chainmaker/raftwal/v2 v2.0.3
-	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211027124954-09b710bd9ce8
-	chainmaker.org/chainmaker/vm-native v0.0.0-20211029075817-046b5f1bbc31
+	chainmaker.org/chainmaker/chainconf/v2 v2.1.0
+	chainmaker.org/chainmaker/common/v2 v2.1.0
+	chainmaker.org/chainmaker/localconf/v2 v2.1.0
+	chainmaker.org/chainmaker/logger/v2 v2.1.0
+	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
+	chainmaker.org/chainmaker/protocol/v2 v2.1.0
+	chainmaker.org/chainmaker/raftwal/v2 v2.1.0
+	chainmaker.org/chainmaker/utils/v2 v2.1.0
+	chainmaker.org/chainmaker/vm-native/v2 v2.1.0
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
@@ -35,5 +35,5 @@ require (
 
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
-	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
+	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v1.0.0
 )

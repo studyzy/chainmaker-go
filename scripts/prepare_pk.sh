@@ -25,6 +25,8 @@ CRYPTOGEN_TOOL_BIN=${CRYPTOGEN_TOOL_PATH}/bin/chainmaker-cryptogen
 CRYPTOGEN_TOOL_CONF=${CRYPTOGEN_TOOL_PATH}/config/pk_config_template.yml
 #CRYPTOGEN_TOOL_PKCS11_KEYS=${CRYPTOGEN_TOOL_PATH}/config/pkcs11_keys.yml
 
+VERSION=v2.1.0_alpha
+
 function show_help() {
     echo "Usage:  "
     echo "  prepare_pk.sh node_cnt(4/7/10/13/16) chain_cnt(1-4) p2p_port(default:11301) rpc_port(default:12301)"
@@ -219,6 +221,7 @@ function generate_config() {
             fi
 
             xsed "s%{chain_id}%chain$j%g" node$i/chainconfig/bc$j.yml
+            xsed "s%{version}%$VERSION%g" node$i/chainconfig/bc$j.yml
             xsed "s%{hash_type}%$HASH_TYPE%g" node$i/chainconfig/bc$j.yml
 
             if  [ $NODE_CNT -eq 7 ] || [ $NODE_CNT -eq 13 ] || [ $NODE_CNT -eq 16 ]; then

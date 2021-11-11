@@ -5,10 +5,24 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-log:
-  config_file: ../config-sql/wx-org1/log.yml          # config file of logger configuration.
+# [*] represents the item cannot be modified after startup
 
+# The blockchain auth type, shoudle be consistent with auth type in each chain config (e.g., bc1.yml)
+# The auth type can be permissionedWithCert, permissionedWithKey, public.
+# By default it is permissionedWithCert.
+# permissionedWithCert: permissioned blockchain, using x.509 certificate to identify members.
+# permissionedWithKey: permissioned blockchain, using public key to identify members.
+# public: public blockchain, using public key to identify members.
+auth_type: "permissionedWithCert" # [*]
+
+# Logger settings
+log:
+  # Logger configuration file path
+  config_file: ../config-sql/wx-org1/log.yml
+
+# Chains the node currently knows
 blockchain:
+  # chain id and its genesis block file path
   - chainId: chain1
     genesis: ../config-sql/wx-org1/chainconfig/bc1.yml
 #  - chainId: chain2
@@ -19,12 +33,9 @@ blockchain:
 #    genesis: ../config-sql/wx-org1/chainconfig/bc4.yml
 
 node:
-  # 节点类型：full
-  type:              full
   org_id:            wx-org1.chainmaker.org
   priv_key_file:     ../config-sql/wx-org1/certs/node/consensus1/consensus1.sign.key
   cert_file:         ../config-sql/wx-org1/certs/node/consensus1/consensus1.sign.crt
-  signer_cache_size: 1000
   cert_cache_size:   1000
 
 net:
@@ -48,8 +59,7 @@ txpool:
   max_txpool_size: 100000 # 普通交易池上限
   max_config_txpool_size: 10 # config交易池的上限
   full_notify_again_time: 30 # 交易池溢出后，再次通知的时间间隔(秒)
-  batch_max_size: 1000 # 批次最大大小
-  batch_create_timeout: 1000 # 创建批次超时时间，单位毫秒
+    batch_create_timeout: 1000 # 创建批次超时时间，单位毫秒
 
 rpc:
   provider: grpc

@@ -19,12 +19,9 @@ blockchain:
 #    genesis: ../config-sql/wx-org4/chainconfig/bc4.yml
 
 node:
-  # 节点类型：full
-  type:              full
   org_id:            wx-org4.chainmaker.org
   priv_key_file:     ../config-sql/wx-org4/certs/node/consensus1/consensus1.sign.key
   cert_file:         ../config-sql/wx-org4/certs/node/consensus1/consensus1.sign.crt
-  signer_cache_size: 1000
   cert_cache_size:   1000
 
 net:
@@ -48,8 +45,7 @@ txpool:
   max_txpool_size: 100000 # 普通交易池上限
   max_config_txpool_size: 10 # config交易池的上限
   full_notify_again_time: 30 # 交易池溢出后，再次通知的时间间隔(秒)
-  batch_max_size: 1000 # 批次最大大小
-  batch_create_timeout: 1000 # 创建批次超时时间，单位毫秒
+    batch_create_timeout: 1000 # 创建批次超时时间，单位毫秒
 
 rpc:
   provider: grpc

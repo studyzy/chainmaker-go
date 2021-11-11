@@ -12,15 +12,15 @@ require (
 	chainmaker.org/chainmaker-go/sync v0.0.0
 	chainmaker.org/chainmaker-go/txpool v0.0.0
 	chainmaker.org/chainmaker-go/vm v0.0.0
-	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20211025081513-28594b541181
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20211101030932-bf3bcb20eb52
-	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20211101111610-0d268248b5c8
-	chainmaker.org/chainmaker/logger/v2 v2.0.1-0.20211015125919-8e5199930ac9
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20211021024710-9329804d1c21
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20211014144951-97323532a236
-	chainmaker.org/chainmaker/store/v2 v2.0.1-0.20211101060552-ab2318ad9c6e
-	chainmaker.org/chainmaker/utils/v2 v2.0.0-20211027124954-09b710bd9ce8
-	chainmaker.org/chainmaker/vm v0.0.0-20211028094551-9b2cca96d10d
+	chainmaker.org/chainmaker/chainconf/v2 v2.1.0
+	chainmaker.org/chainmaker/common/v2 v2.1.0
+	chainmaker.org/chainmaker/localconf/v2 v2.1.0
+	chainmaker.org/chainmaker/logger/v2 v2.1.0
+	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
+	chainmaker.org/chainmaker/protocol/v2 v2.1.0
+	chainmaker.org/chainmaker/store/v2 v2.1.0
+	chainmaker.org/chainmaker/utils/v2 v2.1.0
+	chainmaker.org/chainmaker/vm/v2 v2.1.0
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20210113012101-fb4e108d2519 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
@@ -39,6 +39,6 @@ replace (
 	chainmaker.org/chainmaker-go/sync => ../sync
 	chainmaker.org/chainmaker-go/txpool => ../txpool
 	chainmaker.org/chainmaker-go/vm => ../vm
-	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
+	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v1.0.0
 	google.golang.org/grpc v1.40.0 => google.golang.org/grpc v1.26.0
 )
