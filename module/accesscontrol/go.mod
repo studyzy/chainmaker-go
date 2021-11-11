@@ -7,7 +7,7 @@ require (
 	chainmaker.org/chainmaker/localconf/v2 v2.1.0
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
-	chainmaker.org/chainmaker/protocol/v2 v2.1.0
+	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211110022918-9516552c201a
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0

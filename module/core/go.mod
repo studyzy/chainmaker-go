@@ -5,15 +5,15 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/consensus v0.0.0
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
-	chainmaker.org/chainmaker/chainconf/v2 v2.1.0
+	chainmaker.org/chainmaker/chainconf/v2 v2.1.1-0.20211110023535-5bf814f90c4c
 	chainmaker.org/chainmaker/common/v2 v2.1.0
 	chainmaker.org/chainmaker/localconf/v2 v2.1.0
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
-	chainmaker.org/chainmaker/protocol/v2 v2.1.0
+	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211110022918-9516552c201a
 	chainmaker.org/chainmaker/txpool-batch/v2 v2.1.0
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
-	chainmaker.org/chainmaker/vm/v2 v2.1.0
+	chainmaker.org/chainmaker/vm/v2 v2.1.1-0.20211110024944-978019e15d33
 	github.com/ethereum/go-ethereum v1.10.3 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/panjf2000/ants/v2 v2.4.3

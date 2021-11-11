@@ -9,4 +9,14 @@ pid=`ps -ef | grep chainmaker | grep "\-c ../config/{org_id}/chainmaker.yml" | g
 if [ ! -z ${pid} ];then
     kill -9 $pid
 fi
+
+docker_go_container_name=`grep -A1 'dockervm:' ../config/{org_id}/chainmaker.yml | tail -n1 | awk '{print $2}'`
+docker_container_lists=(`docker ps -a | grep ${docker_go_container_name} | awk '{print $1}'`)
+
+for container_id in ${docker_container_lists[*]}
+do
+  docker stop ${container_id}
+  docker rm ${container_id}
+done
+
 echo "chainmaker is stopped"

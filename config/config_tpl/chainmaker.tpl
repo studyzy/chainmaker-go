@@ -316,3 +316,15 @@ storage:
       sqldb_type: mysql
       # Mysql connection info, such as:  root:admin@tcp(127.0.0.1:3306)/
       dsn: root:password@tcp(127.0.0.1:3306)/
+
+vm:
+  enable_dockervm: {enable_dockervm}
+  dockervm_container_name: {dockervm_container_name}
+  dockervm_mount_path: ../data/{org_id}/docker-go  # mount point in chain maker
+  dockervm_log_path: ../log/{org_id}/docker-go
+  log_in_console: false
+  log_level: INFO
+  uds_open: true
+  tx_size: 1000
+  user_num: 100
+  time_limit: 2                              # second
