@@ -108,19 +108,21 @@ func grantOrRevokeContractAccess(which int) error {
 	defer client.Stop()
 
 	if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithCert {
-		adminKeys = strings.Split(adminKeyFilePaths, ",")
-		adminCrts = strings.Split(adminCrtFilePaths, ",")
-		if len(adminKeys) == 0 || len(adminCrts) == 0 {
-			return errAdminOrgIdKeyCertIsEmpty
+		if adminKeyFilePaths != "" {
+			adminKeys = strings.Split(adminKeyFilePaths, ",")
+		}
+		if adminCrtFilePaths != "" {
+			adminCrts = strings.Split(adminCrtFilePaths, ",")
 		}
 		if len(adminKeys) != len(adminCrts) {
 			return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 		}
 	} else if sdk.AuthTypeToStringMap[client.GetAuthType()] == protocol.PermissionedWithKey {
-		adminKeys = strings.Split(adminKeyFilePaths, ",")
-		adminOrgs = strings.Split(adminOrgIds, ",")
-		if len(adminKeys) == 0 || len(adminOrgs) == 0 {
-			return errAdminOrgIdKeyCertIsEmpty
+		if adminKeyFilePaths != "" {
+			adminKeys = strings.Split(adminKeyFilePaths, ",")
+		}
+		if adminOrgIds != "" {
+			adminOrgs = strings.Split(adminOrgIds, ",")
 		}
 		if len(adminKeys) != len(adminOrgs) {
 			return fmt.Errorf(ADMIN_ORGID_KEY_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminOrgs))

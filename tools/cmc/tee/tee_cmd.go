@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package tee
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -80,10 +79,13 @@ func createClientWithConfig() (*sdk.ChainClient, error) {
 }
 
 func createMultiSignAdmins(adminKeyFilePaths string, adminCrtFilePaths string) ([]string, []string, error) {
-	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return nil, nil, errors.New("no admin users given for sign payload")
+	var adminKeys, adminCrts []string
+
+	if adminKeyFilePaths != "" {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+	}
+	if adminCrtFilePaths != "" {
+		adminCrts = strings.Split(adminCrtFilePaths, ",")
 	}
 	if len(adminKeys) != len(adminCrts) {
 		return nil, nil, fmt.Errorf("admin keys num(%v) is not equals certs num(%v)", len(adminKeys), len(adminCrts))
@@ -93,10 +95,13 @@ func createMultiSignAdmins(adminKeyFilePaths string, adminCrtFilePaths string) (
 }
 
 func createMultiSignAdminsForPK(adminKeyFilePaths string, adminOrgIds string) ([]string, []string, error) {
-	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	adminOrgs := strings.Split(adminOrgIds, ",")
-	if len(adminKeys) == 0 || len(adminOrgs) == 0 {
-		return nil, nil, errors.New("no admin users given for sign payload")
+	var adminKeys, adminOrgs []string
+
+	if adminKeyFilePaths != "" {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+	}
+	if adminOrgIds != "" {
+		adminOrgs = strings.Split(adminOrgIds, ",")
 	}
 	if len(adminKeys) != len(adminOrgs) {
 		return nil, nil, fmt.Errorf("admin keys num(%v) is not equals org-id num(%v)", len(adminKeys), len(adminOrgs))
