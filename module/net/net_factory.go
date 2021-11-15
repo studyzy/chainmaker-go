@@ -10,8 +10,8 @@ import (
 	"errors"
 	"io/ioutil"
 
-	libp2p "chainmaker.org/chainmaker/chainmaker-net-libp2p/libp2pnet"
-	liquid "chainmaker.org/chainmaker/chainmaker-net-liquid/liquidnet"
+	libp2p "chainmaker.org/chainmaker/net-libp2p/libp2pnet"
+	liquid "chainmaker.org/chainmaker/net-liquid/liquidnet"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 

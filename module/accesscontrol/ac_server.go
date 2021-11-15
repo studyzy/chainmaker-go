@@ -218,7 +218,7 @@ type memberCached struct {
 	certChain []*bcx509.Certificate
 }
 
-func initAccessControlService(hashType, localOrgId, authType string, chainConf *config.ChainConfig,
+func initAccessControlService(hashType, authType string,
 	store protocol.BlockchainStore, log protocol.Logger) *accessControlService {
 	acService := &accessControlService{
 		orgNum:                0,
@@ -231,7 +231,6 @@ func initAccessControlService(hashType, localOrgId, authType string, chainConf *
 		hashType:              hashType,
 		authType:              authType,
 	}
-	acService.initResourcePolicy(chainConf.ResourcePolicies, localOrgId)
 	return acService
 }
 
@@ -365,6 +364,12 @@ func (acs *accessControlService) createDefaultResourcePolicy(localOrgId string) 
 		syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String(), policyConfig)
 	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
 		syscontract.ContractManageFunction_REVOKE_CONTRACT.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_GRANT_CONTRACT_ACCESS.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_REVOKE_CONTRACT_ACCESS.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_VERIFY_CONTRACT_ACCESS.String(), policyConfig)
 
 	// certificate management
 	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
@@ -514,6 +519,12 @@ func (acs *accessControlService) createDefaultResourcePolicyForPK(localOrgId str
 		syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String(), policyConfig)
 	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
 		syscontract.ContractManageFunction_REVOKE_CONTRACT.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_GRANT_CONTRACT_ACCESS.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_REVOKE_CONTRACT_ACCESS.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_VERIFY_CONTRACT_ACCESS.String(), policyConfig)
 
 	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PUBKEY_MANAGE.String()+"-"+
 		syscontract.PubkeyManageFunction_PUBKEY_ADD.String(), policySelfConfig)
@@ -751,6 +762,32 @@ func (acs *accessControlService) newPkMember(member *pbac.Member, adminList,
 	}
 	if pkMember.GetOrgId() != member.OrgId && member.OrgId != "" {
 		return nil, fmt.Errorf("new public key member failed: member orgId does not match on chain")
+	}
+	cached := &memberCached{
+		member:    pkMember,
+		certChain: nil,
+	}
+	acs.addMemberToCache(string(member.MemberInfo), cached)
+	return pkMember, nil
+}
+
+func (acs *accessControlService) newNodePkMember(member *pbac.Member,
+	consensusList *sync.Map) (protocol.Member, error) {
+
+	memberCache := acs.getMemberFromCache(member)
+	if memberCache != nil {
+		if memberCache.GetRole() != protocol.RoleConsensusNode &&
+			memberCache.GetRole() != protocol.RoleCommonNode {
+			return nil, fmt.Errorf("get member from cache, the public key is not a node member")
+		}
+		return memberCache, nil
+	}
+	pkMember, err := newPkNodeMemberFromAcs(member, consensusList, acs)
+	if err != nil {
+		return nil, err
+	}
+	if pkMember.GetOrgId() != member.OrgId && member.OrgId != "" {
+		return nil, fmt.Errorf("new public key node member failed: member orgId does not match on chain")
 	}
 	cached := &memberCached{
 		member:    pkMember,

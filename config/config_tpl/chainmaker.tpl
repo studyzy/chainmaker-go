@@ -5,12 +5,24 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-auth_type: "permissionedWithCert"   # permissionedWithCert / permissionedWithKey / public
+# [*] the represented items could not be modified after startup
 
+# "auth_type" should be consistent among the whole chain configuration files(e.g., bc1.yml and chainmaker.yml)
+# The auth type can be permissionedWithCert, permissionedWithKey, public.
+# By default it is permissionedWithCert.
+# permissionedWithCert: permissioned blockchain, using x.509 certificate to identify members.
+# permissionedWithKey: permissioned blockchain, using public key to identify members.
+# public: public blockchain, using public key to identify members.
+auth_type: "permissionedWithCert" # [*]
+
+# Logger settings
 log:
-  config_file: ../config/{org_path}/log.yml          # config file of logger configuration.
+  # Logger configuration file path.
+  config_file: ../config/{org_path}/log.yml
 
+# Chains the node currently joined in
 blockchain:
+  # chain id and its genesis block file path.
 #  - chainId: chain1
 #    genesis: ../config/{org_path1}/chainconfig/bc1.yml
 #  - chainId: chain2
@@ -20,150 +32,299 @@ blockchain:
 #  - chainId: chain4
 #    genesis: ../config/{org_path4}/chainconfig/bc4.yml
 
+# Blockchain node settings
 node:
-  # 节点类型：full
-  type:              full
-  org_id:            {org_id}
-  priv_key_file:     ../config/{org_path}/certs/{node_cert_path}.key
-  cert_file:         ../config/{org_path}/certs/{node_cert_path}.crt
-  signer_cache_size: 1000
-  cert_cache_size:   1000
-  pkcs11:
-    enabled: false
-    library: /usr/local/lib64/pkcs11/libupkcs11.so      # path to the so file of pkcs11 interface
-    label: HSM                                          # label for the slot to be used
-    password: 11111111                                  # password to logon the HSM
-    session_cache_size: 10                              # size of HSM session cache, default to 10
-    hash: "SHA256"                                      # hash algorithm used to compute SKI
+  # Organization id is the node belongs to.
+  # When the auth type is public, org id is ignored.
+  org_id:            {org_id}  # [*]
 
+  # Private key file path
+  priv_key_file:     ../config/{org_path}/certs/{node_cert_path}.key  # [*]
+
+  # Certificate file path
+  cert_file:         ../config/{org_path}/certs/{node_cert_path}.crt  # [*]
+
+  # Certificate cache size, used to speed up member identity verification.
+  # By default the cache size is 1000.
+  cert_cache_size:   1000
+
+  # PKCS#11 crypto settings
+  pkcs11:
+    # Enable it or not
+    enabled: false  # [*]
+
+    # Path for the pkcs11 interface file(.so)
+    library: /usr/local/lib64/pkcs11/libupkcs11.so
+
+    # Label for the slot to be used
+    label: HSM
+
+    # HSM Password
+    password: 11111111
+
+    # Size for HSM session cache, default value is 10.
+    session_cache_size: 10
+
+    # Hash algorithm is used to calculate SKI.
+    # It can be SHA256 or SM3.
+    hash: "SHA256"  # [*]
+
+# Network Settings
 net:
+  # Network provider, can be libp2p or liquid.
+  # libp2p: using libp2p components to build the p2p module.
+  # liquid: a new p2p network module. We build it from 0 to 1.
+  # This item must be consistent across the blockchain network.
   provider: LibP2P
+
+  # The address and port the node listens on.
+  # By default, it uses 0.0.0.0 to listen on all network interfaces.
   listen_addr: /ip4/0.0.0.0/tcp/{net_port}
-  #  peer_stream_pool_size: 100
-  #  max_peer_count_allow: 20
-  #  peer_elimination_strategy: 3  # 1 Random, 2 FIFO, 3 LIFO
-  #  seeds ip格式为： "/ip4/127.0.0.1/tcp/11301/p2p/"+nodeid
-  #  seeds dns格式为："/dns/cm-node1.org/tcp/11301/p2p/"+nodeid
+
+  # Max stream of a connection.
+  # peer_stream_pool_size: 100
+
+  # Max number of peers the node can connect.
+  # max_peer_count_allow: 20
+
+  # The strategy for eliminating node when the amount of connected peers reaches the max value
+  # It could be: 1 Random, 2 FIFO, 3 LIFO. The default strategy is LIFO.
+  # peer_elimination_strategy: 3
+
+  # The seeds list used to setup network among all the peer seed when system starting.
+  # The connection supervisor will try to dial seed peer whenever the connection is broken.
+  # Example ip format: "/ip4/127.0.0.1/tcp/11301/p2p/"+nodeid
+  # Example dns format："/dns/cm-node1.org/tcp/11301/p2p/"+nodeid
   seeds:
 
+  # Network tls settings.
   tls:
+    # Enable tls or not. Currently it can only be true...
     enabled: true
+
+    # TLS private key file path.
     priv_key_file: ../config/{org_path}/certs/{net_cert_path}.key
+
+    # TLS Certificate file path.
     cert_file: ../config/{org_path}/certs/{net_cert_path}.crt
-#  blacklist:
-#    addresses:
-#      - "127.0.0.1:11305"
-#      - "192.168.1.8"
-#    node_ids:
-#      - "QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
-#      - "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
-#  custom_chain_trust_roots:
-#    - chain_id: "chain1"
-#      trust_roots:
-#        - org_id: "{org_id}"
-#          root: "../config/{org_path}/certs/ca/{org_id}/ca.crt"
 
+  # The blacklist is automatically block the listed seed to connect.
+  # blacklist:
+      # The addresses in blacklist.
+      # The address format can be ip or ip+port.
+      # addresses:
+      #   - "127.0.0.1:11301"
+      #   - "192.168.1.8"
 
+      # The node ids in blacklist.
+      # node_ids:
+      #   - "QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
+
+# Transaction pool settings
+# Other txpool settings can be found in tx_Pool_config.go
 txpool:
-  max_txpool_size: 50000 # 普通交易池上限
-  max_config_txpool_size: 10 # config交易池的上限
-  full_notify_again_time: 30 # 交易池溢出后，再次通知的时间间隔(秒)
-#  pool_type: "batch"  # single/batch：single实时进入交易池，batch批量进入交易池
-#  batch_max_size: 30000 # 批次最大大小
-#  batch_create_timeout: 200 # 创建批次超时时间，单位毫秒
+  # txpool type, can be signle or batch.
+  # By default the txpool type is single.
+  pool_type: "single"
 
+  # Max transaction count in txpool.
+  # If txpool is full, the following transactions will be discarded.
+  max_txpool_size: 50000
+
+  # Max config transaction count in config txpool.
+  max_config_txpool_size: 10
+
+  # Interval of creating a transaction batch, only for batch txpool, in millisecond.
+  # batch_create_timeout: 200
+
+# RPC service setting
 rpc:
-  provider: grpc
+  # RPC type, can only be grpc now
+  provider: grpc  # [*]
+
+  # RPC port
   port: {rpc_port}
-  # 检查链配置TrustRoots证书变化时间间隔，单位：s，最小值为10s
+
+  # Interval of checking trust root changes, in seconds.
+  # If changed, the rpc server's root certificate pool will also change.
+  # Only valid if tls is enabled.
+  # The minium value is 10.
   check_chain_conf_trust_roots_change_interval: 60
+
+  # Rate limit related settings
+  # Here we use token bucket to limit rate.
   ratelimit:
+    # Ratelimit switch. Default is false.
     enabled: false
-    # 限速类型：0-全局限速；1-基于来源IP限速
+
+    # Rate limit type
+    # 0: limit globally, 1: limit by ip
     type: 0
-    # 每秒补充令牌数，取值：-1-不受限；0-默认值（10000）
+
+    # Token number added to bucket per second.
+    # -1: unlimited, by default is 10000.
     token_per_second: -1
-    # 令牌桶大小，取值：-1-不受限；0-默认值（10000）
+
+    # Token bucket size.
+    # -1: unlimited, by default is 10000.
     token_bucket_size: -1
+
+  # Rate limit settings for subscriber
   subscriber:
-    # 历史消息订阅流控，实时消息订阅不会进行流控
     ratelimit:
-      # 每秒补充令牌数，取值：-1-不受限；0-默认值（1000）
       token_per_second: 100
-      # 令牌桶大小，取值：-1-不受限；0-默认值（1000）
       token_bucket_size: 100
+
+  # RPC TLS settings
   tls:
-    # TLS模式:
-    #   disable - 不启用TLS
-    #   oneway  - 单向认证
-    #   twoway  - 双向认证
-    #mode: disable
-    #mode: oneway
+    # TLS mode, can be disable, oneway, twoway.
     mode:           twoway
+
+    # RPC TLS private key file path
     priv_key_file:  ../config/{org_path}/certs/{rpc_cert_path}.key
+
+    # RPC TLS public key file path
     cert_file:      ../config/{org_path}/certs/{rpc_cert_path}.crt
+
+  # RPC blacklisted ip addresses
   blacklist:
     addresses:
-      #- "127.0.0.1"
+      # - "127.0.0.1"
 
+# Monitor related settings
 monitor:
-  enabled: true
+  # Monitor service switch, default is false.
+  enabled: false
+
+  # Monitor service port
   port: {monitor_port}
 
+# PProf Settings
 pprof:
+  # If pprof is enabled or not
   enabled: false
+
+  # PProf port
   port: {pprof_port}
 
+# Consensus related settings
 consensus:
   raft:
+    # Take a snapshot based on the set the number of blocks.
+    # If raft nodes change, a snapshot is taken immediately.
     snap_count: 10
-    # 是否异步Wal文件保存，true异步保存，false同步保存
+
+    # Saving wal asynchronously switch. Default is true.
     async_wal_save: true
-    # 1 time.Duration 表示1 * time.Second
+
+    # Min time unit in rate election and heartbeat.
     ticker: 1
 
+# Scheduler related settings
+scheduler:
+  # whether log the txRWSet map in debug mode
+  rwset_log: false
+
+# Storage config settings
+# Contains blockDb, stateDb, historyDb, resultDb, contractEventDb
+#
+# blockDb: block transaction data,                          support leveldb, mysql, badgerdb
+# stateDb: world state data,                                support leveldb, mysql, badgerdb
+# historyDb: world state change history of transactions,    support leveldb, mysql, badgerdb
+# resultDb: transaction execution results data,             support leveldb, mysql, badgerdb
+# contractEventDb: contract emit event data,                support mysql
+#
+# provider, sqldb_type cannot be changed after startup.
+# store_path, dsn the content cannot be changed after startup.
 storage:
-  store_path: ../data/{org_id}/ledgerData1
-  # 最小的不允许归档的区块高度
+  # Default store path
+  store_path: ../data/{org_id}/ledgerData1 # [*]
+
+  # Prefix for mysql db name
+  # db_prefix: org1_
+
+  # Minimum block height not allowed to be archived
   unarchive_block_height: 300000
-#  encryptor: sm4    # 数据落盘对称加密算法：sm4/aes
-#  encrypt_key: "1234567890123456" # 对称加密密钥：16 bytes key，如果开启PKCS11则为密钥KeyID
+
+  # Symmetric encryption algorithm for writing data to disk. can be sm4 or aes
+  # encryptor: sm4    # [*]
+
+  # Symmetric encryption key:16 bytes key
+  # If pkcs11 is enabled, it is the keyID
+  # encrypt_key: "1234567890123456"
+
+  # Block db config
   blockdb_config:
+    # Databases type support leveldb, sql, badgerdb
+    provider: leveldb # [*]
+    # If provider is leveldb, leveldb_config should not be null.
+    leveldb_config:
+      # LevelDb store path
+      store_path: ../data/{org_id}/block
+
+    # Example for sql provider
+    # Databases type support leveldb, sql, badgerdb
+    # provider: sql # [*]
+    # If provider is sql, sqldb_config should not be null.
+    # sqldb_config:
+      # Sql db type, can be mysql, sqlite. sqlite only for test
+      # sqldb_type: mysql # # [*]
+      # Mysql connection info, the database name is not required. such as:  root:admin@tcp(127.0.0.1:3306)/
+      # dsn: root:password@tcp(127.0.0.1:3306)/
+
+    # Example for badgerdb provider
+    # Databases type support leveldb, sql, badgerdb
+    # provider: badgerdb
+    # If provider is badgerdb, badgerdb_config should not be null.
+    # badgerdb_config:
+      # BadgerDb store path
+      # store_path: ../data/wx-org1.chainmaker.org/history
+      # Whether compression is enabled for stored data, default is 0: disabled
+      # compression: 0
+      # Key and value are stored separately when value is greater than this byte, default is 1024 * 10
+      # value_threshold: 256
+      # Number of key value pairs written in batch. default is 128
+      # write_batch_size: 1024
+
+  # State db config
+  statedb_config:
     provider: leveldb
     leveldb_config:
-      store_path: ../data/{org_id}/block
-  statedb_config:
-    provider: leveldb # leveldb/sql 二选一
-    leveldb_config: # leveldb config
       store_path: ../data/{org_id}/state
-  #    sqldb_config: # sql config，只有provider为sql的时候才需要配置和启用这个配置
-  #      sqldb_type: mysql           #具体的sql db类型，目前支持mysql，sqlite
-  #      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
+
+  # History db config
   historydb_config:
     provider: leveldb
     leveldb_config:
       store_path: ../data/{org_id}/history
-#  historydb_config:
-#    provider: rocksdb
-#    rocksdb_config:
-#      write_buffer_size: 64
-#      db_write_buffer_size: 4
-#      block_cache_size: 128
-#      max_write_buffer_number: 10
-#      max_background_compactions: 4
-#      max_background_flushes: 2
-#      bloom_filter_bits: 10
+
+  # Result db config
   resultdb_config:
     provider: leveldb
     leveldb_config:
       store_path: ../data/{org_id}/result
-  disable_contract_eventdb: true  #是否禁止合约事件存储功能，默认为true，如果设置为false,需要配置mysql
+
+  # Disable contract event database or not. If it is false, contract_eventdb_config must be mysql
+  disable_contract_eventdb: true
+  # Contract event db config
   contract_eventdb_config:
-    provider: sql                 #如果开启contract event db 功能，需要指定provider为sql
+    # Event db only support sql
+    provider: sql
+    # Sql db config
     sqldb_config:
-      sqldb_type: mysql           #contract event db 只支持mysql
-      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
-core:
-  evidence: false
-scheduler:
-  rwset_log: false #whether log the txRWSet map in the debug mode
+      # Event db only support mysql
+      sqldb_type: mysql
+      # Mysql connection info, such as:  root:admin@tcp(127.0.0.1:3306)/
+      dsn: root:password@tcp(127.0.0.1:3306)/
+
+vm:
+  enable_dockervm: {enable_dockervm}
+  dockervm_container_name: {dockervm_container_name}
+  dockervm_mount_path: ../data/{org_id}/docker-go  # mount point in chain maker
+  dockervm_log_path: ../log/{org_id}/docker-go
+  log_in_console: false
+  log_level: INFO
+  uds_open: true
+  tx_size: 1000
+  user_num: 100
+  time_limit: 2                              # second

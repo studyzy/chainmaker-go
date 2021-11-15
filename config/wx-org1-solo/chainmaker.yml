@@ -21,12 +21,10 @@ blockchain:
 #    genesis: ../config/wx-org1-solo/chainconfig/bc4.yml
 
 node:
-  # 节点类型：full
   type: full
   org_id: wx-org1.chainmaker.org
   priv_key_file: ../config/wx-org1-solo/certs/node/consensus1/consensus1.sign.key
   cert_file: ../config/wx-org1-solo/certs/node/consensus1/consensus1.sign.crt
-  signer_cache_size: 1000
   cert_cache_size: 1000
 
 net:
@@ -102,4 +100,18 @@ debug:
   # 是否开启CLI功能，过度期间使用
   is_cli_open: true
   is_http_open: false
+
+
+vm:
+  enable_dockervm: true
+  dockervm_container_name: chainmaker-vm-docker-go-container
+  dockervm_mount_path: ../data/org1/docker-go     # mount point in chain maker
+  dockervm_log_path: ../log/org1/dockervm
+  log_in_console: true
+  log_level: INFO
+  uds_open: true                             # default is unix domain socket connection
+  tx_size: 1000
+  user_num: 100
+  time_limit: 20
+
 

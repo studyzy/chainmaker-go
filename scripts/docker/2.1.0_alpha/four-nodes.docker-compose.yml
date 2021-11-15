@@ -1,0 +1,86 @@
+version: '3'
+
+services:
+  node1:
+    container_name: cm-node1
+    hostname: cm-node1
+    image: "chainmakerofficial/chainmaker:v2.1.0"
+    restart: always
+    working_dir: "/chainmaker-go/bin"
+    command: "./chainmaker start -c ../config/wx-org1.chainmaker.org/chainmaker.yml > panic.log"
+    ports:
+      - "11301:11301"
+      - "12301:12301"
+    volumes:
+      - ../config/four-nodes/wx-org1.chainmaker.org:/chainmaker-go/config/wx-org1.chainmaker.org
+      - ./tmp/data1:/chainmaker-go/data
+      - ./tmp/log1:/chainmaker-go/log
+    networks:
+      chainmakerofficial-localnet:
+        aliases:      
+          - cm-node1
+        ipv4_address: 172.49.1.11
+  node2:
+    container_name: cm-node2
+    hostname: cm-node2
+    image: "chainmakerofficial/chainmaker:v2.1.0"
+    restart: always
+    working_dir: "/chainmaker-go/bin"
+    command: "./chainmaker start -c ../config/wx-org2.chainmaker.org/chainmaker.yml > panic.log"
+    ports:
+      - "11302:11302"
+      - "12302:12302"
+    volumes:
+      - ../config/four-nodes/wx-org2.chainmaker.org:/chainmaker-go/config/wx-org2.chainmaker.org
+      - ./tmp/data2:/chainmaker-go/data
+      - ./tmp/log2:/chainmaker-go/log
+    networks:
+      chainmakerofficial-localnet:
+        aliases:      
+          - cm-node2
+        ipv4_address: 172.49.1.12
+  node3:
+    container_name: cm-node3
+    hostname: cm-node3
+    image: "chainmakerofficial/chainmaker:v2.1.0"
+    restart: always
+    working_dir: "/chainmaker-go/bin"
+    command: "./chainmaker start -c ../config/wx-org3.chainmaker.org/chainmaker.yml > panic.log"
+    ports:
+      - "11303:11303"
+      - "12303:12303"
+    volumes:
+      - ../config/four-nodes/wx-org3.chainmaker.org:/chainmaker-go/config/wx-org3.chainmaker.org
+      - ./tmp/data3:/chainmaker-go/data
+      - ./tmp/log3:/chainmaker-go/log
+    networks:
+      chainmakerofficial-localnet:
+        aliases:      
+          - cm-node3
+        ipv4_address: 172.49.1.13
+  node4:
+    container_name: cm-node4
+    hostname: cm-node4
+    image: "chainmakerofficial/chainmaker:v2.1.0"
+    restart: always
+    working_dir: "/chainmaker-go/bin"
+    command: "./chainmaker start -c ../config/wx-org4.chainmaker.org/chainmaker.yml > panic.log"
+    ports:
+      - "11304:11304"
+      - "12304:12304"
+    volumes:
+      - ../config/four-nodes/wx-org4.chainmaker.org:/chainmaker-go/config/wx-org4.chainmaker.org
+      - ./tmp/data4:/chainmaker-go/data
+      - ./tmp/log4:/chainmaker-go/log
+    networks:
+      chainmakerofficial-localnet:
+        aliases:      
+          - cm-node4
+        ipv4_address: 172.49.1.14
+
+networks:
+  chainmakerofficial-localnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.49.1.0/16

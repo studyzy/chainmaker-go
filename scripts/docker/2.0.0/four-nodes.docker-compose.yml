@@ -13,7 +13,7 @@ services:
       - "12301:12301"
     volumes:
       - ../config/four-nodes/wx-org1.chainmaker.org:/chainmaker-go/config/wx-org1.chainmaker.org
-      - node1_data:/chainmaker-go/data
+      - ./tmp/data1:/chainmaker-go/data
       - ./tmp/log1:/chainmaker-go/log
     networks:
       chainmakerofficial-localnet:
@@ -32,7 +32,7 @@ services:
       - "12302:12302"
     volumes:
       - ../config/four-nodes/wx-org2.chainmaker.org:/chainmaker-go/config/wx-org2.chainmaker.org
-      - node2_data:/chainmaker-go/data
+      - ./tmp/data2:/chainmaker-go/data
       - ./tmp/log2:/chainmaker-go/log
     networks:
       chainmakerofficial-localnet:
@@ -51,7 +51,7 @@ services:
       - "12303:12303"
     volumes:
       - ../config/four-nodes/wx-org3.chainmaker.org:/chainmaker-go/config/wx-org3.chainmaker.org
-      - node3_data:/chainmaker-go/data
+      - ./tmp/data3:/chainmaker-go/data
       - ./tmp/log3:/chainmaker-go/log
     networks:
       chainmakerofficial-localnet:
@@ -70,7 +70,7 @@ services:
       - "12304:12304"
     volumes:
       - ../config/four-nodes/wx-org4.chainmaker.org:/chainmaker-go/config/wx-org4.chainmaker.org
-      - node4_data:/chainmaker-go/data
+      - ./tmp/data4:/chainmaker-go/data
       - ./tmp/log4:/chainmaker-go/log
     networks:
       chainmakerofficial-localnet:
@@ -84,9 +84,3 @@ networks:
     ipam:
       config:
         - subnet: 172.49.1.0/16
-
-volumes:
-  node1_data: {}  
-  node2_data: {}  
-  node3_data: {}  
-  node4_data: {}  

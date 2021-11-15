@@ -287,7 +287,7 @@ func FinalizeBlock(
 		return err
 	}
 	logger.DebugDynamic(func() string {
-		return fmt.Sprintf("GetMerkleRoot(%s,%v) get %x", hashType, txHashes, block.Header.TxRoot)
+		return fmt.Sprintf("GetMerkleRoot(%s) get %x", hashType, block.Header.TxRoot)
 	})
 	block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
 	if err != nil {
@@ -491,13 +491,13 @@ func NewVerifierBlock(conf *VerifierBlockConf) *VerifierBlock {
 	return verifyBlock
 }
 
-func (vb *VerifierBlock) FetchLastBlock(block *commonpb.Block,
-	lastBlock *commonpb.Block) (*commonpb.Block, error) { //nolint: staticcheck
+func (vb *VerifierBlock) FetchLastBlock(block *commonpb.Block) (*commonpb.Block, error) { //nolint: staticcheck
 	currentHeight, _ := vb.ledgerCache.CurrentHeight()
 	if currentHeight >= block.Header.BlockHeight {
 		return nil, commonErrors.ErrBlockHadBeenCommited
 	}
 
+	var lastBlock *commonpb.Block
 	if currentHeight+1 == block.Header.BlockHeight {
 		lastBlock = vb.ledgerCache.GetLastCommittedBlock() //nolint: staticcheck
 	} else {
@@ -585,7 +585,7 @@ func (vb *VerifierBlock) ValidateBlock(
 			vb.txPool.RetryAndRemoveTxs(nil, errTxs)
 		}
 		return nil, nil, timeLasts, fmt.Errorf("verify failed [%d](%x), %s ",
-			block.Header.BlockHeight, block.Header.PreBlockHash, err)
+			block.Header.BlockHeight, block.Header.BlockHash, err)
 	}
 	//if protocol.CONSENSUS_VERIFY == mode && len(newAddTx) > 0 {
 	//	v.txPool.AddTrustedTx(newAddTx)
@@ -803,11 +803,14 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 		if lastProposed, rwSetMap, conEventMap, err = chain.checkLastProposedBlock(block); err != nil {
 			return err
 		}
+	} else if IfOpenConsensusMessageTurbo(chain.chainConf) {
+		// recover the block for proposer when enable the conensus message turbo function.
+		lastProposed.Header = block.Header
+		lastProposed.AdditionalData = block.AdditionalData
 	}
 
 	checkLasts := utils.CurrentTimeMillisSeconds() - startTick
-
-	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent, err := chain.commonCommit.CommitBlock(
+	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent, blockInfo, err := chain.commonCommit.CommitBlock(
 		lastProposed, rwSetMap, conEventMap)
 	if err != nil {
 		chain.log.Errorf("block common commit failed: %s, blockHeight: (%d)",
@@ -823,12 +826,15 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 
 	chain.proposalCache.ClearProposedBlockAt(height)
 
+	// synchronize new block height to consensus and sync module
+	chain.msgBus.PublishSafe(msgbus.BlockInfo, blockInfo)
+
 	curTime := utils.CurrentTimeMillisSeconds()
 	elapsed := curTime - startTick
 	interval := curTime - chain.blockInterval
 	chain.blockInterval = curTime
 	chain.log.Infof(
-		"commit block [%d](count:%d,hash:%x), "+
+		"commit block [%d](count:%d,hash:%x)"+
 			"time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,pubConEvent:%d,other:%d,total:%d,interval:%d)",
 		height, lastProposed.Header.TxCount, lastProposed.Header.BlockHash,
 		checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, pubEvent, otherLasts, elapsed, interval)

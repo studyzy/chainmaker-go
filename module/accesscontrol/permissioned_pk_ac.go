@@ -75,7 +75,7 @@ func newPermissionedPkACProvider(chainConfig *config.ChainConfig, localOrgId str
 	}
 	chainConfig.AuthType = strings.ToLower(chainConfig.AuthType)
 	ppacProvider.acService = initAccessControlService(chainConfig.GetCrypto().Hash,
-		localOrgId, chainConfig.AuthType, chainConfig, store, log)
+		chainConfig.AuthType, store, log)
 
 	err := ppacProvider.initAdminMembers(chainConfig.TrustRoots)
 	if err != nil {
@@ -86,6 +86,8 @@ func newPermissionedPkACProvider(chainConfig *config.ChainConfig, localOrgId str
 	if err != nil {
 		return nil, err
 	}
+
+	ppacProvider.acService.initResourcePolicy(chainConfig.ResourcePolicies, localOrgId)
 
 	return ppacProvider, nil
 }
@@ -309,7 +311,7 @@ func (pp *permissionedPkACProvider) LookUpExceptionalPolicy(resourceName string)
 }
 
 func (pp *permissionedPkACProvider) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus, error) {
-	if _, err := pp.NewMember(member); err != nil {
+	if _, err := pp.newNodeMember(member); err != nil {
 		pp.acService.log.Infof("get member status: %s", err.Error())
 		return pbac.MemberStatus_INVALID, err
 	}
@@ -371,4 +373,8 @@ func (pp *permissionedPkACProvider) GetValidEndorsements(principal protocol.Prin
 		roleList[roleRaw] = true
 	}
 	return pp.acService.getValidEndorsements(orgList, roleList, endorsements), nil
+}
+
+func (pp *permissionedPkACProvider) newNodeMember(member *pbac.Member) (protocol.Member, error) {
+	return pp.acService.newNodePkMember(member, pp.consensusMember)
 }

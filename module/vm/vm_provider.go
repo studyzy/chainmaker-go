@@ -1,3 +1,10 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package vm
 
 import (
@@ -7,7 +14,7 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 
-type Provider func(chainId string) (protocol.VmInstancesManager, error)
+type Provider func(chainId string, config map[string]interface{}) (protocol.VmInstancesManager, error)
 
 var vmProviders = make(map[string]Provider)
 

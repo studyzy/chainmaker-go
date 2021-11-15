@@ -1,0 +1,100 @@
+#
+# Copyright (C) BABEC. All rights reserved.
+# Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+auth_type: "public"                                                        # permissionedWithCert / permissionedWithKey / public
+
+log:
+  config_file: ../config-pk/public/node/node3/log.yml                           # config file of logger configuration.
+
+blockchain:
+  - chainId: chain1
+    genesis: ../config-pk/public/node/node3/chainconfig/bc1.yml
+#  - chainId: chain2
+#    genesis: ../config-sql/wx-org1/chainconfig/bc2.yml
+#  - chainId: chain3
+#    genesis: ../config-sql/wx-org1/chainconfig/bc3.yml
+#  - chainId: chain4
+#    genesis: ../config-sql/wx-org1/chainconfig/bc4.yml
+
+node:
+  org_id:            wx-org3.chainmaker.org
+  priv_key_file:     ../config-pk/public/node/node3/node3.key
+  cert_file:         ../config-sql/wx-org3/certs/node/consensus1/consensus1.sign.crt
+  cert_cache_size:   1000
+
+net:
+  provider: LibP2P
+  listen_addr: /ip4/0.0.0.0/tcp/11353
+  seeds:
+    - "/ip4/127.0.0.1/tcp/11351/p2p/QmZcFcJFYYoZ3FNNGL88QaszUZwFwuBdFqYh6yPzJURc3s"
+    - "/ip4/127.0.0.1/tcp/11352/p2p/QmXwtuPemSgH5ypzoKvcLdCLbd9jZ25FbpNf7VPjHF3HMS"
+    - "/ip4/127.0.0.1/tcp/11353/p2p/QmRmQLHJoqAYGkuLFaNY6HLzwtTNxr45UJsYpSjdKvBQw2"
+    - "/ip4/127.0.0.1/tcp/11354/p2p/QmURUHTGsuzzjgh1Xg6s92G1Q3gK91A6JEZGPfYNWwJMiT"
+#    - "/ip4/127.0.0.1/tcp/11355/p2p/QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
+#    - "/ip4/127.0.0.1/tcp/11356/p2p/QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
+#    - "/ip4/127.0.0.1/tcp/11357/p2p/QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
+  tls:
+    enabled: true
+    priv_key_file: ../config-pk/public/node/node3/node3.key
+    cert_file:     ../config-sql/wx-org1/certs/node/consensus1/consensus1.tls.crt
+
+txpool:
+  max_txpool_size: 5120 # 普通交易池上限
+  max_config_txpool_size: 10 # config交易池的上限
+  full_notify_again_time: 30 # 交易池溢出后，再次通知的时间间隔(秒)
+
+rpc:
+  provider: grpc
+  port: 12303
+  tls:
+    # TLS模式:
+    #   disable - 不启用TLS
+    #   oneway  - 单向认证
+    #   twoway  - 双向认证
+    #mode: disable
+    #mode: oneway
+    mode:           twoway
+    priv_key_file:  ../config-sql/wx-org1/certs/node/consensus1/consensus1.tls.key
+    cert_file:      ../config-sql/wx-org1/certs/node/consensus1/consensus1.tls.crt
+
+monitor:
+  enabled: false
+  port: 14321
+
+pprof:
+  enabled: false
+  port: 24321
+
+storage:
+  store_path: ../data/node3/ledgerData1
+  blockdb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/node3/blocks
+  statedb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/node3/state
+  historydb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/node3/history
+  resultdb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/node3/result
+  disable_contract_eventdb: true  #是否禁止合约事件存储功能，默认为true，如果设置为false,需要配置mysql
+  contract_eventdb_config:
+    provider: sql                 #如果开启contract event db 功能，需要指定provider为sql
+    sqldb_config:
+      sqldb_type: mysql           #contract event db 只支持mysql
+      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
+
+debug:
+  # 是否开启CLI功能，过度期间使用
+  is_cli_open: true
+  is_http_open: false

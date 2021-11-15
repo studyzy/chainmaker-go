@@ -12,7 +12,6 @@ module/store/store
 release
 bin
 *.log.*
-/config/
 /config-sql/
 **/crypto-config/
 /testdata
@@ -32,3 +31,4 @@ vendor
 cover.out
 test/send_proposal_request_ci/data/
 test/send_proposal_request_ci/chainmaker
+/tools/chainmaker-cryptogen/

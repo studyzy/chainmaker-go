@@ -3,7 +3,8 @@ chain_client:
   chain_id: "chain1"
 
   # 客户端用户交易签名私钥路径
-  user_sign_key_file_path: "./testdata/crypto-config-pk/public/admin/admin1/admin1.key"
+  #user_sign_key_file_path: "./testdata/crypto-config-pk/public/admin/admin1/admin1.key"
+  user_sign_key_file_path: "./testdata/crypto-config/node1/admin/admin1/admin1.key"
 
   # 签名使用的哈希算法，和节点保持一直
   crypto:

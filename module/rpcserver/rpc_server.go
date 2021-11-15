@@ -56,6 +56,9 @@ const (
 	// subscriber ratelimit config
 	subscriberRateLimitDefaultTokenPerSecond  = 1000
 	subscriberRateLimitDefaultTokenBucketSize = 1000
+
+	maxRecvMessageSize = 10 * 1024 * 1024 // 10 MiB
+	maxSendMessageSize = 10 * 1024 * 1024 // 10 MiB
 )
 
 // TLS Mode
@@ -100,15 +103,18 @@ func (s *RPCServer) Start() error {
 
 	s.isShutdown = false
 
-	if s.curChainConfTrustRootsHash == "" {
-		s.curChainConfTrustRootsHash, err = s.getCurChainConfTrustRootsHash()
-		if err != nil {
-			return err
+	// check chainconf trust roots change if TLS is twoway or oneway
+	if localconf.ChainMakerConfig.RpcConfig.TLSConfig.Mode != TLS_MODE_DISABLE {
+		if s.curChainConfTrustRootsHash == "" {
+			s.curChainConfTrustRootsHash, err = s.getCurChainConfTrustRootsHash()
+			if err != nil {
+				return err
+			}
+
+			s.tryReloadChainConfTrustRootsChange()
+
+			s.log.Debugf("[START] current chain config trust roots hash: %s", s.curChainConfTrustRootsHash)
 		}
-
-		s.tryReloadChainConfTrustRootsChange()
-
-		s.log.Debugf("[START] current chain config trust roots hash: %s", s.curChainConfTrustRootsHash)
 	}
 
 	if err = s.RegisterHandler(); err != nil {
@@ -337,6 +343,9 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 
 		opts = append(opts, grpc.Creds(*c))
 	}
+
+	opts = append(opts, grpc.MaxSendMsgSize(maxSendMessageSize))
+	opts = append(opts, grpc.MaxRecvMsgSize(maxRecvMessageSize))
 
 	//params := grpc.KeepaliveParams(keepalive.ServerParameters{
 	//	Time:    10 * time.Second,

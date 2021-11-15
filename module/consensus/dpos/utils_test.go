@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker/vm-native/dposmgr"
+	"chainmaker.org/chainmaker/vm-native/v2/dposmgr"
 
 	pbdpos "chainmaker.org/chainmaker/pb-go/v2/consensus/dpos"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"

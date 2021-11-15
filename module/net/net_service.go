@@ -11,9 +11,9 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker/chainmaker-net-common/common/priorityblocker"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	rootLog "chainmaker.org/chainmaker/logger/v2"
+	"chainmaker.org/chainmaker/net-common/common/priorityblocker"
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
@@ -354,12 +354,18 @@ func (v *VmWatcher) Module() string {
 }
 
 func (v *VmWatcher) ContractNames() []string {
-	return []string{syscontract.SystemContract_CERT_MANAGE.String()}
+	return []string{syscontract.SystemContract_CERT_MANAGE.String(),
+		syscontract.SystemContract_PUBKEY_MANAGE.String()}
 }
 
 func (v *VmWatcher) Callback(contractName string, _ []byte) error {
 	switch contractName {
 	case syscontract.SystemContract_CERT_MANAGE.String():
+		v.ns.logger.Infof("[module: %s] call back, [contractName: %s]", v.Module(), contractName)
+		v.ns.localNet.ReVerifyPeers(v.ns.chainId)
+		return nil
+	case syscontract.SystemContract_PUBKEY_MANAGE.String():
+		v.ns.logger.Infof("[module: %s] call back, [contractName: %s]", v.Module(), contractName)
 		v.ns.localNet.ReVerifyPeers(v.ns.chainId)
 		return nil
 	default:

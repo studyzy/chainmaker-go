@@ -169,6 +169,60 @@ func newPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map,
 		protocol.Role(publickInfo.Role), acs.hashType)
 }
 
+func newPkNodeMemberFromAcs(member *pbac.Member, consensusList *sync.Map,
+	acs *accessControlService) (*pkMember, error) {
+
+	if member.MemberType != pbac.MemberType_PUBLIC_KEY {
+		return nil, fmt.Errorf("new public key node member failed: memberType and authType do not match")
+	}
+	pk, err := asym.PublicKeyFromPEM(member.MemberInfo)
+	if err != nil {
+		return nil, fmt.Errorf("new public key node member failed: parse the public key from PEM failed")
+	}
+	pkBytes, err := pk.Bytes()
+	if err != nil {
+		return nil, fmt.Errorf("new public key node member failed: %s", err.Error())
+	}
+
+	var nodeId string
+	nodeId, err = helper.CreateLibp2pPeerIdWithPublicKey(pk)
+	if err != nil {
+		return nil, fmt.Errorf("new public key node member failed: create libp2p peer id with pk failed")
+	}
+
+	consensusMember, ok := consensusList.Load(nodeId)
+	if ok {
+		consensus, _ := consensusMember.(*consensusMemberModel)
+		return newPkMemberFromParam(consensus.orgId, pkBytes,
+			protocol.RoleConsensusNode, acs.hashType)
+	}
+
+	publicKeyIdex := pubkeyHash(pkBytes)
+	publicKeyInfoBytes, err := acs.dataStore.ReadObject(syscontract.SystemContract_PUBKEY_MANAGE.String(),
+		[]byte(publicKeyIdex))
+	if err != nil {
+		return nil, fmt.Errorf("new public key node member failed: %s", err.Error())
+	}
+
+	if publicKeyInfoBytes == nil {
+		return nil, fmt.Errorf("new public key node member failed: the public key doesn't belong to a member on chain")
+	}
+
+	var publickInfo pbac.PKInfo
+	err = proto.Unmarshal(publicKeyInfoBytes, &publickInfo)
+	if err != nil {
+		return nil, fmt.Errorf("new public key node member failed: %s", err.Error())
+	}
+
+	if publickInfo.Role != string(protocol.RoleCommonNode) {
+
+		return nil, fmt.Errorf("new public key node member failed: the public key is not a node member")
+	}
+
+	return newPkMemberFromParam(publickInfo.OrgId, pkBytes,
+		protocol.Role(publickInfo.Role), acs.hashType)
+}
+
 func publicNewPkMemberFromAcs(member *pbac.Member, adminList,
 	consensusList *sync.Map, hashType string) (*pkMember, error) {
 	if member.MemberType != pbac.MemberType_PUBLIC_KEY {

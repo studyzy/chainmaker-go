@@ -17,6 +17,7 @@ func (bc *Blockchain) Stop() {
 	// 3、consensus module
 	// 4、net service
 	// 5、tx pool
+	// 6、vm
 
 	var stopModules = make([]map[string]func() error, 0)
 	if bc.isModuleStartUp(moduleNameNetService) {
@@ -33,6 +34,9 @@ func (bc *Blockchain) Stop() {
 	}
 	if bc.isModuleStartUp(moduleNameTxPool) {
 		stopModules = append(stopModules, map[string]func() error{moduleNameTxPool: bc.stopTxPool})
+	}
+	if bc.isModuleStartUp(moduleNameVM) {
+		stopModules = append(stopModules, map[string]func() error{moduleNameVM: bc.stopVM})
 	}
 
 	total := len(stopModules)
@@ -58,6 +62,7 @@ func (bc *Blockchain) StopOnRequirements() {
 		moduleNameCore:       bc.stopCoreEngine,
 		moduleNameConsensus:  bc.stopConsensus,
 		moduleNameTxPool:     bc.stopTxPool,
+		moduleNameVM:         bc.stopVM,
 	}
 
 	// stop sequence：
@@ -73,8 +78,9 @@ func (bc *Blockchain) StopOnRequirements() {
 		moduleNameConsensus:  2,
 		moduleNameNetService: 3,
 		moduleNameTxPool:     4,
+		moduleNameVM:         5,
 	}
-	closeFlagArray := [5]string{}
+	closeFlagArray := [6]string{}
 	for moduleName := range bc.startModules {
 		_, ok := bc.initModules[moduleName]
 		if ok {
@@ -144,5 +150,16 @@ func (bc *Blockchain) stopTxPool() error {
 		return err
 	}
 	delete(bc.startModules, moduleNameTxPool)
+	return nil
+}
+
+func (bc *Blockchain) stopVM() error {
+	// stop vm
+	err := bc.vmMgr.Stop()
+	if err != nil {
+		bc.log.Errorf("stop vm failed, %s", err)
+		return err
+	}
+	delete(bc.startModules, moduleNameVM)
 	return nil
 }

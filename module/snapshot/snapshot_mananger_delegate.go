@@ -32,7 +32,8 @@ func (m *ManagerDelegate) calcSnapshotFingerPrint(snapshot *SnapshotImpl) utils.
 	blockProposer := snapshot.blockProposer
 	preBlockHash := snapshot.preBlockHash
 	blockProposerBytes, _ := blockProposer.Marshal()
-	return utils.CalcFingerPrint(chainId, blockHeight, blockTimestamp, blockProposerBytes, preBlockHash)
+	return utils.CalcFingerPrint(chainId, blockHeight, blockTimestamp, blockProposerBytes, preBlockHash,
+		snapshot.txRoot, snapshot.rwSetHash, snapshot.txRoot)
 }
 
 func (m *ManagerDelegate) makeSnapshotImpl(block *commonPb.Block, blockHeight uint64) *SnapshotImpl {
@@ -54,6 +55,10 @@ func (m *ManagerDelegate) makeSnapshotImpl(block *commonPb.Block, blockHeight ui
 		txTable:    nil,
 		readTable:  make(map[string]*sv, txCount),
 		writeTable: make(map[string]*sv, txCount),
+
+		txRoot:    block.Header.TxRoot,
+		dagHash:   block.Header.DagHash,
+		rwSetHash: block.Header.RwSetRoot,
 	}
 	return snapshotImpl
 }

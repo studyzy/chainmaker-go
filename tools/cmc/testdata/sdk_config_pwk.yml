@@ -5,7 +5,8 @@ chain_client:
   org_id: "wx-org1.chainmaker.org"
 
   # 客户端用户交易签名私钥路径
-  user_sign_key_file_path: "./testdata/crypto-config-pk/permissioned-with-key/wx-org1/user/admin1/admin1.key"
+  #user_sign_key_file_path: "./testdata/crypto-config-pk/permissioned-with-key/wx-org1/user/admin1/admin1.key"
+  user_sign_key_file_path: "./testdata/crypto-config/wx-org1.chainmaker.org/admin/admin.key"
   # 签名使用的哈希算法，和节点保持一直
   crypto:
     hash: SHA256
