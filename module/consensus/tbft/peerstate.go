@@ -236,7 +236,6 @@ func (pcs *PeerStateService) sendPrevoteOfRound(round int32) {
 
 			if _, pOk := pcs.RoundVoteSet.Prevotes.Votes[pcs.tbftImpl.Id]; !pOk {
 				pcs.sendPrevote(vote)
-				return
 			}
 		}
 	}
@@ -259,7 +258,6 @@ func (pcs *PeerStateService) sendPrecommitOfRound(round int32) {
 
 			if _, pOk := pcs.RoundVoteSet.Precommits.Votes[pcs.tbftImpl.Id]; !pOk {
 				pcs.sendPrecommit(vote)
-				return
 			}
 		}
 	}
@@ -350,7 +348,6 @@ func (pcs *PeerStateService) sendPrevoteInState(state *ConsensusState) {
 		if ok && pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Prevotes != nil {
 			if _, pOk := pcs.RoundVoteSet.Prevotes.Votes[pcs.tbftImpl.Id]; !pOk {
 				pcs.sendPrevote(vote)
-				return
 			}
 		}
 	}
@@ -364,7 +361,6 @@ func (pcs *PeerStateService) sendPrecommitInState(state *ConsensusState) {
 		if ok && pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Precommits != nil {
 			if _, pOk := pcs.RoundVoteSet.Precommits.Votes[pcs.tbftImpl.Id]; !pOk {
 				pcs.sendPrecommit(vote)
-				return
 			}
 		}
 	}
