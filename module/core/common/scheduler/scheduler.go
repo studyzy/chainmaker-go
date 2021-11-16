@@ -482,7 +482,6 @@ func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) (
 	return parameters, nil
 }
 
-//
 //func (ts *TxScheduler) dumpDAG(dag *commonpb.DAG, txs []*commonpb.Transaction) {
 //	dagString := "digraph DAG {\n"
 //	for i, ns := range dag.Vertexes {
