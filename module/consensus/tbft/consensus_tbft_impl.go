@@ -47,11 +47,11 @@ const (
 	DefaultTimeoutPropose      = 30 * time.Second // Timeout of waitting for a proposal before prevoting nil
 	DefaultTimeoutProposeDelta = 1 * time.Second  // Increased time delta of TimeoutPropose between rounds
 	DefaultBlocksPerProposer   = uint64(1)        // The number of blocks each proposer can propose
-	TimeoutPrevote             = 1 * time.Second  // Timeout of waitting for >2/3 prevote
+	TimeoutPrevote             = 30 * time.Second // Timeout of waitting for >2/3 prevote
 	TimeoutPrevoteDelta        = 1 * time.Second  // Increased time delta of TimeoutPrevote between round
-	TimeoutPrecommit           = 1 * time.Second  // Timeout of waitting for >2/3 precommit
+	TimeoutPrecommit           = 30 * time.Second // Timeout of waitting for >2/3 precommit
 	TimeoutPrecommitDelta      = 1 * time.Second  // Increased time delta of TimeoutPrecommit between round
-	TimeoutCommit              = 1 * time.Second
+	TimeoutCommit              = 30 * time.Second
 )
 
 // mustMarshal marshals protobuf message to byte slice or panic
@@ -660,7 +660,7 @@ func (consensus *ConsensusTBFTImpl) procPropose(msg *tbftpb.TBFTMsg) {
 }
 
 func (consensus *ConsensusTBFTImpl) canReceiveProposal(height uint64, round int32) bool {
-	if consensus.Height != height || consensus.Round != round || consensus.Step < tbftpb.Step_PROPOSE {
+	if consensus.Height != height || consensus.Round != round || consensus.Step != tbftpb.Step_PROPOSE {
 		consensus.logger.Debugf("[%s](%d/%d/%s) receive invalid proposal: (%d/%d)",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, height, round)
 		return false
@@ -677,6 +677,16 @@ func (consensus *ConsensusTBFTImpl) procPrevote(msg *tbftpb.TBFTMsg) {
 		prevote.Voter, prevote.Height, prevote.Round, prevote.Hash,
 	)
 
+	if consensus.Height != prevote.Height ||
+		consensus.Round > prevote.Round ||
+		(consensus.Round == prevote.Round && consensus.Step > tbftpb.Step_PREVOTE) {
+		errMsg := fmt.Sprintf("[%s](%d/%d/%s) receive invalid vote %s(%d/%d/%s)",
+			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
+			prevote.Voter, prevote.Height, prevote.Round, prevote.Type)
+		consensus.logger.Debugf(errMsg)
+		return
+	}
+
 	if prevote.Voter != consensus.Id {
 		err := consensus.verifyVote(prevote)
 		if err != nil {
@@ -686,16 +696,6 @@ func (consensus *ConsensusTBFTImpl) procPrevote(msg *tbftpb.TBFTMsg) {
 			)
 			return
 		}
-	}
-
-	if consensus.Height != prevote.Height ||
-		consensus.Round > prevote.Round ||
-		(consensus.Round == prevote.Round && consensus.Step > tbftpb.Step_PREVOTE) {
-		errMsg := fmt.Sprintf("[%s](%d/%d/%s) receive invalid vote %s(%d/%d/%s)",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
-			prevote.Voter, prevote.Height, prevote.Round, prevote.Type)
-		consensus.logger.Debugf(errMsg)
-		return
 	}
 
 	vote := NewVoteFromProto(prevote)
@@ -718,6 +718,16 @@ func (consensus *ConsensusTBFTImpl) procPrecommit(msg *tbftpb.TBFTMsg) {
 		precommit.Voter, precommit.Height, precommit.Round,
 	)
 
+	if consensus.Height != precommit.Height ||
+		consensus.Round > precommit.Round ||
+		(consensus.Round == precommit.Round && consensus.Step > tbftpb.Step_PRECOMMIT) {
+		consensus.logger.Debugf("[%s](%d/%d/%s) receive invalid precommit %s(%d/%d)",
+			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
+			precommit.Voter, precommit.Height, precommit.Round,
+		)
+		return
+	}
+
 	if precommit.Voter != consensus.Id {
 		err := consensus.verifyVote(precommit)
 		if err != nil {
@@ -727,16 +737,6 @@ func (consensus *ConsensusTBFTImpl) procPrecommit(msg *tbftpb.TBFTMsg) {
 			)
 			return
 		}
-	}
-
-	if consensus.Height != precommit.Height ||
-		consensus.Round > precommit.Round ||
-		(consensus.Round == precommit.Round && consensus.Step > tbftpb.Step_PRECOMMIT) {
-		consensus.logger.Debugf("[%s](%d/%d/%s) receive invalid precommit %s(%d/%d)",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
-			precommit.Voter, precommit.Height, precommit.Round,
-		)
-		return
 	}
 
 	vote := NewVoteFromProto(precommit)
@@ -780,6 +780,10 @@ func (consensus *ConsensusTBFTImpl) handleTimeout(ti timeoutInfo, replayMode boo
 	switch ti.Step {
 	case tbftpb.Step_PREVOTE:
 		consensus.enterPrevote(ti.Height, ti.Round)
+	case tbftpb.Step_PRECOMMIT:
+		consensus.enterPrecommit(ti.Height, ti.Round)
+	case tbftpb.Step_COMMIT:
+		consensus.enterCommit(ti.Height, ti.Round)
 	}
 }
 
@@ -879,6 +883,13 @@ func (consensus *ConsensusTBFTImpl) addPrevoteVote(vote *Vote) {
 			consensus.logger.Infof("[%s](%d/%d/%s) addVote %v with hasTwoThirdsAny",
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
 			consensus.enterPrecommit(consensus.Height, consensus.Round)
+		} else if consensus.Round == vote.Round && voteSet.hasTwoThirdsNoMajority() && !consensus.TriggeredTimeoutPrevote {
+			// add the prevote timeout event
+			consensus.logger.Infof("[%s](%d/%d/%s) addVote %v with hasTwoThirdsAny, PrevoteTimeout is igniting",
+				consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
+			consensus.AddTimeout(consensus.PrevoteTimeout(consensus.Round), consensus.Height,
+				consensus.Round, tbftpb.Step_PRECOMMIT)
+			consensus.TriggeredTimeoutPrevote = true
 		}
 		return
 	}
@@ -917,6 +928,13 @@ func (consensus *ConsensusTBFTImpl) addPrecommitVote(vote *Vote) {
 			consensus.logger.Infof("[%s](%d/%d/%s) addVote %v with hasTwoThirdsAny",
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
 			consensus.enterCommit(consensus.Height, consensus.Round)
+		} else if consensus.Round == vote.Round && voteSet.hasTwoThirdsNoMajority() && !consensus.TriggeredTimeoutPrecommit {
+			// add the precommit timeout event
+			consensus.logger.Infof("[%s](%d/%d/%s) addVote %v with hasTwoThirdsNoMajority, PrecommitTimeout is igniting",
+				consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
+			consensus.AddTimeout(consensus.PrecommitTimeout(consensus.Round), consensus.Height,
+				consensus.Round, tbftpb.Step_COMMIT)
+			consensus.TriggeredTimeoutPrecommit = true
 		}
 		return
 	}
@@ -1010,6 +1028,8 @@ func (consensus *ConsensusTBFTImpl) enterNewRound(height uint64, round int32) {
 	consensus.Height = height
 	consensus.Round = round
 	consensus.Step = tbftpb.Step_NEW_ROUND
+	consensus.TriggeredTimeoutPrevote = false
+	consensus.TriggeredTimeoutPrecommit = false
 	consensus.Proposal = nil
 	consensus.VerifingProposal = nil
 	consensus.metrics.SetEnterNewRoundTime(consensus.Round)
@@ -1134,10 +1154,10 @@ func (consensus *ConsensusTBFTImpl) enterPrecommit(height uint64, round int32) {
 	voteSet := consensus.heightRoundVoteSet.prevotes(consensus.Round)
 	hash, ok := voteSet.twoThirdsMajority()
 	if !ok {
-		if voteSet.hasTwoThirdsAny() {
+		if voteSet.hasTwoThirdsAny() || voteSet.hasTwoThirdsNoMajority() {
 			hash = nilHash
-			consensus.logger.Infof("[%s](%v/%v/%v) enter precommit to nil because hasTwoThirdsAny",
-				consensus.Id, consensus.Height, consensus.Round, consensus.Step)
+			consensus.logger.Infof("[%s](%v/%v/%v) enter precommit to nil because hasTwoThirdsAny "+
+				"or hasTwoThirdsNoMajority", consensus.Id, consensus.Height, consensus.Round, consensus.Step)
 		} else {
 			panic("this should not happen")
 		}

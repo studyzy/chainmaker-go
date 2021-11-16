@@ -93,9 +93,35 @@ func (pcs *PeerStateService) updateWithProto(pcsProto *tbftpb.GossipState) {
 	pcs.VerifingProposal = pcsProto.VerifingProposal
 	validatorSet := pcs.tbftImpl.getValidatorSet()
 	pcs.RoundVoteSet = newRoundVoteSetFromProto(pcs.logger, pcsProto.RoundVoteSet, validatorSet)
+	// fetch votes from this node state
+	if pcs.Height == pcs.tbftImpl.Height && pcs.Round == pcs.tbftImpl.Round &&
+		pcs.RoundVoteSet != nil {
+		pcs.logger.Debugf("[%s] updateVoteWithProto: [%d/%d]", pcs.Id, pcs.Height, pcs.Round)
+		pcs.updateVoteWithProto(pcs.RoundVoteSet)
+	}
 	pcs.logger.Debugf("[%s] RoundVoteSet: %s", pcs.Id, pcs.RoundVoteSet)
 }
 
+// get the votes for tbft Engine based on the peer node state
+func (pcs *PeerStateService) updateVoteWithProto(voteSet *roundVoteSet) {
+	for _, voter := range pcs.tbftImpl.getValidatorSet().Validators {
+		pcs.logger.Debugf("%s updateVoteWithProto : %v,%v", voter, voteSet.Prevotes, voteSet.Precommits)
+		// prevote Vote
+		vote := voteSet.Prevotes.Votes[voter]
+		if vote != nil && pcs.tbftImpl.Step < tbftpb.Step_PRECOMMIT {
+			pcs.logger.Debugf("updateVoteWithProto prevote : %s", voter)
+			tbftMsg := createPrevoteMsg(vote)
+			pcs.tbftImpl.internalMsgC <- tbftMsg
+		}
+		// precommit Vote
+		vote = voteSet.Precommits.Votes[voter]
+		if vote != nil && pcs.tbftImpl.Step < tbftpb.Step_COMMIT {
+			pcs.logger.Debugf("updateVoteWithProto precommit : %s", voter)
+			tbftMsg := createPrevoteMsg(vote)
+			pcs.tbftImpl.internalMsgC <- tbftMsg
+		}
+	}
+}
 func (pcs *PeerStateService) start() {
 	go pcs.procStateChange()
 }

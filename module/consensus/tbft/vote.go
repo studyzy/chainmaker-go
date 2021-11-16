@@ -392,6 +392,15 @@ func (vs *VoteSet) hasTwoThirdsAny() bool {
 	return ret
 }
 
+// 2f+1 any votes received
+func (vs *VoteSet) hasTwoThirdsNoMajority() bool {
+	if vs == nil {
+		return false
+	}
+
+	return vs.Sum >= uint64(vs.validators.Size()*2/3+1)
+}
+
 type roundVoteSet struct {
 	Height     uint64
 	Round      int32
