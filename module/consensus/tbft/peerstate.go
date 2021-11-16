@@ -93,6 +93,7 @@ func (pcs *PeerStateService) updateWithProto(pcsProto *tbftpb.GossipState) {
 	pcs.VerifingProposal = pcsProto.VerifingProposal
 	validatorSet := pcs.tbftImpl.getValidatorSet()
 	pcs.RoundVoteSet = newRoundVoteSetFromProto(pcs.logger, pcsProto.RoundVoteSet, validatorSet)
+	// fetch votes from this node state
 	if pcs.Height == pcs.tbftImpl.Height && pcs.Round == pcs.tbftImpl.Round &&
 		pcs.RoundVoteSet != nil {
 		pcs.logger.Debugf("[%s] updateVoteWithProto: [%d/%d]", pcs.Id, pcs.Height, pcs.Round)
@@ -101,8 +102,8 @@ func (pcs *PeerStateService) updateWithProto(pcsProto *tbftpb.GossipState) {
 	pcs.logger.Debugf("[%s] RoundVoteSet: %s", pcs.Id, pcs.RoundVoteSet)
 }
 
+// get the votes for tbft Engine based on the peer node state
 func (pcs *PeerStateService) updateVoteWithProto(voteSet *roundVoteSet) {
-
 	for _, voter := range pcs.tbftImpl.getValidatorSet().Validators {
 		pcs.logger.Debugf("%s updateVoteWithProto : %v,%v", voter, voteSet.Prevotes, voteSet.Precommits)
 		// prevote Vote

@@ -884,6 +884,7 @@ func (consensus *ConsensusTBFTImpl) addPrevoteVote(vote *Vote) {
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
 			consensus.enterPrecommit(consensus.Height, consensus.Round)
 		} else if consensus.Round == vote.Round && voteSet.hasTwoThirdsNoMajority() && !consensus.TriggeredTimeoutPrevote {
+			// add the prevote timeout event
 			consensus.logger.Infof("[%s](%d/%d/%s) addVote %v with hasTwoThirdsAny, PrevoteTimeout is igniting",
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
 			consensus.AddTimeout(consensus.PrevoteTimeout(consensus.Round), consensus.Height,
@@ -928,6 +929,7 @@ func (consensus *ConsensusTBFTImpl) addPrecommitVote(vote *Vote) {
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
 			consensus.enterCommit(consensus.Height, consensus.Round)
 		} else if consensus.Round == vote.Round && voteSet.hasTwoThirdsNoMajority() && !consensus.TriggeredTimeoutPrecommit {
+			// add the precommit timeout event
 			consensus.logger.Infof("[%s](%d/%d/%s) addVote %v with hasTwoThirdsNoMajority, PrecommitTimeout is igniting",
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
 			consensus.AddTimeout(consensus.PrecommitTimeout(consensus.Round), consensus.Height,

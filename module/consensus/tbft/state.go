@@ -29,8 +29,8 @@ type ConsensusState struct {
 	ValidRound                int32
 	ValidProposal             *Proposal // valid proposal
 	heightRoundVoteSet        *heightRoundVoteSet
-	TriggeredTimeoutPrecommit bool
-	TriggeredTimeoutPrevote   bool
+	TriggeredTimeoutPrecommit bool // flag that triggers a precommit timeout
+	TriggeredTimeoutPrevote   bool // flag that triggers a prevote timeout
 }
 
 // NewConsensusState creates a new ConsensusState instance
