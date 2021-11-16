@@ -77,22 +77,25 @@ storage:
   db_prefix: org3_
   store_path: ./data/org3/ledgerData1
   blockdb_config:
-    provider: badgerdb
-    badgerdb_config:
-      store_path: ./data/org3/blocks
+    provider: sql
+    sqldb_config:
+      sqldb_type:  mysql
+      dsn:  root:123@tcp(127.0.0.1:3306)/mysql
   statedb_config:
     provider: sql
     sqldb_config:
       sqldb_type:  mysql
       dsn:  root:123@tcp(127.0.0.1:3306)/mysql
   historydb_config:
-    provider: badgerdb
-    badgerdb_config:
-      store_path: ./data/org3/history
+    provider: sql
+    sqldb_config:
+      sqldb_type:  mysql
+      dsn:  root:123@tcp(127.0.0.1:3306)/mysql
   resultdb_config:
-    provider: badgerdb
-    badgerdb_config:
-      store_path: ./data/org3/result
+    provider: sql
+    sqldb_config:
+      sqldb_type:  mysql
+      dsn:  root:123@tcp(127.0.0.1:3306)/mysql
   disable_contract_eventdb: false  #是否禁止合约事件存储功能，默认为true，如果设置为false,需要配置mysql
   contract_eventdb_config:
     provider: sql                 #如果开启contract event db 功能，需要指定provider为sql
