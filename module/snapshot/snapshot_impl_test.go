@@ -19,6 +19,7 @@ import (
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+	uberAtomic "go.uber.org/atomic"
 )
 
 var _ protocol.TxSimContext = (*MockSimContextImpl)(nil)
@@ -30,6 +31,10 @@ type MockSimContextImpl struct {
 	txRwSet      *commonPb.TxRWSet
 	currentDepth int
 	txResult     *commonPb.Result
+}
+
+func (s *MockSimContextImpl) PutIntoReadSet(contractName string, key []byte, value []byte) {
+	panic("implement me")
 }
 
 func (s *MockSimContextImpl) GetContractByName(name string) (*commonPb.Contract, error) {
@@ -53,8 +58,9 @@ func (s *MockSimContextImpl) GetBlockVersion() uint32 {
 	return protocol.DefaultBlockVersion
 }
 
-func (s *MockSimContextImpl) CallContract(contractId *commonPb.Contract, method string, byteCode []byte,
-	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+func (s *MockSimContextImpl) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
+	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult,
+	protocol.ExecOrderTxType, commonPb.TxStatusCode) {
 	panic(implement_me)
 }
 
@@ -175,7 +181,7 @@ func testSnapshot(t *testing.T, i int) {
 	snapshot := &SnapshotImpl{
 		lock:            sync.Mutex{},
 		blockchainStore: nil,
-		sealed:          false,
+		sealed:          uberAtomic.NewBool(false),
 		chainId:         "",
 		blockTimestamp:  0,
 		blockProposer:   nil,
@@ -213,7 +219,7 @@ func testSnapshot(t *testing.T, i int) {
 			// TODO: Use of weak random number generator (math/rand instead of crypto/rand) ?
 			txSimContext.txExecSeq = int32(rand.Intn(len(snapshot.txTable) + 1)) //nolint: gosec
 
-			applyResult, _ := snapshot.ApplyTxSimContext(txSimContext, true)
+			applyResult, _ := snapshot.ApplyTxSimContext(txSimContext, protocol.ExecOrderTxTypeNormal, true, false)
 			atomic.AddInt64(&count, 1)
 			if !applyResult {
 				fmt.Printf("!!!")
@@ -227,7 +233,7 @@ func testSnapshot(t *testing.T, i int) {
 								len(snapshot.txTable)-int(txSimContext.txExecSeq)+1,
 							),
 						)
-					applyResult, _ = snapshot.ApplyTxSimContext(txSimContext, true)
+					applyResult, _ = snapshot.ApplyTxSimContext(txSimContext, protocol.ExecOrderTxTypeNormal, true, false)
 
 					atomic.AddInt64(&count, 1)
 					if applyResult {
@@ -300,7 +306,7 @@ func genRwSet(readKeySet []string, writeKeySet []string) *commonPb.TxRWSet {
 }
 
 func testApply(txSimContext protocol.TxSimContext, snapshot *SnapshotImpl, txExecSeq int, readKeySet []string, writeKeySet []string) (bool, int) {
-	return snapshot.ApplyTxSimContext(txSimContext, true)
+	return snapshot.ApplyTxSimContext(txSimContext, protocol.ExecOrderTxTypeNormal, true, false)
 }
 
 func dump(snapshot *SnapshotImpl) {

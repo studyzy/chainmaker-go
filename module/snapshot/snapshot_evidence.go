@@ -55,6 +55,13 @@ func (s *SnapshotEvidence) GetTxTable() []*commonPb.Transaction {
 	return s.delegate.GetTxTable()
 }
 
+func (s *SnapshotEvidence) GetSpecialTxTable() []*commonPb.Transaction {
+	if s.delegate == nil {
+		return nil
+	}
+	return s.delegate.GetSpecialTxTable()
+}
+
 // After the scheduling is completed, get the result from the current snapshot
 func (s *SnapshotEvidence) GetTxResultMap() map[string]*commonPb.Result {
 	if s.delegate == nil {
@@ -79,7 +86,8 @@ func (s *SnapshotEvidence) GetKey(txExecSeq int, contractName string, key []byte
 
 // After the read-write set is generated, add TxSimContext to the snapshot
 // return if apply successfully or not, and current applied tx num
-func (s *SnapshotEvidence) ApplyTxSimContext(cache protocol.TxSimContext, runVmSuccess bool) (bool, int) {
+func (s *SnapshotEvidence) ApplyTxSimContext(txSimContext protocol.TxSimContext, specialTxType protocol.ExecOrderTxType,
+	runVmSuccess bool, withSpecialTx bool) (bool, int) {
 	if s.delegate == nil {
 		return false, -1
 	}
@@ -90,16 +98,21 @@ func (s *SnapshotEvidence) ApplyTxSimContext(cache protocol.TxSimContext, runVmS
 	s.delegate.lock.Lock()
 	defer s.delegate.lock.Unlock()
 
-	tx := cache.GetTx()
-	txExecSeq := cache.GetTxExecSeq()
+	tx := txSimContext.GetTx()
+	txExecSeq := txSimContext.GetTxExecSeq()
 	var txRWSet *commonPb.TxRWSet
 	var txResult *commonPb.Result
 
-	// Only when the virtual machine is running normally can the read-write set be saved
-	txRWSet = cache.GetTxRWSet(runVmSuccess)
-	txResult = cache.GetTxResult()
+	if !withSpecialTx && specialTxType == protocol.ExecOrderTxTypeIterator {
+		s.delegate.specialTxTable = append(s.delegate.specialTxTable, tx)
+		return true, len(s.delegate.txTable) + len(s.delegate.specialTxTable)
+	}
 
-	if txExecSeq >= len(s.delegate.txTable) {
+	// Only when the virtual machine is running normally can the read-write set be saved
+	txRWSet = txSimContext.GetTxRWSet(runVmSuccess)
+	txResult = txSimContext.GetTxResult()
+
+	if specialTxType == protocol.ExecOrderTxTypeIterator || txExecSeq >= len(s.delegate.txTable) {
 		s.apply(tx, txRWSet, txResult)
 		return true, len(s.delegate.txTable)
 	}

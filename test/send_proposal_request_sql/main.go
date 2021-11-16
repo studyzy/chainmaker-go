@@ -118,11 +118,11 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	testWaitTx(sk3, client, CHAIN1, txId)
 
 	fmt.Println("// 2) 执行合约-sql insert")
-	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "11")
-	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "11")
+	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "11", true)
+	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "11", true)
 
 	for i := 0; i < 10; i++ {
-		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
+		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i), false)
 	}
 	testWaitTx(sk3, client, CHAIN1, txId)
 	id = txId
@@ -174,7 +174,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 10) 交易回退
-	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "2000")
+	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "2000", true)
 	testWaitTx(sk3, client, CHAIN1, txId)
 	id = txId
 	for i := 0; i < 3; i++ {
@@ -201,7 +201,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 10) 升级合约后执行插入
-	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "100000")
+	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "100000", true)
 
 	testWaitTx(sk3, client, CHAIN1, txId)
 	_, result = testQuerySqlById(sk3, client, CHAIN1, txId)
@@ -217,7 +217,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 
 	// 并发测试
 	for i := 500; i < 600; i++ {
-		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
+		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i), false)
 	}
 	testWaitTx(sk3, client, CHAIN1, txId)
 
@@ -337,10 +337,11 @@ func testUpgrade(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId str
 	return resp.TxId
 }
 
-func testInvokeSqlInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, age string) string {
+func testInvokeSqlInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, age string, print bool) string {
 	txId := utils.GetRandTxId()
-	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s,%s] ============\n", contractName, txId, age)
-
+	if print {
+		fmt.Printf("\n============ invoke contract %s[sql_insert] [%s,%s] ============\n", contractName, txId, age)
+	}
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{
 		{
@@ -368,8 +369,9 @@ func testInvokeSqlInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payload)
-
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	if print {
+		fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	}
 	return txId
 }
 
