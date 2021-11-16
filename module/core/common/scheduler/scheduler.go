@@ -481,18 +481,18 @@ func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) (
 	}
 	return parameters, nil
 }
-
-func (ts *TxScheduler) dumpDAG(dag *commonpb.DAG, txs []*commonpb.Transaction) {
-	dagString := "digraph DAG {\n"
-	for i, ns := range dag.Vertexes {
-		if len(ns.Neighbors) == 0 {
-			dagString += fmt.Sprintf("id_%s -> begin;\n", txs[i].Payload.TxId[:8])
-			continue
-		}
-		for _, n := range ns.Neighbors {
-			dagString += fmt.Sprintf("id_%s -> id_%s;\n", txs[i].Payload.TxId[:8], txs[n].Payload.TxId[:8])
-		}
-	}
-	dagString += "}"
-	ts.log.Infof("Dump Dag: %s", dagString)
-}
+//
+//func (ts *TxScheduler) dumpDAG(dag *commonpb.DAG, txs []*commonpb.Transaction) {
+//	dagString := "digraph DAG {\n"
+//	for i, ns := range dag.Vertexes {
+//		if len(ns.Neighbors) == 0 {
+//			dagString += fmt.Sprintf("id_%s -> begin;\n", txs[i].Payload.TxId[:8])
+//			continue
+//		}
+//		for _, n := range ns.Neighbors {
+//			dagString += fmt.Sprintf("id_%s -> id_%s;\n", txs[i].Payload.TxId[:8], txs[n].Payload.TxId[:8])
+//		}
+//	}
+//	dagString += "}"
+//	ts.log.Infof("Dump Dag: %s", dagString)
+//}
