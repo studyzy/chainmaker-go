@@ -9,10 +9,10 @@ require (
 	chainmaker.org/chainmaker/localconf/v2 v2.1.0
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
-	chainmaker.org/chainmaker/protocol/v2 v2.1.0
+	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211110022918-9516552c201a
 	chainmaker.org/chainmaker/store/v2 v2.1.0
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
-	chainmaker.org/chainmaker/vm-native/v2 v2.1.0
+	chainmaker.org/chainmaker/vm-native/v2 v2.1.1-0.20211110024420-96bbe293e8d1
 	github.com/gogo/protobuf v1.3.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/prometheus/client_golang v1.11.0

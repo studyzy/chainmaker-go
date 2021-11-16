@@ -12,21 +12,28 @@ require (
 	chainmaker.org/chainmaker-go/sync v0.0.0
 	chainmaker.org/chainmaker-go/txpool v0.0.0
 	chainmaker.org/chainmaker-go/vm v0.0.0
-	chainmaker.org/chainmaker/chainconf/v2 v2.1.0
+	chainmaker.org/chainmaker/chainconf/v2 v2.1.1-0.20211110023535-5bf814f90c4c
 	chainmaker.org/chainmaker/common/v2 v2.1.0
 	chainmaker.org/chainmaker/localconf/v2 v2.1.0
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
-	chainmaker.org/chainmaker/protocol/v2 v2.1.0
+	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211110022918-9516552c201a
 	chainmaker.org/chainmaker/store/v2 v2.1.0
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
-	chainmaker.org/chainmaker/vm/v2 v2.1.0
+	chainmaker.org/chainmaker/vm/v2 v2.1.1-0.20211110024944-978019e15d33
 	github.com/fatih/color v1.13.0 // indirect
+	github.com/fsnotify/fsnotify v1.5.1 // indirect
+	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20210113012101-fb4e108d2519 // indirect
+	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mitchellh/mapstructure v1.4.2
-	github.com/spf13/cobra v1.2.1 // indirect
-	github.com/spf13/viper v1.9.0 // indirect
+	github.com/pelletier/go-toml v1.9.4 // indirect
+	github.com/spf13/afero v1.5.1 // indirect
+	github.com/spf13/cast v1.4.1 // indirect
+	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	go.opencensus.io v0.23.0 // indirect
+	gopkg.in/ini.v1 v1.63.2 // indirect
 )
 
 replace (

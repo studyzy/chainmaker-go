@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package pubkey
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -317,7 +316,7 @@ func cliQueryPubKey() error {
 	}
 	info := &accesscontrol.PKInfo{}
 	if err = proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
-		return fmt.Errorf("Unmarshal error: %v", err)
+		return fmt.Errorf("unmarshal error: %v", err)
 	}
 	fmt.Printf("org_id = %s, role = %s \n", info.OrgId, info.Role)
 
@@ -335,10 +334,13 @@ func CreateClientWithConfig() (*sdk.ChainClient, error) {
 }
 
 func createMultiSignAdmins(adminKeyFilePaths string, adminOrgIds string) ([]string, []string, error) {
-	adminKeys := strings.Split(adminKeyFilePaths, ",")
-	adminOrgs := strings.Split(adminOrgIds, ",")
-	if len(adminKeys) == 0 || len(adminOrgs) == 0 {
-		return nil, nil, errors.New("no admin users given for sign payload")
+	var adminKeys, adminOrgs []string
+
+	if adminKeyFilePaths != "" {
+		adminKeys = strings.Split(adminKeyFilePaths, ",")
+	}
+	if adminOrgIds != "" {
+		adminOrgs = strings.Split(adminOrgIds, ",")
 	}
 	if len(adminKeys) != len(adminOrgs) {
 		return nil, nil, fmt.Errorf("admin keys num(%v) is not equals org-id num(%v)", len(adminKeys), len(adminOrgs))

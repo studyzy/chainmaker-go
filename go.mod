@@ -13,15 +13,16 @@ require (
 	chainmaker.org/chainmaker/localconf/v2 v2.1.0
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
-	chainmaker.org/chainmaker/protocol/v2 v2.1.0
+	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211110022918-9516552c201a
 	chainmaker.org/chainmaker/sdk-go/v2 v2.1.0
 	chainmaker.org/chainmaker/txpool-batch/v2 v2.1.0
 	chainmaker.org/chainmaker/txpool-single/v2 v2.1.0
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
-	chainmaker.org/chainmaker/vm-evm/v2 v2.1.0
-	chainmaker.org/chainmaker/vm-gasm/v2 v2.1.0
-	chainmaker.org/chainmaker/vm-wasmer/v2 v2.1.0
-	chainmaker.org/chainmaker/vm-wxvm/v2 v2.1.0
+	chainmaker.org/chainmaker/vm-docker-go v0.0.0-20211110081421-00aa679a326f
+	chainmaker.org/chainmaker/vm-evm/v2 v2.1.1-0.20211110030153-2a0edf2033ba
+	chainmaker.org/chainmaker/vm-gasm/v2 v2.1.1-0.20211110065310-2d75623da32e
+	chainmaker.org/chainmaker/vm-wasmer/v2 v2.1.1-0.20211110071539-93d561baa388
+	chainmaker.org/chainmaker/vm-wxvm/v2 v2.1.1-0.20211110033111-b009bdb5d103
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
 	github.com/ethereum/go-ethereum v1.10.4
@@ -29,7 +30,7 @@ require (
 	github.com/mr-tron/base58 v1.2.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563
-	github.com/spf13/cobra v1.2.1
+	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	google.golang.org/grpc v1.41.0

@@ -74,12 +74,6 @@ function prepare_cmc() {
 }
 
 function cmc_test() {
-  if [ "${alreadyBuild}" != "true" ]; then
-    echo "【build】 cmc start..."
-    cd $PROJECT_PATH
-    make cmc
-  fi
-
   echo "【cmc】 send tx..."
   cd $PROJECT_PATH/bin
   pwd
@@ -112,6 +106,11 @@ function cmc_test() {
     --params="{\"file_hash\":\"ab3456df5799b87c77e7f88\"}"
 }
 
+function cat_log() {
+  grep "ERROR\|put block" $PROJECT_PATH/build/release/chainmaker-v2.1.0_alpha-wx-org1.chainmaker.org/log/system.log
+}
+
 start_chainmaker
 prepare_cmc
 cmc_test
+cat_log
