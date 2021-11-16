@@ -9,14 +9,14 @@ require (
 	chainmaker.org/chainmaker-go/vm v0.0.0
 	chainmaker.org/chainmaker/localconf/v2 v2.1.0
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
-	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211115085458-2e5fc44a2059
+	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211116063435-570b375a296a
 	chainmaker.org/chainmaker/txpool-batch/v2 v2.1.0
 	chainmaker.org/chainmaker/txpool-single/v2 v2.1.0
-	chainmaker.org/chainmaker/vm-docker-go v0.0.0-20211115100620-cc1cbf155843
-	chainmaker.org/chainmaker/vm-evm/v2 v2.1.1-0.20211115091308-69cdd81991e1
-	chainmaker.org/chainmaker/vm-gasm/v2 v2.1.1-0.20211115091018-b64da7c64756
-	chainmaker.org/chainmaker/vm-wasmer/v2 v2.1.1-0.20211115095610-3baeacd20b5d
-	chainmaker.org/chainmaker/vm-wxvm/v2 v2.1.1-0.20211115091553-204d61143513
+	chainmaker.org/chainmaker/vm-docker-go v0.0.0-20211116071451-11e5554ec51c
+	chainmaker.org/chainmaker/vm-evm/v2 v2.1.1-0.20211116072535-cf0d24aed8a2
+	chainmaker.org/chainmaker/vm-gasm/v2 v2.1.1-0.20211116071744-294b9085dea5
+	chainmaker.org/chainmaker/vm-wasmer/v2 v2.1.1-0.20211116072941-58cde49507c2
+	chainmaker.org/chainmaker/vm-wxvm/v2 v2.1.1-0.20211116072003-4ba32baad065
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
 	github.com/ethereum/go-ethereum v1.10.4 // indirect
