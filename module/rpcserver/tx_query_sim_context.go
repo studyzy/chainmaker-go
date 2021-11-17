@@ -31,8 +31,7 @@ type txQuerySimContextImpl struct {
 	currentDepth     int
 	currentResult    []byte
 	hisResult        []*callContractResult
-	sqlRowCache      map[int32]protocol.SqlRows
-	kvRowCache       map[int32]protocol.StateIterator
+	rowCache         map[int32]interface{}
 	blockVersion     uint32
 	keyIndex         int
 }
@@ -111,6 +110,11 @@ func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, lim
 	protocol.StateIterator, error) {
 
 	return s.blockchainStore.SelectObject(contractName, startKey, limit)
+}
+
+func (s *txQuerySimContextImpl) GetHistoryIterForKey(contractName string,
+	key []byte) (protocol.KeyHistoryIterator, error) {
+	return s.blockchainStore.GetHistoryForKey(contractName, key)
 }
 
 func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.Member {
@@ -299,21 +303,12 @@ func (s *txQuerySimContextImpl) GetDepth() int {
 	return s.currentDepth
 }
 
-func (s *txQuerySimContextImpl) SetStateSqlHandle(index int32, rows protocol.SqlRows) {
-	s.sqlRowCache[index] = rows
+func (s *txQuerySimContextImpl) SetIterHandle(index int32, rows interface{}) {
+	s.rowCache[index] = rows
 }
 
-func (s *txQuerySimContextImpl) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
-	data, ok := s.sqlRowCache[index]
-	return data, ok
-}
-
-func (s *txQuerySimContextImpl) SetStateKvHandle(index int32, rows protocol.StateIterator) {
-	s.kvRowCache[index] = rows
-}
-
-func (s *txQuerySimContextImpl) GetStateKvHandle(index int32) (protocol.StateIterator, bool) {
-	data, ok := s.kvRowCache[index]
+func (s *txQuerySimContextImpl) GetIterHandle(index int32) (interface{}, bool) {
+	data, ok := s.rowCache[index]
 	return data, ok
 }
 
