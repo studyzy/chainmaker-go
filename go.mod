@@ -48,7 +48,6 @@ replace (
 	chainmaker.org/chainmaker-go/sync => ./module/sync
 	chainmaker.org/chainmaker-go/txpool => ./module/txpool
 	chainmaker.org/chainmaker-go/vm => ./module/vm
-	//chainmaker.org/chainmaker/vm-docker-go => ../vm-docker-go
 	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v1.0.0
 	google.golang.org/grpc v1.40.0 => google.golang.org/grpc v1.26.0
 )
