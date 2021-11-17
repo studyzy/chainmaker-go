@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker/common/v2 v2.1.0
-	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211110022918-9516552c201a
+	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211117024857-2641037a7269
 	chainmaker.org/chainmaker/txpool-single/v2 v2.1.0
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta // indirect

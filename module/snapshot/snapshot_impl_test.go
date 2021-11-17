@@ -33,6 +33,18 @@ type MockSimContextImpl struct {
 	txResult     *commonPb.Result
 }
 
+func (s *MockSimContextImpl) GetHistoryIterForKey(contractName string, key []byte) (protocol.KeyHistoryIterator, error) {
+	panic("implement me")
+}
+
+func (s *MockSimContextImpl) SetIterHandle(index int32, iter interface{}) {
+	panic("implement me")
+}
+
+func (s *MockSimContextImpl) GetIterHandle(index int32) (interface{}, bool) {
+	panic("implement me")
+}
+
 func (s *MockSimContextImpl) PutIntoReadSet(contractName string, key []byte, value []byte) {
 	panic("implement me")
 }

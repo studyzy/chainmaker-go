@@ -10,10 +10,10 @@ require (
 	chainmaker.org/chainmaker/localconf/v2 v2.1.0
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
-	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211116063435-570b375a296a
+	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211117024857-2641037a7269
 	chainmaker.org/chainmaker/txpool-batch/v2 v2.1.0
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
-	chainmaker.org/chainmaker/vm/v2 v2.1.1-0.20211116070910-01fc32bf74d5
+	chainmaker.org/chainmaker/vm/v2 v2.1.1-0.20211117065933-3bd2fccd1033
 	github.com/ethereum/go-ethereum v1.10.3 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/panjf2000/ants/v2 v2.4.3
