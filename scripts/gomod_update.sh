@@ -27,7 +27,7 @@ go get chainmaker.org/chainmaker/localconf/v2@${BRANCH}
 go get chainmaker.org/chainmaker/logger/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/protocol/v2@${ALPHA}
-go get chainmaker.org/chainmaker/store/v2@${BRANCH}
+go get chainmaker.org/chainmaker/store/v2@${ALPHA}
 go get chainmaker.org/chainmaker/utils/v2@${BRANCH}
 go get chainmaker.org/chainmaker/vm/v2@${ALPHA}
 go mod tidy
@@ -74,7 +74,7 @@ go get chainmaker.org/chainmaker/localconf/v2@${BRANCH}
 go get chainmaker.org/chainmaker/logger/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/protocol/v2@${ALPHA}
-go get chainmaker.org/chainmaker/store/v2@${BRANCH}
+go get chainmaker.org/chainmaker/store/v2@${ALPHA}
 go get chainmaker.org/chainmaker/utils/v2@${BRANCH}
 go get chainmaker.org/chainmaker/vm-native/v2@${ALPHA}
 go mod tidy

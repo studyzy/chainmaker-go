@@ -18,7 +18,7 @@ require (
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
 	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211117024857-2641037a7269
-	chainmaker.org/chainmaker/store/v2 v2.1.0
+	chainmaker.org/chainmaker/store/v2 v2.1.1-0.20211122033614-e59ea850f8e1
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
 	chainmaker.org/chainmaker/vm/v2 v2.1.1-0.20211117065933-3bd2fccd1033
 	github.com/fatih/color v1.13.0 // indirect
