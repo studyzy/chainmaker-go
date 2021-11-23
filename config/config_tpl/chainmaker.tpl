@@ -317,14 +317,25 @@ storage:
       # Mysql connection info, such as:  root:admin@tcp(127.0.0.1:3306)/
       dsn: root:password@tcp(127.0.0.1:3306)/
 
+# Docker go virtual machine configuration
 vm:
+  # Enable docker go virtual machine
   enable_dockervm: {enable_dockervm}
+  # Docker go virtual machine container name
   dockervm_container_name: {dockervm_container_name}
-  dockervm_mount_path: ../data/{org_id}/docker-go  # mount point in chain maker
+  # Mount point in chain maker
+  dockervm_mount_path: ../data/{org_id}/docker-go
+  # Specify log file path
   dockervm_log_path: ../log/{org_id}/docker-go
+  # Whether to print log at terminal
   log_in_console: false
+  # Log level
   log_level: INFO
+  # Unix domain socket open, used for chainmaker and docker manager communication
   uds_open: true
+  # The size of the channel where transactions are stored in docker manager
   tx_size: 1000
+  # Number of user Ids
   user_num: 100
-  time_limit: 2                              # second
+  # Timeout per transaction, Unit: second
+  time_limit: 2
