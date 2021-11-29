@@ -17,10 +17,10 @@ require (
 	chainmaker.org/chainmaker/localconf/v2 v2.1.0
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
-	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211117024857-2641037a7269
+	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211129092325-fd10970cbf25
 	chainmaker.org/chainmaker/store/v2 v2.1.1-0.20211122033614-e59ea850f8e1
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
-	chainmaker.org/chainmaker/vm/v2 v2.1.1-0.20211117065933-3bd2fccd1033
+	chainmaker.org/chainmaker/vm/v2 v2.1.1-0.20211129121850-acfd1081a7ce
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect

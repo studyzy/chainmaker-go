@@ -65,7 +65,7 @@ func runInvokeContract(client *sdk.ChainClient, contractName, method string, kvs
 			return
 		}
 
-		if evmMethod != nil {
+		if evmMethod != nil && resp.ContractResult != nil {
 			output, err := util.DecodeOutputs(evmMethod, resp.ContractResult.Result)
 			if err != nil {
 				fmt.Println(err)
@@ -98,7 +98,7 @@ func runInvokeContractOnce(client *sdk.ChainClient, contractName, method string,
 		return
 	}
 
-	if evmMethod != nil {
+	if evmMethod != nil && resp.ContractResult != nil {
 		output, err := util.DecodeOutputs(evmMethod, resp.ContractResult.Result)
 		if err != nil {
 			fmt.Println(err)

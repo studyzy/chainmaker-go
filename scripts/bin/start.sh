@@ -11,7 +11,7 @@ export WASMER_BACKTRACE=1
 pid=`ps -ef | grep chainmaker | grep "\-c ../config/{org_id}/chainmaker.yml" | grep -v grep |  awk  '{print $2}'`
 if [ -z ${pid} ];then
     #nohup ./chainmaker start -c ../config/{org_id}/chainmaker.yml > /dev/null 2>&1 &
-    nohup ./chainmaker start -c ../config/{org_id}/chainmaker.yml > panic.log &
+    nohup ./chainmaker start -c ../config/{org_id}/chainmaker.yml > panic.log 2>&1 &
     echo "chainmaker is startting, pls check log..."
 else
     echo "chainmaker is already started"

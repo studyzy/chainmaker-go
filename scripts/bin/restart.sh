@@ -24,5 +24,5 @@ done
 
 sleep 2
 #nohup ./chainmaker start -c ../config/{org_id}/chainmaker.yml > /dev/null 2>&1 &
-nohup ./chainmaker start -c ../config/{org_id}/chainmaker.yml > panic.log &
+nohup ./chainmaker start -c ../config/{org_id}/chainmaker.yml > panic.log 2>&1 &
 echo "chainmaker is restartting, pls check log..."

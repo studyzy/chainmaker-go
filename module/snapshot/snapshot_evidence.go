@@ -169,6 +169,14 @@ func (s *SnapshotEvidence) GetBlockHeight() uint64 {
 	return s.delegate.GetBlockHeight()
 }
 
+// GetBlockTimestamp returns current block timestamp
+func (s *SnapshotEvidence) GetBlockTimestamp() int64 {
+	if s.delegate == nil {
+		return 0
+	}
+	return s.delegate.GetBlockTimestamp()
+}
+
 // seal the snapshot
 func (s *SnapshotEvidence) Seal() {
 	if s.delegate == nil {
