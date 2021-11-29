@@ -315,6 +315,7 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 			CaCerts:  caCerts,
 			CertFile: localconf.ChainMakerConfig.RpcConfig.TLSConfig.CertFile,
 			KeyFile:  localconf.ChainMakerConfig.RpcConfig.TLSConfig.PrivKeyFile,
+			Logger:   log,
 		}
 
 		checkClientAuth := false
