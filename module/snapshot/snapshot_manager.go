@@ -59,6 +59,7 @@ func (m *ManagerImpl) NotifyBlockCommitted(block *commonPb.Block) error {
 
 	// 计算刚落块的区块指纹
 	deleteFp := utils.CalcBlockFingerPrint(block)
+	deleteFpEx := calcNotConsensusFingerPrint(block)
 	// 如果有snapshot对应的前序snapshot的指纹, 等于刚落块的区块指纹
 	for _, snapshot := range m.snapshots {
 		if snapshot == nil || snapshot.GetPreSnapshot() == nil {
@@ -70,8 +71,14 @@ func (m *ManagerImpl) NotifyBlockCommitted(block *commonPb.Block) error {
 		}
 	}
 
-	log.Infof("delete snapshot@%s %v at height %d", block.Header.ChainId, deleteFp, block.Header.BlockHeight)
 	delete(m.snapshots, deleteFp)
+	// 删除未共识的区块指纹
+	if _, ok := m.snapshots[deleteFpEx]; ok {
+		delete(m.snapshots, deleteFpEx)
+		log.Infof("delete snapshot@%s %v & %v at height %d", block.Header.ChainId, deleteFp, deleteFpEx, block.Header.BlockHeight)
+	} else {
+		log.Infof("delete snapshot@%s %v at height %d", block.Header.ChainId, deleteFp, block.Header.BlockHeight)
+	}
 
 	// in case of switch-fork, gc too old snapshot
 	for _, snapshot := range m.snapshots {
@@ -87,4 +94,22 @@ func (m *ManagerImpl) NotifyBlockCommitted(block *commonPb.Block) error {
 		}
 	}
 	return nil
+}
+
+func calcNotConsensusFingerPrint(block *commonPb.Block) utils.BlockFingerPrint {
+	if block == nil {
+		return ""
+	}
+
+	newBlock := &commonPb.Block{
+		Header: &commonPb.BlockHeader{
+			ChainId:        block.Header.ChainId,
+			BlockHeight:    block.Header.BlockHeight,
+			PreBlockHash:   block.Header.PreBlockHash,
+			BlockTimestamp: block.Header.BlockTimestamp,
+			Proposer:       block.Header.Proposer,
+		},
+	}
+
+	return utils.CalcBlockFingerPrint(newBlock)
 }
