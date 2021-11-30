@@ -75,9 +75,11 @@ func (m *ManagerImpl) NotifyBlockCommitted(block *commonPb.Block) error {
 	// 删除未共识的区块指纹
 	if _, ok := m.snapshots[deleteFpEx]; ok {
 		delete(m.snapshots, deleteFpEx)
-		log.Infof("delete snapshot@%s %v & %v at height %d", block.Header.ChainId, deleteFp, deleteFpEx, block.Header.BlockHeight)
+		log.Infof("delete snapshot@%s %v & %v at height %d",
+			block.Header.ChainId, deleteFp, deleteFpEx, block.Header.BlockHeight)
 	} else {
-		log.Infof("delete snapshot@%s %v at height %d", block.Header.ChainId, deleteFp, block.Header.BlockHeight)
+		log.Infof("delete snapshot@%s %v at height %d",
+			block.Header.ChainId, deleteFp, block.Header.BlockHeight)
 	}
 
 	// in case of switch-fork, gc too old snapshot
