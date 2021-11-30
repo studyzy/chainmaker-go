@@ -10,7 +10,7 @@ if [ ! -z ${pid} ];then
     kill -9 $pid
 fi
 
-docker_go_container_name=`grep -A1 'dockervm:' ../config/{org_id}/chainmaker.yml | tail -n1 | awk '{print $2}'`
+docker_go_container_name=`grep 'dockervm_container_name:' ../config/{org_id}/chainmaker.yml | tail -n1 | awk '{print $2}'`
 docker_container_lists=(`docker ps -a | grep ${docker_go_container_name} | awk '{print $1}'`)
 
 for container_id in ${docker_container_lists[*]}
