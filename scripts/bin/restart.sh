@@ -10,7 +10,7 @@ export PATH=$(dirname $PWD)/lib:$PATH
 export WASMER_BACKTRACE=1
 pid=`ps -ef | grep chainmaker | grep "\-c ../config/{org_id}/chainmaker.yml" | grep -v grep | awk  '{print $2}'`
 if [ ! -z ${pid} ];then
-    kill -9 $pid
+    kill $pid
 fi
 
 docker_go_container_name=`grep 'dockervm_container_name:' ../config/{org_id}/chainmaker.yml | tail -n1 | awk '{print $2}'`
