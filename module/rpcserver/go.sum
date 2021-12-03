@@ -21,7 +21,6 @@ chainmaker.org/chainmaker/pb-go/v2 v2.1.0/go.mod h1:gDZodc1Kp6snzGXugS/REqfCqNNi
 chainmaker.org/chainmaker/protocol/v2 v2.1.0/go.mod h1:jlMaZq/AcwWOxYsehh+R0Qx99AIRLMLQyKEXYx5Bu4o=
 chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211110022918-9516552c201a/go.mod h1:jlMaZq/AcwWOxYsehh+R0Qx99AIRLMLQyKEXYx5Bu4o=
 chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211117024857-2641037a7269/go.mod h1:jlMaZq/AcwWOxYsehh+R0Qx99AIRLMLQyKEXYx5Bu4o=
-chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211129063115-50429efbbf01/go.mod h1:jlMaZq/AcwWOxYsehh+R0Qx99AIRLMLQyKEXYx5Bu4o=
 chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211129092325-fd10970cbf25 h1:hUQ4lo+y5uBPo3sgOp/+/gR6jukwj+LuwY4dmXCgZ4g=
 chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211129092325-fd10970cbf25/go.mod h1:jlMaZq/AcwWOxYsehh+R0Qx99AIRLMLQyKEXYx5Bu4o=
 chainmaker.org/chainmaker/raftwal/v2 v2.1.0 h1:8TNEw1XtWBZkjqoNgcc9qoD/0xFkSb0SDXyzM2rQxjo=
@@ -40,8 +39,9 @@ chainmaker.org/chainmaker/txpool-single/v2 v2.1.0 h1:hctHTyjnmAjlQpdSoRz0yNY8v1a
 chainmaker.org/chainmaker/txpool-single/v2 v2.1.0/go.mod h1:TJJn/NLxi9Te34VFB5sh/zuYncxAabD9DbhMtzkKaxg=
 chainmaker.org/chainmaker/utils/v2 v2.1.0 h1:qMxtgn5PfS4rMoZyVZJqwVSW3zdVmRJPEvllsHIn/Mg=
 chainmaker.org/chainmaker/utils/v2 v2.1.0/go.mod h1:GppORTQ5PexKKU/vX+PQrnjCvl1uiBZ6rEbb2S0tPOU=
-chainmaker.org/chainmaker/vm-native/v2 v2.1.1-0.20211129092821-19b7acb6fc04 h1:5m9cN0z7LWgsxv+HI5luMnPasDyGl3pxFD3ODtW+0/g=
 chainmaker.org/chainmaker/vm-native/v2 v2.1.1-0.20211129092821-19b7acb6fc04/go.mod h1:do7zPO03o8SURGTP62P/szAKhmC6QpNmayNdWhqM3MU=
+chainmaker.org/chainmaker/vm-native/v2 v2.1.1-0.20211203080753-23a30d128efd h1:jzQMTYcVYBJ6+r5N+vT13opPHG2NmmiOWFRWqbfZUy4=
+chainmaker.org/chainmaker/vm-native/v2 v2.1.1-0.20211203080753-23a30d128efd/go.mod h1:do7zPO03o8SURGTP62P/szAKhmC6QpNmayNdWhqM3MU=
 chainmaker.org/chainmaker/vm/v2 v2.1.1-0.20211129121850-acfd1081a7ce h1:UzaDNhVio9k6jJ7FZJSs2/hfXwlaYq+kUeL8ySHV/qg=
 chainmaker.org/chainmaker/vm/v2 v2.1.1-0.20211129121850-acfd1081a7ce/go.mod h1:n08veVE8llkYvnqtOl5cHKT/Td1RKb3ACuc6XK6XgiA=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
