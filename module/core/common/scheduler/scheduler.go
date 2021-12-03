@@ -344,7 +344,7 @@ func (ts *TxScheduler) simulateSpecialTxs(dag *commonpb.DAG, snapshot protocol.S
 					dag.Vertexes = append(dag.Vertexes, dagNeighbors)
 				}
 				if applySize >= txBatchSize {
-					ts.log.Debugf("block [%d] schedule special txs finished, apply size:%d, len of txs:%d, " +
+					ts.log.Debugf("block [%d] schedule special txs finished, apply size:%d, len of txs:%d, "+
 						"len of special txs:%d", block.Header.BlockHeight, applySize, txBatchSize, specialTxsLen)
 					scheduleFinishC <- true
 					return
