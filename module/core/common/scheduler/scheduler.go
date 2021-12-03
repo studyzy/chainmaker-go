@@ -340,6 +340,7 @@ func (ts *TxScheduler) simulateSpecialTxs(dag *commonpb.DAG, snapshot protocol.S
 						Neighbors: make([]uint32, 0, 1),
 					}
 					dagNeighbors.Neighbors = append(dagNeighbors.Neighbors, uint32(snapshot.GetSnapshotSize())-2)
+					dag.Vertexes = append(dag.Vertexes, dagNeighbors)
 				}
 				if applySize >= len(block.Txs) {
 					ts.log.Debugf("block [%d] schedule special txs finished", block.Header.BlockHeight)
