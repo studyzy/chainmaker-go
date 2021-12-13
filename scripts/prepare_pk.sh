@@ -25,7 +25,7 @@ CRYPTOGEN_TOOL_BIN=${CRYPTOGEN_TOOL_PATH}/bin/chainmaker-cryptogen
 CRYPTOGEN_TOOL_CONF=${CRYPTOGEN_TOOL_PATH}/config/pk_config_template.yml
 #CRYPTOGEN_TOOL_PKCS11_KEYS=${CRYPTOGEN_TOOL_PATH}/config/pkcs11_keys.yml
 
-VERSION=v2.1.0_alpha
+VERSION=v2.1.0
 
 function show_help() {
     echo "Usage:  "

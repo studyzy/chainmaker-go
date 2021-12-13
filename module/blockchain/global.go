@@ -9,7 +9,7 @@ package blockchain
 
 var (
 	//CurrentVersion current version
-	CurrentVersion = "v2.1.0_alpha"
+	CurrentVersion = "v2.1.0"
 	// CurrentCommit current git commit hash
 	GitCommit = ""
 	// CurrentBranch current git branch
