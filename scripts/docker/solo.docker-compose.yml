@@ -3,7 +3,7 @@ version: '3'
 services:
   node1:
     container_name: cm-solo
-    image: "chainmaker:v2.1.0_alpha"
+    image: "chainmaker:v2.1.0"
     restart: always
     working_dir: "/chainmaker-go/bin"
     command: "./chainmaker start -c ../config/wx-org1.chainmaker.org/chainmaker.yml > panic.log"
