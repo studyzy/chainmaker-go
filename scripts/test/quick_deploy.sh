@@ -107,7 +107,7 @@ function cmc_test() {
 }
 
 function cat_log() {
-  grep "ERROR\|put block" $PROJECT_PATH/build/release/chainmaker-v2.1.0_alpha-wx-org1.chainmaker.org/log/system.log
+  grep "ERROR\|put block" $PROJECT_PATH/build/release/chainmaker*/log/system.log
 }
 
 start_chainmaker
