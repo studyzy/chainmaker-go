@@ -3,16 +3,16 @@ module chainmaker.org/chainmaker-go/rpcserver
 go 1.15
 
 require (
-	chainmaker.org/chainmaker-go/blockchain v0.0.0-00010101000000-000000000000
+	chainmaker.org/chainmaker-go/blockchain v0.0.0
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
 	chainmaker.org/chainmaker/common/v2 v2.1.0
 	chainmaker.org/chainmaker/localconf/v2 v2.1.0
 	chainmaker.org/chainmaker/logger/v2 v2.1.0
 	chainmaker.org/chainmaker/pb-go/v2 v2.1.0
-	chainmaker.org/chainmaker/protocol/v2 v2.1.1-0.20211129092325-fd10970cbf25
-	chainmaker.org/chainmaker/store/v2 v2.1.1-0.20211209155311-2c63ed4e9ade
+	chainmaker.org/chainmaker/protocol/v2 v2.1.1
+	chainmaker.org/chainmaker/store/v2 v2.1.1
 	chainmaker.org/chainmaker/utils/v2 v2.1.0
-	chainmaker.org/chainmaker/vm-native/v2 v2.1.1-0.20211203080753-23a30d128efd
+	chainmaker.org/chainmaker/vm-native/v2 v2.1.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/prometheus/client_golang v1.11.0
