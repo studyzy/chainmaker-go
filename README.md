@@ -1,9 +1,10 @@
-
 长安链·ChainMaker, a blockchain platform for building secure, trustworthy value-exchange networks to power the new global digital economy.
 
 ChainMaker aims to use standardized and modularized components to build a blockchain infrastructure that can be utilized to construct various blockchain systems for a wide-range of applications,  advancing blockchain developing from the “pre-industrial” era to the “industrial” era of automated assembly.
 
 # Quick Start
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fstudyzy%2Fchainmaker-go.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fstudyzy%2Fchainmaker-go?ref=badge_shield)
+
 Please visit the following links to get started with ChainMaker.
 - [长安链 · ChainMaker Docs](https://docs.chainmaker.org.cn/ "长安链 · ChainMaker Docs")
 - [长安链 · ChainMaker Community](https://www.chainmaker.org.cn/ "长安链 · ChainMaker Community")
@@ -11,6 +12,9 @@ Please visit the following links to get started with ChainMaker.
 # License
 
 长安链·ChainMaker is made available under the Apache License, Version 2.0 (Apache-2.0), located in the [LICENSE](./LICENSE) file.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fstudyzy%2Fchainmaker-go.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fstudyzy%2Fchainmaker-go?ref=badge_large)
 
 # Declaration
 Project chainMaker-go is in early phase currently. Participation and contribution are highly encouraged. Issues and feedback are welcome to be submitted to [ISSUES](https://git.chainmaker.org.cn/chainmaker/chainmaker-go/-/issues).
